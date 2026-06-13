@@ -1,6 +1,6 @@
 exclude = [
     '^http://localhost',
-    '^https://gitlab\.com/.*/pipelines'
+    '^https://gitlab.com/.*/pipelines'
 ]
 
 retry_wait = 30
