@@ -1,16 +1,17 @@
-# Lychee configuration
+# Lychee link checker configuration
 
+# Exclude local and internal links
 exclude = [
-    "http://localhost.*",
-    "https://github.com/.*/pipelines.*",
-    "https://gitlab.com/.*/pipelines.*",
+    "http://localhost",
+    "http://127.0.0.1",
+    "https://github.com/Orderly-Team24/team-24/actions",
 ]
 
-# Maximum number of retries
+# Maximum number of retries for failed requests
 max_retries = 3
 
-# Wait time between retries (seconds)
+# Wait time between retries in seconds
 retry_wait = 30
 
-# Accept only http/https links
-accept = ["https?://.+"]
+# Skip checking email addresses
+skip_mail = true
