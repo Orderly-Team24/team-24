@@ -1,0 +1,30 @@
+name: Link Check with Lychee
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Lychee link checker
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --config .lychee.toml . --verbose
+          fail: true
+          jobSummary: true
+      
+      - name: Upload lychee output as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lychee-output
+          path: lychee-output.md
