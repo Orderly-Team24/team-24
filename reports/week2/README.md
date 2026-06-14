@@ -14,7 +14,7 @@
 - [LLM Report](llm-report.md)
 
 ## Prototype (Figma)
-[Figma Prototype](https://www.figma.com/design/BK4oKfBZo6r8RxjTanLQ3z/Untitled?t=Dx8jl21S5zCeA3az-0)
+[Figma Prototype](https://www.figma.com/proto/BK4oKfBZo6r8RxjTanLQ3z/Untitled?node-id=0-1&t=AcWkRf7vyhtHL5PB-1)
 
 ## MVP v0 deployment
 - **Deployment URL:** https://keen-pegasus-a95a6a.netlify.app/
@@ -49,7 +49,7 @@ Full implementation of these stories is planned for MVP v1.
 
 ## Customer meeting
 - [Meeting summary](customer-meeting-summary.md)
-- **Transcript published:** [Customer meeting transcript](customer-meeting-transcript.md)(customer permission obtained)
+- **Transcript published:** [Customer meeting transcript](customer-meeting-transcript.md) (customer permission obtained)
 
 ## Links verification (Lychee)
 - **Configuration:** [.lychee.toml](../../.lychee.toml)
