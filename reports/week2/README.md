@@ -34,10 +34,10 @@ The prototype covers the following user story IDs:
 **US-001, US-002, US-004, US-005**
 
 It demonstrates:
-- Onboarding / preferences screen
+- Preferences screen
 - Budget input + menu upload
 - Recommendation result with three action buttons
-- History screen (placeholder)
+
 
 ### MVP v0 (technical foundation)
 The deployed MVP v0 establishes the client-side infrastructure for:
@@ -49,12 +49,12 @@ Full implementation of these stories is planned for MVP v1.
 
 ## Customer meeting
 - [Meeting summary](customer-meeting-summary.md)
-- **Transcript published:** No – included only in Moodle PDF (customer permission obtained)
-
+- [Transcript published](customer-meeting-transcript.md)
 ## Links verification (Lychee)
 - **Configuration:** [.lychee.toml](../../.lychee.toml)
-- **Latest pipeline:** 
-- **Excluded links justification:** `http://localhost.*` (development only), `https://gitlab.com/.*/pipelines.*` (dynamic CI/CD links not publicly accessible)
+- **Latest pipeline:**
+- **Excluded links justification:** 
+  - `https://www.figma.com/*` – Figma blocks automated requests (403). All Figma links were manually verified in a browser on 2026-06-14 and work correctly.
 - **Manual verification date:** 2026-06-14 – all excluded links confirmed accessible 
 
 ## Merge Requests & Code Review
