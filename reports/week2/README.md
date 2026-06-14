@@ -49,7 +49,7 @@ Full implementation of these stories is planned for MVP v1.
 
 ## Customer meeting
 - [Meeting summary](customer-meeting-summary.md)
-- **Transcript published:** [Customer meeting transcript](customer-meeting-transcript.md)(customer permission obtained)
+- [Customer meeting transcript](customer-meeting-transcript.md) (customer permission obtained)
 
 ## Links verification (Lychee)
 - **Configuration:** [.lychee.toml](../../.lychee.toml)
@@ -58,5 +58,5 @@ Full implementation of these stories is planned for MVP v1.
 - **Manual verification date:** 2026-06-14 – all excluded links confirmed accessible 
 
 ## Merge Requests & Code Review
-- **MR Template:** [.gitlab/merge_request_templates/Default.md](../../.gitlab/merge_request_templates/Default.md)
+- **MR Template:** [Merge request template](merge-request-templates/Default.md)
 - **Example reviewed MR:** [PR #16 - Create .lychee.toml](https://github.com/Orderly-Team24/team-24/pull/16)
