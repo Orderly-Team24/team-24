@@ -1,0 +1,23 @@
+name: Link Check with Lychee
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  link-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Run Lychee link checker
+        uses: lycheeverse/lychee-action@v1
+        with:
+          args: --verbose --exclude "http://localhost|http://127.0.0.1|https://github.com/Orderly-Team24/team-24/actions" .
+          fail: true
+          jobSummary: true
