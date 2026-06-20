@@ -1,6 +1,15 @@
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// ---- Config ---------------------------------------------------------------
+// Point this at the deployed backend. After deploy on Render it will look
+// like "https://orderly-upload-menu.onrender.com". Leave empty to use the
+// same origin as the page (works when the API is reverse-proxied).
+const API_BASE_URL = "";
 
-document.addEventListener('DOMContentLoaded', function() {
+// Match the backend's MAX_IMAGE_SIZE (8 MB).
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
+
+// ---- DOM refs -------------------------------------------------------------
+
+document.addEventListener('DOMContentLoaded', function () {
     initPhotoUpload();
 });
 
@@ -15,37 +24,41 @@ function initPhotoUpload() {
     const errorDiv = document.getElementById('upload-error');
     const successDiv = document.getElementById('upload-success');
 
-    uploadBtn.addEventListener('click', function() {
+    uploadBtn.addEventListener('click', function () {
         fileInput.click();
     });
 
-    fileInput.addEventListener('change', function(e) {
+    fileInput.addEventListener('change', function (e) {
         const file = e.target.files[0];
-        
+
         errorDiv.style.display = 'none';
         successDiv.style.display = 'none';
         errorDiv.textContent = '';
         successDiv.textContent = '';
-        
+
         if (!file) return;
-        
-        const validTypes = ['image/jpeg', 'image/png'];
+
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
         if (!validTypes.includes(file.type)) {
-            showUploadError('Invalid format. Please upload JPEG or PNG.');
+            showUploadError('Invalid format. Please upload JPEG, PNG, WEBP, or HEIC.');
             fileInput.value = '';
             return;
         }
-        
+
         if (file.size > MAX_FILE_SIZE) {
-            showUploadError('File too large. Maximum size is 5 MB. Your file: ' + (file.size / 1024 / 1024).toFixed(2) + ' MB');
+            showUploadError(
+                'File too large. Maximum size is 8 MB. Your file: '
+                + (file.size / 1024 / 1024).toFixed(2) + ' MB'
+            );
             fileInput.value = '';
             return;
         }
-        
+
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = function (event) {
             previewImg.src = event.target.result;
-            fileInfo.textContent = '📄 ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+            fileInfo.textContent =
+                '📄 ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
             previewDiv.style.display = 'block';
             uploadBtn.textContent = 'Choose another photo';
             submitBtn.disabled = false;
@@ -53,34 +66,38 @@ function initPhotoUpload() {
         reader.readAsDataURL(file);
     });
 
-    submitBtn.addEventListener('click', function() {
+    submitBtn.addEventListener('click', async function () {
         const file = fileInput.files[0];
         if (!file) {
             showUploadError('Please select a photo first.');
             return;
         }
-        
-        submitBtn.textContent = 'Processing...';
+
+        submitBtn.textContent = 'Uploading...';
         submitBtn.disabled = true;
         errorDiv.style.display = 'none';
         successDiv.style.display = 'none';
         errorDiv.textContent = '';
         successDiv.textContent = '';
-        
-        setTimeout(function() {
-            successDiv.textContent = '✅ Menu uploaded successfully! Processing... (demo)';
+
+        try {
+            const result = await uploadToServer(file);
+            successDiv.textContent =
+                '✅ Menu uploaded! Filename: ' + result.filename + '. Forwarded to OCR service.';
             successDiv.style.display = 'block';
             submitBtn.textContent = 'Sent for processing';
+        } catch (err) {
+            console.error('Upload failed:', err);
+            showUploadError(
+                'Upload failed: ' + (err && err.message ? err.message : 'network error')
+            );
+            submitBtn.textContent = 'Send for processing';
+        } finally {
             submitBtn.disabled = false;
-            
-            console.log('File to upload:', file);
-            console.log('File name:', file.name);
-            console.log('File size:', file.size, 'bytes');
-            console.log('File type:', file.type);
-        }, 1500);
+        }
     });
 
-    removeBtn.addEventListener('click', function() {
+    removeBtn.addEventListener('click', function () {
         fileInput.value = '';
         previewDiv.style.display = 'none';
         previewImg.src = '#';
@@ -104,23 +121,23 @@ function showUploadError(message) {
 
 async function uploadToServer(file) {
     const formData = new FormData();
-    formData.append('menu', file);
-    
-    try {
-        const response = await fetch('/api/upload-menu', {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            throw new Error('Upload failed');
-        }
-        
-        const result = await response.json();
-        console.log('Server response:', result);
-        return result;
-    } catch (error) {
-        console.error('Upload error:', error);
-        throw error;
+    // Field name must match the backend (`photo: UploadFile = File(...)`).
+    formData.append('photo', file);
+
+    const url = API_BASE_URL + '/upload-menu';
+    const response = await fetch(url, {
+        method: 'POST',
+        body: formData,
+    });
+
+    if (!response.ok) {
+        let detail = 'HTTP ' + response.status;
+        try {
+            const body = await response.json();
+            if (body && body.detail) detail = body.detail;
+        } catch (_) { /* keep generic detail */ }
+        throw new Error(detail);
     }
+
+    return await response.json();
 }

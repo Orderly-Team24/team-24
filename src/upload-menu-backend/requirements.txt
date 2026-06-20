@@ -1,0 +1,9 @@
+# Upload-menu service dependencies.
+# Pinned to the versions installed in our shared venv.
+fastapi==0.137.2
+uvicorn[standard]==0.49.0
+httpx==0.28.1
+python-multipart==0.0.32
+
+# Test-only. Move to requirements-dev.txt if you split things up later.
+pytest==9.1.1

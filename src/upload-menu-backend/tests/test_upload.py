@@ -259,3 +259,15 @@ def test_upload_returns_502_on_ocr_connection_error(
         files={"photo": ("m.jpg", b"x", "image/jpeg")},
     )
     assert response.status_code == 502, response.text
+
+
+# --- health --------------------------------------------------------------
+
+
+def test_root_healthcheck(client: TestClient) -> None:
+    """GET / is a cheap healthcheck for Render / uptime monitors."""
+    response = client.get("/")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["service"] == "upload-menu-backend"
