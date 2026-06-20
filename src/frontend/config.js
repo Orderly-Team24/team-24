@@ -10,6 +10,6 @@
 //   API_UPLOAD       → POST /upload-menu               (src/upload-menu-backend)
 
 window.ORDERLY_CONFIG = {
-    API_RECOMMENDER: "https://orderly-recommender.onrender.com",
-    API_UPLOAD:      "https://orderly-upload.onrender.com",
+    API_RECOMMENDER: "https://team-24.onrender.com",
+    API_UPLOAD:      "https://team-24-1.onrender.com",
 };
