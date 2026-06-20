@@ -1,4 +1,4 @@
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_FILE_SIZE = 8 * 1024 * 1024;
 
 document.addEventListener('DOMContentLoaded', function() {
     initPhotoUpload();
