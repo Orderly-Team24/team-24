@@ -1,56 +1,72 @@
-import httpx
+import io
+
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from PIL import Image
+import pytesseract
 
 app = FastAPI()
 
-# OCR service endpoint (handled by US-011-2)
-OCR_SERVICE_URL = "http://localhost:8002/extract-text"
-
 # Maximum allowed image size: 8 MB
 MAX_IMAGE_SIZE = 8 * 1024 * 1024
+
+# Supported image content types for OCR
+SUPPORTED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 @app.post("/upload-menu")
 async def upload_menu(photo: UploadFile = File(...)):
     """
-    Upload a menu photo and forward it to the OCR service.
-    The OCR service handles text extraction and further processing.
-    
+    Upload a menu photo, run OCR on it locally, and return the extracted text.
+
     Args:
-        photo: Menu image file (max 8 MB).
-    
+        photo: Menu image file (max 8 MB, JPEG/PNG/WEBP).
+
     Returns:
-        Confirmation that the photo was accepted.
-    
+        Confirmation with the filename and the OCR'd text.
+
     Raises:
         413: File size exceeds 8 MB.
-        504: OCR service timed out.
-        502: OCR service returned an error.
+        415: Unsupported content type.
+        422: Image cannot be decoded.
+        500: OCR engine failed.
     """
-    
     # Read the uploaded file into memory
     image_bytes = await photo.read()
 
     # Validate file size
     if len(image_bytes) > MAX_IMAGE_SIZE:
         raise HTTPException(status_code=413, detail="File size exceeds 8 MB")
-    
-    # Forward the image to the OCR service
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                OCR_SERVICE_URL,
-                files={"photo": (photo.filename, image_bytes, photo.content_type)},
-            )
-            response.raise_for_status()
-    
-    except httpx.TimeoutException:
-        raise HTTPException(status_code=504, detail="OCR service timeout")
-    except httpx.HTTPError as e:
-        raise HTTPException(status_code=502, detail=f"OCR service error: {e}")
 
-    # Photo accepted — OCR service handles the rest
+    # Validate content type
+    content_type = (photo.content_type or "").lower()
+    if content_type not in SUPPORTED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported content type: {content_type}. "
+                   f"Use one of {sorted(SUPPORTED_CONTENT_TYPES)}.",
+        )
+
+    # Decode image
+    try:
+        image = Image.open(io.BytesIO(image_bytes))
+        image.load()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Could not decode image: {exc}",
+        )
+
+    # Run OCR
+    try:
+        extracted_text = pytesseract.image_to_string(image)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"OCR engine failed: {exc}",
+        )
+
     return {
         "status": "accepted",
-        "filename": photo.filename
+        "filename": photo.filename,
+        "extracted_text": extracted_text,
     }

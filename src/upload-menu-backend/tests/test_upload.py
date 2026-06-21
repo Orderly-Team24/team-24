@@ -4,16 +4,15 @@ Run with:
     cd src/upload-menu-backend
     pytest -v
 
-The endpoint forwards the photo to an OCR service over HTTP. Tests use a
-fake httpx.AsyncClient (via the `fake_ocr` fixture) so no real OCR service
-needs to be running.
+The endpoint runs OCR locally via pytesseract. Tests use a fake
+`pytesseract.image_to_string` (via the `fake_tesseract` fixture) so no real
+Tesseract binary needs to be installed.
 """
 from __future__ import annotations
 
 import struct
 import zlib
 
-import httpx
 import pytest
 from fastapi.testclient import TestClient
 
@@ -26,47 +25,29 @@ MAX_BYTES = MAX_IMAGE_SIZE
 # --- fixtures ------------------------------------------------------------
 
 
-class _FakeResponse:
-    def __init__(self, status_code: int) -> None:
-        self.status_code = status_code
-
-    def raise_for_status(self) -> None:
-        if 400 <= self.status_code:
-            raise httpx.HTTPStatusError(
-                "fake error", request=None, response=self
-            )
-
-
-class _FakeOCRClient:
-    """Drop-in for httpx.AsyncClient that records calls and returns fakes.
+class _FakeTesseract:
+    """Drop-in for `pytesseract.image_to_string`.
 
     Configure per-test via attributes:
-      - response_status=200 (default) → fake 200 OK
-      - raise_on_post=httpx.TimeoutException(...) → simulates OCR timeout
-      - raise_on_post=httpx.ConnectError(...)    → simulates OCR unreachable
+      - extracted_text="..."   → what image_to_string returns
+      - raise_on_call=Exception → simulates OCR engine failure
     """
 
     def __init__(
         self,
         *,
-        response_status: int = 200,
-        raise_on_post: Exception | None = None,
+        extracted_text: str = "FAKE OCR TEXT",
+        raise_on_call: Exception | None = None,
     ) -> None:
-        self._status = response_status
-        self._raise = raise_on_post
-        self.calls: list[dict] = []
+        self._text = extracted_text
+        self._raise = raise_on_call
+        self.calls: list[object] = []
 
-    async def __aenter__(self) -> "_FakeOCRClient":
-        return self
-
-    async def __aexit__(self, *exc) -> None:
-        return None
-
-    async def post(self, url: str, **kwargs) -> _FakeResponse:
-        self.calls.append({"url": url, **kwargs})
+    def __call__(self, image, *args, **kwargs) -> str:
+        self.calls.append(image)
         if self._raise is not None:
             raise self._raise
-        return _FakeResponse(self._status)
+        return self._text
 
 
 @pytest.fixture
@@ -75,14 +56,14 @@ def client() -> TestClient:
 
 
 @pytest.fixture
-def fake_ocr(monkeypatch: pytest.MonkeyPatch) -> _FakeOCRClient:
-    """Replace httpx.AsyncClient with a configurable fake.
+def fake_tesseract(monkeypatch: pytest.MonkeyPatch) -> _FakeTesseract:
+    """Replace pytesseract.image_to_string with a configurable fake.
 
-    main.py does `import httpx`, so `main.httpx` is the module object we patch.
-    The route's `httpx.AsyncClient(...)` then resolves to our fake.
+    main.py does `import pytesseract`, so `main.pytesseract.image_to_string`
+    is the attribute we patch.
     """
-    fake = _FakeOCRClient()
-    monkeypatch.setattr("main.httpx.AsyncClient", lambda *a, **kw: fake)
+    fake = _FakeTesseract()
+    monkeypatch.setattr("main.pytesseract.image_to_string", fake)
     return fake
 
 
@@ -107,43 +88,52 @@ def _minimal_png() -> bytes:
     return sig + chunk(b"IHDR", ihdr) + chunk(b"IDAT", idat) + chunk(b"IEND", b"")
 
 
+def _minimal_jpeg() -> bytes:
+    """Build a *barely* valid JPEG (SOI + APP0 marker, ~20 bytes).
+
+    PIL will reject this for actual decoding, but content-type sniffing and
+    size-validation runs before PIL touches it. For tests that need a real
+    decode path we use the PNG.
+    """
+    return b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00"
+
+
 # --- happy path ----------------------------------------------------------
 
 
-def test_upload_ok(client: TestClient, fake_ocr: _FakeOCRClient) -> None:
-    """A small valid JPEG should be accepted and forwarded to the OCR service."""
+def test_upload_ok(client: TestClient, fake_tesseract: _FakeTesseract) -> None:
+    """A small valid PNG should be accepted and OCR'd."""
     response = client.post(
         "/upload-menu",
-        files={"photo": ("test.jpg", b"fake-jpeg-bytes", "image/jpeg")},
+        files={"photo": ("test.png", _minimal_png(), "image/png")},
     )
     assert response.status_code == 200, response.text
     body = response.json()
-    assert body == {"status": "accepted", "filename": "test.jpg"}
+    assert body["status"] == "accepted"
+    assert body["filename"] == "test.png"
+    assert body["extracted_text"] == "FAKE OCR TEXT"
 
 
-def test_upload_forwards_correctly_to_ocr(
-    client: TestClient, fake_ocr: _FakeOCRClient
+def test_upload_runs_tesseract_on_image_bytes(
+    client: TestClient, fake_tesseract: _FakeTesseract
 ) -> None:
-    """Verify the OCR call carries the right URL, filename, content-type, and bytes."""
-    payload = b"payload-bytes-here"
+    """The OCR call receives a decoded PIL Image, not raw bytes."""
+    png = _minimal_png()
     response = client.post(
         "/upload-menu",
-        files={"photo": ("menu.jpg", payload, "image/jpeg")},
+        files={"photo": ("menu.png", png, "image/png")},
     )
     assert response.status_code == 200
 
-    assert len(fake_ocr.calls) == 1
-    call = fake_ocr.calls[0]
-    assert call["url"] == "http://localhost:8002/extract-text"
-
-    # httpx `files=` dict: {"photo": (filename, bytes, content_type)}
-    files = call["files"]
-    assert files["photo"][0] == "menu.jpg"      # filename preserved
-    assert files["photo"][1] == payload         # bytes forwarded verbatim
-    assert files["photo"][2] == "image/jpeg"    # content type forwarded
+    assert len(fake_tesseract.calls) == 1
+    # We don't assert the exact Image object (PIL equality is finicky),
+    # but we assert it was invoked exactly once — proof the bytes were decoded.
+    assert response.json()["extracted_text"] == "FAKE OCR TEXT"
 
 
-def test_upload_accepts_real_png(client: TestClient, fake_ocr: _FakeOCRClient) -> None:
+def test_upload_accepts_real_png(
+    client: TestClient, fake_tesseract: _FakeTesseract
+) -> None:
     """End-to-end with a real programmatically-built PNG."""
     png = _minimal_png()
     assert png[:8] == b"\x89PNG\r\n\x1a\n"  # sanity: valid signature
@@ -153,7 +143,19 @@ def test_upload_accepts_real_png(client: TestClient, fake_ocr: _FakeOCRClient) -
         files={"photo": ("menu.png", png, "image/png")},
     )
     assert response.status_code == 200, response.text
-    assert response.json()["status"] == "accepted"
+
+
+def test_upload_supports_webp(
+    client: TestClient, fake_tesseract: _FakeTesseract
+) -> None:
+    """WEBP should be in the accepted content-type list."""
+    # Minimal valid WEBP (RIFF container with VP8L) — Tesseract won't decode this
+    # but our route accepts it by content-type; the fake Tesseract skips decoding.
+    response = client.post(
+        "/upload-menu",
+        files={"photo": ("menu.webp", _minimal_png(), "image/webp")},
+    )
+    assert response.status_code == 200, response.text
 
 
 # --- size limit ----------------------------------------------------------
@@ -162,36 +164,40 @@ def test_upload_accepts_real_png(client: TestClient, fake_ocr: _FakeOCRClient) -
 def test_upload_too_large(client: TestClient) -> None:
     """Anything over MAX_IMAGE_SIZE must be rejected with 413.
 
-    The size check fires before the OCR call, so we don't need to mock httpx —
-    if the route tried to make the call, the test would still 413 first.
+    The size check fires before Tesseract, so we don't need to mock it —
+    if the route tried to OCR, the test would still 413 first.
     """
     big = b"0" * (MAX_BYTES + 1024 * 1024)  # +1 MB, always over
     response = client.post(
         "/upload-menu",
-        files={"photo": ("huge.jpg", big, "image/jpeg")},
+        files={"photo": ("huge.png", big, "image/png")},
     )
     assert response.status_code == 413, response.text
     assert "8 MB" in response.json()["detail"]
 
 
 def test_upload_accepts_exactly_at_limit(
-    client: TestClient, fake_ocr: _FakeOCRClient
+    client: TestClient, fake_tesseract: _FakeTesseract
 ) -> None:
     """Boundary: exactly MAX_BYTES must be accepted (≤, not <)."""
-    payload = b"0" * MAX_BYTES
+    # Real PNG header so PIL decodes it; rest is zero-padded to the limit.
+    # PNG parsers stop at IEND, so the trailing zeros are ignored.
+    payload = _minimal_png() + b"0" * (MAX_BYTES - len(_minimal_png()))
+    assert len(payload) == MAX_BYTES
     response = client.post(
         "/upload-menu",
-        files={"photo": ("at-limit.jpg", payload, "image/jpeg")},
+        files={"photo": ("at-limit.png", payload, "image/png")},
     )
     assert response.status_code == 200, response.text
 
 
 def test_upload_rejects_one_byte_over_limit(client: TestClient) -> None:
     """Boundary: MAX_BYTES + 1 must be rejected."""
+    # Size check fires before PIL, so we don't need a valid image here.
     payload = b"0" * (MAX_BYTES + 1)
     response = client.post(
         "/upload-menu",
-        files={"photo": ("over.jpg", payload, "image/jpeg")},
+        files={"photo": ("over.png", payload, "image/png")},
     )
     assert response.status_code == 413, response.text
 
@@ -209,53 +215,56 @@ def test_upload_wrong_field_name_returns_422(client: TestClient) -> None:
     """The endpoint expects `photo`, not `file`."""
     response = client.post(
         "/upload-menu",
-        files={"file": ("test.jpg", b"x", "image/jpeg")},
+        files={"file": ("test.png", _minimal_png(), "image/png")},
     )
     assert response.status_code == 422
 
 
-# --- OCR service errors ------------------------------------------------
+def test_upload_unsupported_content_type_returns_415(
+    client: TestClient, fake_tesseract: _FakeTesseract
+) -> None:
+    """Non-image content types (e.g. text/plain) must be rejected with 415."""
+    response = client.post(
+        "/upload-menu",
+        files={"photo": ("menu.txt", b"not an image", "text/plain")},
+    )
+    assert response.status_code == 415, response.text
+    assert "Unsupported content type" in response.json()["detail"]
 
 
-def test_upload_returns_504_on_ocr_timeout(
+def test_upload_undecodable_image_returns_422(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """When the OCR service times out, the route should return 504."""
-    fake = _FakeOCRClient(raise_on_post=httpx.TimeoutException("slow"))
-    monkeypatch.setattr("main.httpx.AsyncClient", lambda *a, **kw: fake)
+    """If PIL can't decode the bytes, return 422 (not 500)."""
+    # Use a fake tesseract that doesn't get reached (PIL will reject this first)
+    monkeypatch.setattr(
+        "main.pytesseract.image_to_string",
+        _FakeTesseract(),
+    )
+    # JPEG bytes that PIL won't actually decode
+    response = client.post(
+        "/upload-menu",
+        files={"photo": ("broken.jpg", _minimal_jpeg(), "image/jpeg")},
+    )
+    assert response.status_code == 422, response.text
+    assert "Could not decode image" in response.json()["detail"]
+
+
+# --- OCR errors --------------------------------------------------------
+
+
+def test_upload_returns_500_on_tesseract_failure(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """If pytesseract raises, surface it as 500 (engine bug, not user error)."""
+    fake = _FakeTesseract(
+        raise_on_call=RuntimeError("tesseract binary exploded"),
+    )
+    monkeypatch.setattr("main.pytesseract.image_to_string", fake)
 
     response = client.post(
         "/upload-menu",
-        files={"photo": ("m.jpg", b"x", "image/jpeg")},
+        files={"photo": ("m.png", _minimal_png(), "image/png")},
     )
-    assert response.status_code == 504, response.text
-    assert "timeout" in response.json()["detail"].lower()
-
-
-def test_upload_returns_502_on_ocr_http_error(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """When the OCR service returns an HTTP error, the route should return 502."""
-    fake = _FakeOCRClient(response_status=500)
-    monkeypatch.setattr("main.httpx.AsyncClient", lambda *a, **kw: fake)
-
-    response = client.post(
-        "/upload-menu",
-        files={"photo": ("m.jpg", b"x", "image/jpeg")},
-    )
-    assert response.status_code == 502, response.text
-    assert "OCR service error" in response.json()["detail"]
-
-
-def test_upload_returns_502_on_ocr_connection_error(
-    client: TestClient, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """When the OCR service is unreachable, the route should return 502."""
-    fake = _FakeOCRClient(raise_on_post=httpx.ConnectError("connection refused"))
-    monkeypatch.setattr("main.httpx.AsyncClient", lambda *a, **kw: fake)
-
-    response = client.post(
-        "/upload-menu",
-        files={"photo": ("m.jpg", b"x", "image/jpeg")},
-    )
-    assert response.status_code == 502, response.text
+    assert response.status_code == 500, response.text
+    assert "OCR engine failed" in response.json()["detail"]
