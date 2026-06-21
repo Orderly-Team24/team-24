@@ -1,38 +1,53 @@
-# team-24
+# Orderly
 
-## Orderly: a website which based on your preferences, budget, allergies, and the photo of a menu gives you top-3 best dishes.
+A web app that recommends dishes based on your preferences, budget, allergies, and the photo of a restaurant menu.
+
+## Live demo
+
+- Frontend: https://frontend-pearl-sigma-1diis9tsn9.vercel.app
+- Recommender API: https://team-24.onrender.com
+- Upload API: https://team-24-1.onrender.com
+
+> Free-tier services on Render may take 5-15s to wake up after inactivity.
 
 ## Project structure
 
-All services live under `src/`:
+```
+team-24/
+├── src/
+│   ├── backend/              # Recommender service
+│   ├── upload-menu-backend/  # Photo upload service
+│   └── frontend/             # Static SPA (Vercel)
+├── docs/                     # Design docs and user stories
+├── reports/                  # Weekly reports and customer notes
+├── CHANGELOG.md
+└── README.md
+```
 
-- `src/backend/` — FastAPI service with RAG food recommendation (`main.py`, `retriever.py`, `ai_service.py`, `parser.py`, `ocr_reader.py`)
-- `src/upload-menu-backend/` — Photo upload service that forwards menu images to the OCR service (`main.py`)
-- `src/frontend/` — Static HTML/JS/CSS prototypes: `food-recommender/` and `photo_from_gallery/`
+## Getting started
 
-Other top-level directories:
+```bash
+# Create venv and install deps
+python -m venv venv
+source venv/bin/activate
+pip install -r src/backend/requirements.txt
+pip install -r src/upload-menu-backend/requirements.txt
 
-- `docs/` — design and reference material
-- `reports/` — week reports and customer meeting notes
-- `system_promts/` — LLM system prompts
+# Run services
+cd src/backend            && uvicorn main:app --reload --port 8003 &
+cd src/upload-menu-backend && uvicorn main:app --reload --port 8002 &
 
-## License
-This project is licensed under the [MIT License](LICENSE).
-
-## [User Stories](reports/week2/user_stories.md)
+# Serve frontend (any static server)
+cd src/frontend && python -m http.server 8080
+```
 
 ## Documentation
-- [Week 2 README](reports/week2/README.md)
-- [MVP v0 Report](reports/week2/mvp-v0-report.md)
 
-## [Customer transcript](reports/week2/customer-meeting-transcript.md)
+- [User stories](docs/user-stories.md)
+- [CHANGELOG](CHANGELOG.md)
+- [Week 2 report](reports/week2/README.md)
+- [Week 3 report](reports/week3/README.md)
 
-## [Customer meeting summary](reports/week2/customer-meeting-summary.md)
+## License
 
-## [Week 2 analysis](reports/week2/analysis.md)
-
-## [LLM report](reports/week2/llm-report.md)
-
----
-
-*Figma prototype link is available in the [Week 2 README](reports/week2/README.md) due to technical limitations of automated link checkers.*
+[MIT](LICENSE)
