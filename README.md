@@ -24,6 +24,7 @@ This project is licensed under the [MIT License](LICENSE).
 ## Documentation
 - [Week 2 README](reports/week2/README.md)
 - [MVP v0 Report](reports/week2/mvp-v0-report.md)
+- [Week 3 README](reports/week3/README.md)
 
 ## [Customer transcript](reports/week2/customer-meeting-transcript.md)
 
