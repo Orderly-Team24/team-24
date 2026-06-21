@@ -11,5 +11,5 @@
 
 window.ORDERLY_CONFIG = {
     API_RECOMMENDER: "https://team-24.onrender.com",
-    API_UPLOAD:      "https://team-24-1.onrender.com",
+    API_UPLOAD: "http://127.0.0.1:8001",
 };

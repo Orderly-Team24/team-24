@@ -121,6 +121,26 @@ def test_upload_ok(client: TestClient, fake_ocr: _FakeOCRClient) -> None:
     assert body == {"status": "accepted", "filename": "test.jpg"}
 
 
+def test_healthcheck(client: TestClient) -> None:
+    """Render and frontend diagnostics can check the service is alive."""
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok", "service": "orderly-upload-menu"}
+
+
+def test_upload_cors_preflight(client: TestClient) -> None:
+    """Browser preflight should allow the static frontend to call /upload-menu."""
+    response = client.options(
+        "/upload-menu",
+        headers={
+            "Origin": "https://example-frontend.netlify.app",
+            "Access-Control-Request-Method": "POST",
+        },
+    )
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "*"
+
+
 def test_upload_forwards_correctly_to_ocr(
     client: TestClient, fake_ocr: _FakeOCRClient
 ) -> None:

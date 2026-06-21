@@ -1,13 +1,33 @@
+import os
+
 import httpx
 from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
 # OCR service endpoint (handled by US-011-2)
-OCR_SERVICE_URL = "http://localhost:8002/extract-text"
+OCR_SERVICE_URL = os.getenv("OCR_SERVICE_URL", "http://localhost:8002/extract-text")
+
+# Comma-separated list of allowed CORS origins. Override via env in deploy.
+# Use "*" for demos; lock down to your frontend origin in production.
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 # Maximum allowed image size: 8 MB
 MAX_IMAGE_SIZE = 8 * 1024 * 1024
+
+
+@app.get("/")
+def root() -> dict[str, str]:
+    """Cheap healthcheck used by Render / uptime monitors."""
+    return {"status": "ok", "service": "orderly-upload-menu"}
 
 
 @app.post("/upload-menu")
