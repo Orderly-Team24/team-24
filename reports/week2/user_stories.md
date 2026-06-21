@@ -180,10 +180,7 @@ User should upload photo, then we need to extract dish names and prices
 ---
 
 # Initial proposed MVP v1 scope
-
-- US-004
-- US-005
 - US-011
 
-> **Removed from MVP v1:** US-001 (Propose dishes according to the budget), US-002 (Ability to sign in)
+> **Removed from MVP v1:** US-001 (Propose dishes according to the budget), US-002 (Ability to sign in), US-004 (Propose dishes according to preferences), US-005 (No allergy suggestions)
 > **Added to MVP v1:** US-011 (Upload photo of a menu)
