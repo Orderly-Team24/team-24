@@ -5,121 +5,121 @@
 
 ## Team
 
-| Person | Зона |
+| Person | Area |
 |---|---|
-| Вика, Вилена | Frontend (всё) |
-| Даша, Полина, Аделина | AI: модель, промпты, рекомендации, parser-связка |
-| Омар | Остальной бэк (эндпоинты, БД, auth), деплой (кроме документации) |
+| Vika, Vilena | Frontend (everything) |
+| Dasha, Polina, Adelina | AI: model, prompts, recommendations, parser-binding |
+| Omar | Other backend (endpoints, DB, auth), deployment (except documentation) |
 
 ## Sprint map
 
-| Sprint | Dates (4 недели → защита) | Goal | Stories |
+| Sprint | Dates (4 weeks → defense) | Goal | Stories |
 |---|---|---|---|
-| W1 | 22-06 – 28-06 | Закрыть хвосты US-011 + старт рекомендаций | US-011-2, US-011-3, US-004 |
-| W2 | 29-06 – 05-07 | Логин + UI кнопки | US-002 (1..5), US-012, US-013, US-014, US-015 |
-| W3 | 06-07 – 12-07 | Бюджет + добой логина | US-001, остатки US-002 |
-| W4 | 13-07 – 19-07 | Полировка, баги, защита | — |
+| W1 | 22-06 – 28-06 | Close US-011 leftovers + start recommendations | US-011-2, US-011-3, US-004 |
+| W2 | 29-06 – 05-07 | Login + UI buttons | US-002 (1..5), US-012, US-013, US-014, US-015 |
+| W3 | 06-07 – 12-07 | Budget + finish login | US-001, remaining US-002 |
+| W4 | 13-07 – 19-07 | Polish, bugfix, defense | — |
 
-> W5 = защита. Все must должны быть закрыты к концу W3.
+> W5 = defense. All Must stories must be closed by end of W3.
 
 ---
 
 ## Week 1 — 22-06 … 28-06
 
-**Цель:** закрыть US-011 целиком (он уже на 80% готов) и начать US-004.
+**Goal:** close US-011 entirely (already ~80% done) and start US-004.
 
-### Задачи
+### Tasks
 
-| ID | Story | MoSCoW | Subtask | Owner | SP | Что делаем | Definition of Done |
+| ID | Story | MoSCoW | Subtask | Owner | SP | What we do | Definition of Done |
 |---|---|---|---|---|---|---|---|
-| **US-011-2** | OCR | 🔴 Must | — | Аделина | 3 | E2E на 3 фото меню (чистое / шум / EN+RU), негативные 413/415/422 | Фото-фикстуры в `tests/fixtures/`, pytest зелёный, README обновлён, PR `feat/ocr-real-photos` смёржен |
-| **US-011-3** | Парсинг | 🔴 Must | — | Полина | 3 | Перевести `test_parser.py` в pytest, покрыть 8 кейсов (4 формата цены, без цены, разделители, пустая строка, несколько цен) | `src/backend/tests/test_parser.py` ≥ 8 кейсов, все зелёные, контракт задокументирован, PR `feat/menu-parser-skeleton` смёржен |
-| **US-004-1** | Preferences: API-контракт | 🔴 Must | US-004 | Омар | 1 | Расширить `RecommendationRequest`: добавить Pydantic `Preferences{cuisine, exclude_ingredients, favorite_ingredients}`, legacy `message` сохранить | Юнит-тест парсинга, обратная совместимость с текущим фронтом |
-| **US-004-2** | Preferences: промпт + stub | 🔴 Must | US-004 | Даша + Аделина | 2 | Учёт `Preferences` в `_openai()` и stub-фильтрация `_FALLBACK_POOL` по `exclude_ingredients`/cuisine | Локально: `cuisine="italian"` → итальянское блюдо; `exclude=["nuts"]` → нет орехов; fallback на полный пул при пустом |
-| **US-004-3** | Preferences: UI | 🔴 Must | US-004 | Вика | 1 | Форма: select кухни + chips "не люблю"/"люблю", отправка `{preferences: {...}}` в POST `/recommendations` | Форма отображается, карточка меняется при смене кухни, пустые preferences = текущее поведение |
-| **US-004-4** | Preferences: связка с parser | 🔴 Must | US-004 | Даша + Полина | 1 | Эндпоинт принимает `dishes` из `parser.py`, фильтрует по `exclude_ingredients`, выбирает из списка | E2E: фото → парсинг → exclude=["nuts"] → блюдо без орехов; пустой результат → 200 с `[]`, не 500 |
-| **US-004-5** | Preferences: доки | 🔴 Must | US-004 | Вика + Вилена | 0.5 | Раздел в `src/backend/README.md` с curl-примером + скриншот UI в `docs/screenshots/us-004.png` | README содержит пример, скриншот приложен к PR |
+| **US-011-2** | OCR | 🔴 Must | — | Adelina | 3 | E2E on 3 menu photos (clean / noisy / EN+RU), negative cases 413/415/422 | Photo fixtures in `tests/fixtures/`, pytest green, README updated, PR `feat/ocr-real-photos` merged |
+| **US-011-3** | Parsing | 🔴 Must | — | Polina | 3 | Migrate `test_parser.py` to pytest, cover 8 cases (4 price formats, no price, separators, empty line, multiple prices) | `src/backend/tests/test_parser.py` ≥ 8 cases, all green, contract documented, PR `feat/menu-parser-skeleton` merged |
+| **US-004-1** | Preferences: API contract | 🔴 Must | US-004 | Omar | 1 | Extend `RecommendationRequest`: add Pydantic `Preferences{cuisine, exclude_ingredients, favorite_ingredients}`, keep legacy `message` | Parsing unit test, backward compat with current frontend |
+| **US-004-2** | Preferences: prompt + stub | 🔴 Must | US-004 | Dasha + Adelina | 2 | Honour `Preferences` in `_openai()` and stub-filter `_FALLBACK_POOL` by `exclude_ingredients`/cuisine | Locally: `cuisine="italian"` → italian dish; `exclude=["nuts"]` → no nuts; fallback to full pool on empty |
+| **US-004-3** | Preferences: UI | 🔴 Must | US-004 | Vika | 1 | Form: cuisine select + "dislike"/"like" chips, send `{preferences: {...}}` to POST `/recommendations` | Form renders, card changes on cuisine switch, empty preferences = current behaviour |
+| **US-004-4** | Preferences: parser-binding | 🔴 Must | US-004 | Dasha + Polina | 1 | Endpoint accepts `dishes` from `parser.py`, filters by `exclude_ingredients`, picks from list | E2E: photo → parse → `exclude=["nuts"]` → dish without nuts; empty result → 200 with `[]`, not 500 |
+| **US-004-5** | Preferences: docs | 🔴 Must | US-004 | Vika + Vilena | 0.5 | Section in `src/backend/README.md` with curl example + UI screenshot in `docs/screenshots/us-004.png` | README contains example, screenshot attached to PR |
 
-**Итого W1:** 11.5 SP (US-004-4 ждёт US-011-3; US-004-3 параллельно с US-004-2)
+**W1 total:** 11.5 SP (US-004-4 waits for US-011-3; US-004-3 parallel to US-004-2)
 
 **US-001 — W3 (Should):**
 
-| ID | Story | MoSCoW | Subtask | Owner | SP | Что делаем | Definition of Done |
+| ID | Story | MoSCoW | Subtask | Owner | SP | What we do | Definition of Done |
 |---|---|---|---|---|---|---|---|
-| **US-001-1** | Budget: API + фильтр | 🟠 Should | US-001 | Омар | 1 | Поле `max_budget: float \| None` в `Preferences`, фильтр `price <= max_budget` на бэке | Юнит-тест: `max_budget=10` исключает блюдо с `price=12`; пусто после фильтра → 200 с `[]` |
-| **US-001-2** | Budget: UI | 🟠 Should | US-001 | Вилена | 1 | Поле "Max budget" с валидацией (>0), сообщение "No dishes under $X" при пустом ответе | Поле работает, валидация на клиенте, сообщение показывается |
-| **US-001-3** | Budget: E2E + доки | 🟠 Should | US-001 | Вилена + Омар | 1 | E2E: budget=10 + cuisine=italian → карточка ≤ $10, curl-пример в README, скриншот | E2E пройден, README обновлён |
+| **US-001-1** | Budget: API + filter | 🟠 Should | US-001 | Omar | 1 | Field `max_budget: float \| None` in `Preferences`, backend filter `price <= max_budget` | Unit test: `max_budget=10` excludes a dish with `price=12`; empty after filter → 200 with `[]` |
+| **US-001-2** | Budget: UI | 🟠 Should | US-001 | Vilena | 1 | "Max budget" field with validation (>0), message "No dishes under $X" on empty response | Field works, client-side validation, message shown |
+| **US-001-3** | Budget: E2E + docs | 🟠 Should | US-001 | Vilena + Omar | 1 | E2E: budget=10 + cuisine=italian → card ≤ $10, curl example in README, screenshot | E2E passed, README updated |
 
-### Параллельно (не блокирует W1, но надо)
+### Parallel work (does not block W1, but needed)
 
-- **Омар:** поднять Postgres на Render под будущий US-002 (логин). Бесплатный tier. Без схем пока — только инстанс + переменные окружения.
-- **Вика, Вилена:** подготовить макеты для US-002-1 (логин) и US-012-014 (кнопки). Figma/бумага — неважно, главное зафиксировать до старта W2.
+- **Omar:** spin up Postgres on Render for the future US-002 (login). Free tier. No schema yet — only the instance + env variables.
+- **Vika, Vilena:** prepare mockups for US-002-1 (login) and US-012-014 (buttons). Figma/paper — doesn't matter, lock it down before W2 starts.
 
-### Риски W1
+### W1 risks
 
-1. **OCR на реальных фото** может плохо работать — Полина+Даша могут застрять. План Б: подключить OCR.space как fallback (бесплатный API).
-2. **US-004 без присвоенного** — если Полина+Аделина не возьмутся в первые 2 дня, на W2 логину не на чем базироваться (юзер нужен для предпочтений).
+1. **OCR on real photos** may work poorly — Polina+Dasha may get stuck. Plan B: plug in OCR.space as a fallback (free API).
+2. **US-004 without owner** — if Polina+Adelina don't pick it up in the first 2 days, W2's login has nothing to base on (user is needed for preferences).
 
-### PR-план W1
+### W1 PR plan
 
-- `feat/ocr-real-photos` → `main` (Аделина)
-- `feat/menu-parser-skeleton` → `main` (Аделина)
-- `feat/recommend-by-preferences` → `main` (Даша + Аделина)
-- `chore/postgres-render-setup` → `main` (Омар)
+- `feat/ocr-real-photos` → `main` (Adelina)
+- `feat/menu-parser-skeleton` → `main` (Polina)
+- `feat/recommend-by-preferences` → `main` (Dasha + Adelina)
+- `chore/postgres-render-setup` → `main` (Omar)
 
 ---
 
 ## Week 2 — 29-06 … 05-07
 
-**Цель:** логин целиком + UI кнопки.
+**Goal:** login in full + UI buttons.
 
-### Задачи
+### Tasks
 
 | # | Story | Owner | Notes |
 |---|---|---|---|
-| 4 | US-002-1 Страница логина | Вика, Вилена | Форма email/password, без бэка пока (моки) |
-| 5 | US-002-2 Клиентская валидация | Вика, Вилена | Подвязать к US-002-1 |
-| 6 | US-002-3 Проверка пароля (бэк) | Омар | Эндпоинт `POST /auth/login` |
-| 7 | US-002-4 JWT | Омар | **Критично.** Не писать с нуля — взять `fastapi-users` или аналог |
-| 8 | US-002-5 Редирект после логина | Вика | localStorage токен, редирект на /display/recommendations |
-| 9 | US-012 Кнопка "I'll order dish" | Вика | Маленькая фича, ~2-3ч |
-| 10 | US-013 Кнопка "Another option" | Вилена | ~2-3ч |
-| 11 | US-014 Кнопка "End session" | Вика | Сбрасывает сессию, ~2ч |
-| 12 | US-015 Управление историей заказов | Вилена + Вика | UI + связка с бэком |
+| 4 | US-002-1 Login page | Vika, Vilena | Email/password form, no backend yet (mocks) |
+| 5 | US-002-2 Client-side validation | Vika, Vilena | Bind to US-002-1 |
+| 6 | US-002-3 Password verification (backend) | Omar | Endpoint `POST /auth/login` |
+| 7 | US-002-4 JWT | Omar | **Critical.** Don't write from scratch — use `fastapi-users` or equivalent |
+| 8 | US-002-5 Redirect after login | Vika | localStorage token, redirect to /display/recommendations |
+| 9 | US-012 "I'll order dish" button | Vika | Small feature, ~2-3h |
+| 10 | US-013 "Another option" button | Vilena | ~2-3h |
+| 11 | US-014 "End session" button | Vika | Resets the session, ~2h |
+| 12 | US-015 Managing order history | Vilena + Vika | UI + backend binding |
 
 ---
 
 ## Week 3 — 06-07 … 12-07
 
-**Цель:** бюджет + добить логин.
+**Goal:** budget + finish login.
 
-### Задачи
+### Tasks
 
 | ID | Story | Owner |
 |---|---|---|
-| **US-001-1** | Budget: API + фильтр | Омар |
-| **US-001-2** | Budget: UI | Вилена |
-| **US-001-3** | Budget: E2E + доки | Полина + Вилена |
-| US-002 финальная полировка | Все |
-| E2E: фото → парсинг → предпочтения → бюджет → блюдо | Все |
+| **US-001-1** | Budget: API + filter | Omar |
+| **US-001-2** | Budget: UI | Vilena |
+| **US-001-3** | Budget: E2E + docs | Vilena + Omar |
+| US-002 final polish | All |
+| E2E: photo → parse → preferences → budget → dish | All |
 
 ---
 
 ## Week 4 — 13-07 … 19-07
 
-**Цель:** защита готова.
+**Goal:** defense-ready.
 
-- Исправление багов с W1-W3
-- Деплой всех новых фич
-- Прогон demo-сценария 3 раза
-- Подготовка презентации (Омар + Даша)
-- Запас на форс-мажор (если W3 пошло не так)
+- Fix bugs from W1-W3
+- Deploy all new features
+- Run the demo scenario 3 times
+- Prepare presentation (Omar + Dasha)
+- Buffer for force-majeure (if W3 went sideways)
 
 ---
 
-## Заметки
+## Notes
 
-- **US-005 (аллергены) — Removed**, не делаем.
-- **US-007 (dislike), US-008 (history) — Removed** в таблице, но US-015 фактически перекрывает историю.
-- **GitHub-issues для US-012-015** ещё не созданы. Создать на этой неделе.
-- **Лейблы в GitHub** расходятся с таблицей (US-005 в GitHub Must, в таблице Removed). Проверить перед защитой.
+- **US-005 (allergens) — Removed**, not doing it.
+- **US-007 (dislike), US-008 (history) — Removed** in the table, but US-015 effectively covers history.
+- **GitHub issues for US-012-015** don't exist yet. Create them this week.
+- **GitHub labels** diverge from the table (US-005 is Must in GitHub, Removed in table). Verify before defense.
