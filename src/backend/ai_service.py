@@ -71,6 +71,22 @@ def _pick_fallback(message: str) -> dict[str, Any]:
     return FALLBACK_POOL[h % len(FALLBACK_POOL)]
 
 
+def pick_from_pool(pool: list[dict[str, Any]], message: str) -> dict[str, Any]:
+    """Deterministic pick from a (possibly filtered) pool.
+
+    `display_recommendations` uses this with a budget-filtered pool;
+    `_stub` uses it with the full pool. Same hashing scheme as `_pick_fallback`.
+    """
+    if not pool:
+        return _pick_fallback(message)
+    if not message:
+        return pool[0]
+    h = 0
+    for ch in message.lower():
+        h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+    return pool[h % len(pool)]
+
+
 # --- backend: stub ------------------------------------------------------
 
 

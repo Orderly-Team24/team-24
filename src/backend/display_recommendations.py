@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from ai_service import FALLBACK_POOL, get_recommendation_struct
+from ai_service import FALLBACK_POOL, get_recommendation_struct, pick_from_pool
 from budget_filter import filter_by_budget
 
 router = APIRouter(prefix="/display", tags=["display"])
@@ -47,19 +47,12 @@ def display_recommendations(data: RecommendationRequest):
         if not candidates:
             return {"recommendations": []}
 
-    # Deterministic pick from the (possibly filtered) pool. We bias the pick
-    # towards the user's message when present, otherwise just the first dish.
-    if candidates:
-        if data.message:
-            h = 0
-            for ch in data.message.lower():
-                h = (h * 31 + ord(ch)) & 0xFFFFFFFF
-            pick = candidates[h % len(candidates)]
-        else:
-            pick = candidates[0]
+    # Pick deterministically from the (possibly filtered) pool. If a budget
+    # filter was applied we must use the filtered pool; otherwise fall
+    # through to the AI backend (which may itself fall back to the stub).
+    if prefs is not None and prefs.max_budget is not None:
+        pick = pick_from_pool(candidates, data.message)
     else:
-        # No budget filter active and the pool is empty — fall through to
-        # the AI backend with the original behaviour.
         pick = get_recommendation_struct(data.message)
 
     return {
