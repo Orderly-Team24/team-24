@@ -82,6 +82,7 @@
 | 6 | US-002-3 Password verification (backend) | Dasha | Endpoint `POST /auth/login` |
 | 7 | US-002-4 JWT | Omar | **Critical.** Don't write from scratch — use `fastapi-users` or equivalent |
 | 8 | US-002-5 Redirect after login | Vilena | localStorage token, redirect to /display/recommendations |
+| 9 | US-002-6 Registration (signup) | Dasha | Backend: `POST /auth/register` (hash + store). Frontend: signup form, **separate from login page** |
 | 9 | US-012 "I'll order dish" button | Vika | Small feature, ~2-3h |
 | 10 | US-013 "Another option" button | Vilena | ~2-3h |
 | 11 | US-014 "End session" button | Vika | Resets the session, ~2h |
