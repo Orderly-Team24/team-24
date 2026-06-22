@@ -21,6 +21,36 @@
 - US-011 added to scope per customer request: photo upload + AI recommendations implemented
 - US-004 and US-005 moved to next sprint
 
+## Changes to User Story Scope (post Week 3)
+
+Scope adjustments made after the Week 3 retrospective, reflected in `docs/user-stories.md`:
+
+**Removed (out of MVP scope):**
+- US-005 (No allergen suggestions) — removed; allergy filtering dropped for v2 to keep MVP focused.
+- US-007 (Reject and hide dislikes) — removed; functionality is partially covered by the new US-015 history/orders flow.
+- US-008 (Save liked dishes to history) — removed; replaced by US-015.
+
+**Priority changes:**
+- US-001 (Propose dishes according to the budget) — demoted from Must to Should.
+- US-002 (Ability to sign in) — demoted from Must to Should.
+
+**New user stories added (Sprint 2 / MVP v2):**
+- US-012 — Button "I'll order dish" (Should).
+- US-013 — Button "Another option" (Should).
+- US-014 — Button "End session" (Should).
+- US-015 — Managing history of orders (Should).
+
+**Decomposition for Sprint 2:**
+- US-001 → US-001-1 (Budget: API + filter), US-001-2 (Budget: UI), US-001-3 (Budget: E2E + docs). See [#154](https://github.com/Orderly-Team24/team-24/issues/154) for US-001-1, [#155](https://github.com/Orderly-Team24/team-24/issues/155) for US-001-2.
+- US-002 → US-002-1..7 (login page, validation, password verify, JWT, redirect, registration backend, signup frontend). GitHub issues [#74](https://github.com/Orderly-Team24/team-24/issues/74)–[#79](https://github.com/Orderly-Team24/team-24/issues/79).
+- US-004 → US-004-1..5 (preferences: API contract, prompt + stub, UI, parser binding, docs). GitHub issues [#150](https://github.com/Orderly-Team24/team-24/issues/150)–[#153](https://github.com/Orderly-Team24/team-24/issues/153).
+
+**Cross-cutting infrastructure tasks:**
+- [#161](https://github.com/Orderly-Team24/team-24/issues/161) — Migrate frontend to React (vanilla JS → React SPA).
+- [#162](https://github.com/Orderly-Team24/team-24/issues/162) — Re-deploy frontend after US-011/-004/-001 work (umbrella task).
+
+**Implementation plan:** [`docs/plan-week1.md`](../../docs/plan-week1.md) — 4-week sprint breakdown with owners and Definition of Done for every subtask.
+
 ## Links
 - Historical: [`reports/week2/user_stories.md`](../week2/user_stories.md)
 - Current: [`docs/user-stories.md`](../../docs/user-stories.md)
