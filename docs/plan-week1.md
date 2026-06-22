@@ -77,11 +77,11 @@
 
 | # | Story | Owner | Notes |
 |---|---|---|---|
-| 4 | US-002-1 Login page | Vika, Vilena | Email/password form, no backend yet (mocks) |
-| 5 | US-002-2 Client-side validation | Vika, Vilena | Bind to US-002-1 |
-| 6 | US-002-3 Password verification (backend) | Omar | Endpoint `POST /auth/login` |
+| 4 | US-002-1 Login page | Vika | Email/password form, no backend yet (mocks) |
+| 5 | US-002-2 Client-side validation | Vilena | Bind to US-002-1 |
+| 6 | US-002-3 Password verification (backend) | Dasha | Endpoint `POST /auth/login` |
 | 7 | US-002-4 JWT | Omar | **Critical.** Don't write from scratch — use `fastapi-users` or equivalent |
-| 8 | US-002-5 Redirect after login | Vika | localStorage token, redirect to /display/recommendations |
+| 8 | US-002-5 Redirect after login | Vilena | localStorage token, redirect to /display/recommendations |
 | 9 | US-012 "I'll order dish" button | Vika | Small feature, ~2-3h |
 | 10 | US-013 "Another option" button | Vilena | ~2-3h |
 | 11 | US-014 "End session" button | Vika | Resets the session, ~2h |
