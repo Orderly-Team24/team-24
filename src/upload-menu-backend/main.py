@@ -10,7 +10,17 @@ tesseract_path = os.environ.get("TESSERACT_PATH")
 if tesseract_path:
     pytesseract.pytesseract.tesseract_cmd = tesseract_path
 app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
+import os
 
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 # Maximum allowed image size: 8 MB
 MAX_IMAGE_SIZE = 8 * 1024 * 1024
 
