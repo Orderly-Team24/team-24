@@ -5,5 +5,12 @@ exclude = [
     "https://keen-pegasus-a95a6a.netlify.app/"
 ]
 
+include_extensions = [
+    "md",
+    "txt",
+    "html",
+    "htm"
+]
+
 max_retries = 3
 retry_wait = 30
