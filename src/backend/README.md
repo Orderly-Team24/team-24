@@ -10,8 +10,36 @@ recommendation endpoint backed by a swappable AI module.
 | GET    | `/`                        | Healthcheck (used by Render).                                        |
 | POST   | `/recommend`               | Legacy. Returns `{recommendation: "free-form text"}`.                 |
 | POST   | `/display/recommendations` | Frontend-facing. Returns structured card data.                       |
+| POST   | `/history/orders`          | Save a dish into a user's order history (in-memory stub).            |
+| GET    | `/history/orders`          | Read a user's order history, most-recent first.                      |
+| GET    | `/history/orders/check`    | Whether a given dish is already in a user's history.                 |
 
 Interactive docs at `/docs`.
+
+### Order history (stub)
+
+The `/history/orders*` endpoints back the **"I'll order it again"** button
+on the recommendation card. No real database yet — everything lives in a
+thread-safe in-memory `dict`, so data is lost on restart. When a real DB
+lands, only `order_history.py` needs to change; the HTTP shape stays.
+
+Each dish gets a stable id derived from its name (32-bit hash). The
+frontend passes the dish from `/display/recommendations` straight to
+`POST /history/orders` with the `X-User-Id` header.
+
+```bash
+# Save a dish
+curl -X POST http://127.0.0.1:8003/history/orders \
+  -H 'Content-Type: application/json' \
+  -H 'X-User-Id: dasha' \
+  -d '{"name":"Margherita pizza","price":13,"description":"...","ingredients":["flour","tomato"],"reason":"classic"}'
+
+# Read history
+curl http://127.0.0.1:8003/history/orders -H 'X-User-Id: dasha'
+
+# Check whether a dish is already in history (used by the button label)
+curl 'http://127.0.0.1:8003/history/orders/check?dish_id=42' -H 'X-User-Id: dasha'
+```
 
 ## AI backends
 
