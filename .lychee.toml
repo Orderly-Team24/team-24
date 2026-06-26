@@ -2,7 +2,15 @@
 
 exclude = [
     "https://www.figma.com/*",
-    "https://keen-pegasus-a95a6a.netlify.app/"
+    "https://keen-pegasus-a95a6a.netlify.app/",
+    ".*PUBLIC_URL.*"
+]
+
+include_extensions = [
+    "md",
+    "txt",
+    "html",
+    "htm"
 ]
 
 max_retries = 3
