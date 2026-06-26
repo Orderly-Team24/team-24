@@ -335,6 +335,7 @@ def get_recommendation_struct(
     menu: list[dict] | None = None,
 ) -> dict[str, Any]:
     """Structured recommendation for /display/recommendations."""
+    logging.info("Preferences: %s", preferences)
     _, pick = _call_backend(user_message, preferences, menu)
     return {
         "name":        str(pick.get("name", "Chef's special")),

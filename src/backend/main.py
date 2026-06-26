@@ -16,6 +16,7 @@ app.add_middleware(
 )
 app.include_router(display_router)
 app.include_router(history_router)
+app.include_router(another_option_router)
 
 
 MAX_FILE_SIZE = 8 * 1024 * 1024  # 8 MB

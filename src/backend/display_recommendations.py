@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
+from recommendation_session import create_session, mark_shown
 
 from ai_service import (
     FALLBACK_POOL,
@@ -28,9 +29,8 @@ class Preferences(BaseModel):
 
 class RecommendationRequest(BaseModel):
     message: str = ""
-    menu: list[dict] = []  # Из вашей ветки (для загруженного меню)
-    preferences: Preferences | None = None  # Из ветки main (для фильтрации и предпочтений)
-
+    menu: list[dict] = [] 
+    preferences: Preferences | None = None 
 
 @router.post("/recommendations")
 def display_recommendations(data: RecommendationRequest):
@@ -61,7 +61,7 @@ def display_recommendations(data: RecommendationRequest):
         if preferred_candidates:
             candidates = preferred_candidates
 
-    prefs_dict = prefs.dict() if prefs else None
+    prefs_dict = prefs.model_dump() if prefs else None
 
     if prefs is not None and prefs.max_budget is not None:
         pick = pick_from_pool(candidates, data.message)
@@ -83,9 +83,11 @@ def display_recommendations(data: RecommendationRequest):
         "reason": str(pick.get("reason", "Recommended by AI")),
     }
 
+    session_id = create_session(candidates)
+    mark_shown(session_id, dish["name"]) 
    
     return {
-        "session_id": session_id,  # Берется из глобального контекста файла
+        "session_id": session_id,
         "recommendations": [
             {
                 "id":          make_dish_id(dish),
