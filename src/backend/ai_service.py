@@ -71,29 +71,71 @@ def _pick_fallback(message: str) -> dict[str, Any]:
     return _FALLBACK_POOL[h % len(_FALLBACK_POOL)]
 
 
+def _pick_fallback_from_list(message: str, items: list[dict]) -> dict:
+    """Same deterministic hash trick, but picks from the real uploaded menu."""
+    if not message:
+        return items[0]
+    h = 0
+    for ch in message.lower():
+        h = (h * 31 + ord(ch)) & 0xFFFFFFFF
+    return items[h % len(items)]
+
 # --- backend: stub ------------------------------------------------------
 
 
-def _stub(user_message: str, menu: list[dict] | None = None) -> dict:
+def _stub(
+    user_message: str,
+    menu: list[dict] | None = None,
+    preferences: dict | None = None
+) -> dict:
+    # Определяем исходный пул блюд
     if menu:
-        valid_items = [m for m in menu if not m.get("flagged")]
-        if valid_items:
-            item = _pick_fallback_from_list(user_message, valid_items)
-            return {
-                "name": item["name"],
-                "price": item["price"],
-                "description": "",
-                "ingredients": [],
-                "reason": "Picked from your uploaded menu.",
-            }
-    return _pick_fallback(user_message)
+        source_pool = [m for m in menu if not m.get("flagged")]
+    else:
+        source_pool = _FALLBACK_POOL
+
+    filtered_pool = source_pool
+
+    
+    if preferences and filtered_pool:
+        exclude = [x.lower().strip() for x in preferences.get("exclude_ingredients", [])]
+        cuisine = preferences.get("cuisine", "")
+
+        
+        if exclude:
+            filtered_pool = [
+                item for item in filtered_pool
+                if not any(exc in [ing.lower() for ing in item.get("ingredients", [])] for exc in exclude)
+                and not any(exc in item.get("name", "").lower() for exc in exclude)
+            ]
+
+        
+        if cuisine:
+            cuisine_lower = cuisine.lower().strip()
+            filtered_pool = [
+                item for item in filtered_pool
+                if cuisine_lower in item.get("name", "").lower()
+                or cuisine_lower in item.get("description", "").lower()
+            ]
+
+        
+        if not filtered_pool:
+            filtered_pool = source_pool
+
+    if menu:
+        item = _pick_fallback_from_list(user_message, filtered_pool)
+        return {
+            "name": item["name"],
+            "price": item["price"],
+            "description": item.get("description", ""),
+            "ingredients": item.get("ingredients", []),
+            "reason": "Picked from your uploaded menu based on preferences.",
+        }
+
+    return _pick_fallback_from_list(user_message, filtered_pool)
 
 
 # --- backend: OpenAI / LM Studio ---------------------------------------
-#
-# Both expose the same OpenAI Chat Completions API, so we share the call.
-# The prompt asks for a *single* JSON object matching our frontend schema,
-# which keeps parsing simple and reliable.
 
 _OPENAI_SYSTEM_PROMPT = (
     "You are Orderly, a food recommendation AI. "
@@ -132,16 +174,50 @@ def _extract_json_object(text: str) -> dict[str, Any]:
     raise ValueError(f"Unbalanced JSON in LLM response: {text!r}")
 
 
-def _openai_compatible(user_message: str, *, base_url: str, api_key: str, model: str) -> dict[str, Any]:
+def _openai_compatible(
+    user_message: str,
+    menu: list[dict] | None,
+    preferences: dict | None = None,
+    *,
+    base_url: str,
+    api_key: str,
+    model: str,
+) -> dict[str, Any]:
     """Call any OpenAI-compatible Chat Completions endpoint."""
     from openai import OpenAI
+    import json
 
     client = OpenAI(base_url=base_url, api_key=api_key)
+    valid_items = [m for m in (menu or []) if not m.get("flagged")]
+    menu_text = json.dumps(valid_items, ensure_ascii=False) if valid_items else "[]"
+
+    
+    preferences_prompt = ""
+    if preferences:
+        cuisine = preferences.get("cuisine")
+        exclude = preferences.get("exclude_ingredients", [])
+        
+        if cuisine or exclude:
+            preferences_prompt = "\nUser preferences:\n"
+            if cuisine:
+                preferences_prompt += f"- Cuisine: {cuisine}\n"
+            if exclude:
+                preferences_prompt += f"- Excludes: {', '.join(exclude)}\n"
+
+    
+    user_content = _OPENAI_USER_TEMPLATE.format(message=user_message or "")
+    if preferences_prompt:
+        user_content += preferences_prompt
+    user_content += f"\n\nMenu (only recommend dishes from this list, if non-empty): {menu_text}"
+
     response = client.chat.completions.create(
         model=model,
         messages=[
             {"role": "system", "content": _OPENAI_SYSTEM_PROMPT},
-            {"role": "user", "content": _OPENAI_USER_TEMPLATE.format(message=user_message or "")},
+            {
+                "role": "user",
+                "content": user_content,
+            },
         ],
         temperature=0.7,
     )
@@ -149,22 +225,34 @@ def _openai_compatible(user_message: str, *, base_url: str, api_key: str, model:
     return _extract_json_object(content)
 
 
-def _openai_backend(user_message: str) -> dict[str, Any]:
+def _openai_backend(
+    user_message: str,
+    menu: list[dict] | None = None,
+    preferences: dict | None = None
+) -> dict[str, Any]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("AI_BACKEND=openai but OPENAI_API_KEY is not set")
     return _openai_compatible(
         user_message,
+        menu,
+        preferences,
         base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
         api_key=api_key,
         model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     )
 
 
-def _lmstudio_backend(user_message: str) -> dict[str, Any]:
+def _lmstudio_backend(
+    user_message: str,
+    menu: list[dict] | None = None,
+    preferences: dict | None = None
+) -> dict[str, Any]:
     base_url = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
     return _openai_compatible(
         user_message,
+        menu,
+        preferences,
         base_url=base_url,
         api_key=os.getenv("LMSTUDIO_API_KEY", "lm-studio"),
         model=os.getenv("LMSTUDIO_MODEL", "qwen/qwen3.5-9b"),
@@ -189,14 +277,18 @@ def _resolve_backend():
     return name, fn
 
 
-def _call_backend(user_message: str) -> tuple[str, dict[str, Any]]:
+def _call_backend(
+    user_message: str,
+    menu: list[dict] | None = None,
+    preferences: dict | None = None
+) -> tuple[str, dict[str, Any]]:
     """Call the configured backend with graceful fallback to the stub."""
     backend_name, fn = _resolve_backend()
     try:
-        return backend_name, fn(user_message)
+        return backend_name, fn(user_message, menu, preferences)
     except Exception as exc:
         logging.warning("AI backend %r failed: %s. Falling back to stub.", backend_name, exc)
-        return "stub", _stub(user_message)
+        return "stub", _stub(user_message, menu, preferences)
 
 
 def get_recommendation(user_message: str) -> str:
@@ -205,9 +297,13 @@ def get_recommendation(user_message: str) -> str:
     return f"{pick['name']} — ${float(pick['price']):.2f}. {pick['reason']}"
 
 
-def get_recommendation_struct(user_message: str, menu: list[dict] | None = None) -> dict:
+def get_recommendation_struct(
+    user_message: str,
+    menu: list[dict] | None = None,
+    preferences: dict | None = None
+) -> dict:
     """Structured recommendation for /display/recommendations."""
-    _, pick = _call_backend(user_message, menu)
+    _, pick = _call_backend(user_message, menu, preferences)
     return {
         "name":        str(pick.get("name", "Chef's special")),
         "price":       float(pick.get("price", 0) or 0),
