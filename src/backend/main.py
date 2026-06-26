@@ -4,10 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from ai_service import get_recommendation
 from display_recommendations import router as display_router
 from history_router import router as history_router
-from ocr_reader import extract_text
-from parser import parse_menu
 from another_option import router as another_option_router
-
 ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 
 app = FastAPI()
@@ -37,6 +34,9 @@ def recommend_food(data: dict):
 
 @app.post("/upload-menu")
 async def upload_menu(file: UploadFile):
+    from ocr_reader import extract_text
+    from parser import parse_menu
+
     contents = await file.read()
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File size exceeds 8 MB")
