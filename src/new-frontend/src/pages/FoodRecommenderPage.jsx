@@ -69,7 +69,10 @@ const FoodRecommenderPage = () => {
         method: 'POST',
         headers: {'Content-Type': 'application/json', 'session-id': sessionId,
         },
-        body: JSON.stringify({sessionId: sessionId, currentDishId: dish?.id}),
+        body: JSON.stringify({ 
+          sessionId: sessionId,
+          currentDishId: dish?.id
+        }),
       });
 
       if (response.status === 404) {
@@ -176,6 +179,7 @@ const FoodRecommenderPage = () => {
                   >
                     I'll order it
                   </button>
+                  
                   <button 
                     className="btn-secondary" 
                     onClick={handleAnotherOption}
@@ -185,7 +189,7 @@ const FoodRecommenderPage = () => {
                      noMoreOptions ? 'No more options' : 
                      'Another option'}
                   </button>
-
+                  
                   <button 
                     className="btn-tertiary" 
                     onClick={handleEndSession}
