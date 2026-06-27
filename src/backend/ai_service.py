@@ -183,7 +183,7 @@ def _stub(
     if menu:
         valid_items = [m for m in menu if not m.get("flagged")]
         if valid_items:
-            item = _pick_fallback_from_list(user_message, valid_items)
+            item = pick_from_pool(valid_items, user_message)
             return {
                 "name": item["name"],
                 "price": item["price"],
@@ -192,7 +192,7 @@ def _stub(
                 "reason": "Picked from your uploaded menu.",
             }
 
-    pool = _filter_fallback_pool_by_preferences(FALLBACK_POOL, preferences)
+    pool = filter_fallback_pool_by_preferences(FALLBACK_POOL, preferences)
     return pick_from_pool(pool, user_message)
 
 
@@ -313,14 +313,30 @@ def _resolve_backend():
     return name, fn
 
 
-def _call_backend(user_message: str, preferences: Any = None) -> tuple[str, dict[str, Any]]:
-    """Call the configured backend with graceful fallback to the stub."""
+class AIServiceUnavailableError(RuntimeError):
+    """Raised when the configured AI backend is unreachable or returns an error.
+
+    Callers must surface this as HTTP 503 — never silently fall back to a stub,
+    because stub dishes ignore user allergens and preferences.
+    """
+
+
+def _call_backend(
+    user_message: str,
+    preferences: Any = None,
+    menu: list[dict] | None = None,
+) -> tuple[str, dict[str, Any]]:
+    """Call the configured backend. Raises AIServiceUnavailableError on failure."""
     backend_name, fn = _resolve_backend()
     try:
+        if backend_name == "stub":
+            return backend_name, fn(user_message, preferences, menu)
         return backend_name, fn(user_message, preferences)
+    except AIServiceUnavailableError:
+        raise
     except Exception as exc:
-        logging.warning("AI backend %r failed: %s. Falling back to stub.", backend_name, exc)
-        return "stub", _stub(user_message, preferences)
+        logging.warning("AI backend %r failed: %s", backend_name, exc)
+        raise AIServiceUnavailableError(str(exc)) from exc
 
 
 def get_recommendation(user_message: str) -> str:
@@ -334,7 +350,11 @@ def get_recommendation_struct(
     preferences: Any = None,
     menu: list[dict] | None = None,
 ) -> dict[str, Any]:
-    """Structured recommendation for /display/recommendations."""
+    """Structured recommendation for /display/recommendations.
+
+    Raises AIServiceUnavailableError when the AI backend fails — callers must
+    convert this to HTTP 503 and must not substitute a stub dish.
+    """
     _, pick = _call_backend(user_message, preferences, menu)
     return {
         "name":        str(pick.get("name", "Chef's special")),

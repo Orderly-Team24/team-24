@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
 const API_UPLOAD_URL = 'https://team-24-1.onrender.com/upload-menu';
+const RECOMMENDER_ROUTE = '/food-recommender';
 
 function UploadMenu() {
   const navigate = useNavigate();
@@ -68,7 +69,7 @@ function UploadMenu() {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('photo', file);
 
       const response = await fetch(API_UPLOAD_URL, {
         method: 'POST',
@@ -85,7 +86,9 @@ function UploadMenu() {
       }
 
       const data = await response.json();
-      localStorage.setItem('sessionId', data.sessionId);
+      if (data.menu && data.menu.length > 0) {
+        localStorage.setItem('orderly_menu', JSON.stringify(data.menu));
+      }
       setSuccess('Menu uploaded successfully!');
       
     } catch (err) {
@@ -104,7 +107,7 @@ function UploadMenu() {
     setSuccess('');
     setError('');
     fileInputRef.current.value = '';
-    localStorage.removeItem('sessionId');
+    localStorage.removeItem('orderly_menu');
   };
 
   const handleChooseClick = () => {
@@ -112,12 +115,7 @@ function UploadMenu() {
   };
 
   const handleGoToRecommendations = () => {
-    const sessionId = localStorage.getItem('sessionId');
-    if (!sessionId) {
-      setError('Please upload a menu first to get recommendations.');
-      return;
-    }
-    navigate('/food-recommender-page');
+    navigate(RECOMMENDER_ROUTE);
   };
 
   return (

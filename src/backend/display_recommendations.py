@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from ai_service import (
+    AIServiceUnavailableError,
     FALLBACK_POOL,
     filter_fallback_pool_by_preferences,
     get_recommendation_struct,
@@ -63,14 +64,20 @@ def display_recommendations(data: RecommendationRequest):
 
     prefs_dict = prefs.dict() if prefs else None
 
-    if prefs is not None and prefs.max_budget is not None:
-        pick = pick_from_pool(candidates, data.message)
-    else:
-        pick = get_recommendation_struct(
-            data.message,
-            preferences=prefs_dict,
-            menu=candidates,
-        )
+    try:
+        if prefs is not None and prefs.max_budget is not None:
+            pick = pick_from_pool(candidates, data.message)
+        else:
+            pick = get_recommendation_struct(
+                data.message,
+                preferences=prefs_dict,
+                menu=candidates,
+            )
+    except AIServiceUnavailableError as exc:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is temporarily unavailable. Please try again later.",
+        ) from exc
 
     if not pick:
         return {"recommendations": []}
@@ -83,9 +90,7 @@ def display_recommendations(data: RecommendationRequest):
         "reason": str(pick.get("reason", "Recommended by AI")),
     }
 
-   
     return {
-        "session_id": session_id,  # Берется из глобального контекста файла
         "recommendations": [
             {
                 "id":          make_dish_id(dish),
