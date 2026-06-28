@@ -1,7 +1,5 @@
 # Meet – Meeting with the customer 3
 
-**Source:** 
-
 ---
 
 ## Transcript
