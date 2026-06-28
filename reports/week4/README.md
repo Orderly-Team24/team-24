@@ -1,218 +1,118 @@
 # Week 4 Report – Orderly
 
 ## Project information
-
 - **Name:** Orderly – Food Recommendation App
-- **Short description:** A web app that helps users choose dishes from restaurant menus based on their preferences, allergens, and budget. Users upload a menu photo; OCR extracts the text; AI recommends the best matching dish.
-- **License:** [MIT](../../LICENSE)
+- **Short description:** A web app that helps users choose dishes from restaurant menus based on their preferences and budget.
+- **License:** [MIT](../../LICENSE) 
 
----
+## Product Backlog
+- [Product Backlog board/view](https://github.com/orgs/Orderly-Team24/projects/2)
+- [Current Sprint Backlog board/view](https://github.com/orgs/Orderly-Team24/projects/3)
+- [Current Sprint milestone](https://github.com/Orderly-Team24/team-24/milestone/2)
 
-## Sprint information
+### Sprint Details
+- **Sprint Goal:** End-to-end flow works on the live deployment. Users fill a preferences questionnaire (with mandatory allergens), upload a menu photo, parser structures the menu data, and the recommender returns a dish that matches preferences, contains no allergens, and fits the budget.
+- **Sprint Dates:** June 22 2026 – June 27 2026
+- **Scope Summary:** Preferences questionnaire (with allergens), menu photo upload, budget filtering, and preference-aware dish recommendation. Public deployment via Docker.
+- **Total Sprint Size:** 25 Story Points
 
-- **Sprint:** Sprint 2 (MVP v2)
-- **Dates:** 22 Jun 2026 – 28 Jun 2026
-- **Sprint Goal:** End-to-end flow works on the live deployment. Users fill a preferences questionnaire (with mandatory allergens), upload a menu photo with a budget, OCR extracts the text, the parser structures it, and the recommender returns a dish that matches preferences, contains no allergens, and fits the budget.
-- **Total Sprint size:** 55 SP
+## Delivery Summary
+- **Delivered Product Changes:** Preferences questionnaire with allergen/diet fields, menu photo upload with OCR text extraction, menu parser (dish name + price structuring), AI recommender filtered by preferences, allergens, and budget, "Another option" flow without re-uploading menu, public deployment via Docker
+- **Access/Run instructions:** [README.md](../../README.md)
+- **Deployed Product (runnable artifact):** [product](https://team-24-navy.vercel.app/)
 
-### Scope summary
+## Customer Feedback & Response
+| Feedback Point | Resulting PBI / Issue |
+| :--- | :--- |
+| Preferences are not saved after page refresh; user has to re-enter them each time | new issue — Implement preferences persistence (cookies/localStorage) |
+| "Another option" sometimes returns the same dish instead of a different one | new issue — Fix "Another option" to return distinct recommendations |
+| Cuisine selection is not helpful, replace with taste-based preferences (sweet, spicy, etc.) | new issue — Replace cuisine selection with taste-based preferences |
+| No order history yet | [#149](https://github.com/Orderly-Team24/team-24/issues/149) — US-015: Managing history of orders |
 
-| User Story | Title | SP |
-|-----------|-------|----|
-| US-001 | Propose dishes according to the budget | 18 |
-| US-004 | Propose dishes according to preferences + allergens | 21 |
-| US-011-2 | Text extraction (OCR) | 8 |
-| US-011-3 | Parsing and structuring menu | 5 |
-| DEPLOY-1 | Deploy + smoke test | 3 |
+### Feedback Not Addressed
+OCR and AI not connected to frontend - deferred to Sprint 3, requires additional development.
 
-- [Sprint 2 milestone](https://github.com/Orderly-Team24/team-24/milestone/2)
-- [Product Backlog board](https://github.com/orgs/Orderly-Team24/projects/2)
-- [Sprint Backlog board](https://github.com/orgs/Orderly-Team24/projects/3)
-
----
-
-## Delivered product changes
-
-- **US-001 — Budget filtering:** `max_budget` field added to the recommendation request. Backend post-filter guarantees no dish above budget is returned, even if the LLM ignores the prompt constraint. Frontend budget input field added.
-- **US-012-1 — Order history backend stub:** `POST /history/orders`, `GET /history/orders`, `GET /history/orders/check` endpoints implemented with thread-safe in-memory storage. Dish ID derived from name hash to prevent duplicates.
-- **Budget filter hardening:** Negative budget and NaN price values are now rejected with HTTP 422.
-
----
-
-## Links
-
-- **Deployed product:** [https://frontend-pearl-sigma-1diis9tsn9.vercel.app](https://frontend-pearl-sigma-1diis9tsn9.vercel.app)
-- **Run / access instructions:** [README.md](../../README.md)
-- **SemVer release (MVP v2):** <!-- add link after v0.2.0 is released -->
-- **CHANGELOG.md:** [CHANGELOG.md](../../CHANGELOG.md)
+## Documentation
 - **Roadmap:** [docs/roadmap.md](../../docs/roadmap.md)
 - **Definition of Done:** [docs/definition-of-done.md](../../docs/definition-of-done.md)
 - **Quality Requirements:** [docs/quality-requirements.md](../../docs/quality-requirements.md)
 - **Quality Requirement Tests:** [docs/quality-requirement-tests.md](../../docs/quality-requirement-tests.md)
-- **Testing strategy:** [docs/testing.md](../../docs/testing.md)
-- **User Acceptance Tests:** [docs/user-acceptance-tests.md](../../docs/user-acceptance-tests.md)
+- **Testing Strategy:** [docs/testing.md](../../docs/testing.md)
+- **User Acceptance Tests (UAT):** [docs/user-acceptance-tests.md](../../docs/user-acceptance-tests.md)
 
----
+## Quality Assurance & Testing
+- **Quality Model:** ISO/IEC 25010 - reliability, security, maintainability.
+- **Selected Sub-characteristics:** functional correctness, fault tolerance, input validation.
+- **Testing Status Summary:**
+    - **Critical Modules:** budget_filter.py, order_history.py, parser.py, upload/main.py
+    - **Per-module Line Coverage:** >=30 required for each critical module
 
-## Customer feedback response
+### Test Links
+- **Unit Tests:** test_budget_filter.py, test_history_router.py, test_parser.py, test_preferences.py, test_upload.py, test_parser.py
+- **Integration Tests:** test_budget_filter.py, test_history_router.py, test_ai_service.py, test_response_time.py, test_upload.py
+- **Automated Quality Requirement Tests:** quality-requirement-tests.md, test_response_time.py
 
-| Feedback point | Resulting PBI or issue | Status | Response |
-|----------------|----------------------|--------|----------|
-| Customer requested budget-based filtering | [US-001 #57](https://github.com/Orderly-Team24/team-24/issues/57) | Done | Max budget field added; backend post-filter enforces the constraint |
-| Customer wanted to save dishes they liked | [US-012 #146](https://github.com/Orderly-Team24/team-24/issues/146) | In progress | Backend stub complete (#157); frontend button deferred to Sprint 3 |
-| Customer requested preferences (cuisine, allergens) | [US-004 #64](https://github.com/Orderly-Team24/team-24/issues/64) | In progress | Backend extended; frontend modal in review |
-| OCR quality was low on some menu photos | Backlog (no issue yet) | Not planned for this Sprint | Pre-processing (contrast, grayscale) deferred to Sprint 3 due to higher-priority quality and CI work |
+## CI / CD & Branch Protection
+- **CI Pipeline Definition:** [.github/workflows/blank.yml](../../.github/workflows/blank.yml)
+- **Latest Protected-Branch CI Run:** [CI Run](https://github.com/Orderly-Team24/team-24/actions/runs/28323344180)
+- **Branch Protection Rules Evidence:** [Rules](https://github.com/Orderly-Team24/team-24/settings/branches)
 
----
+## Forward Governance
+**How Assignment 4 artifacts will govern future work:**
+All future work will be governed by the Assignment 4 artifacts:
+- **DoD** — all tasks must meet Definition of Done before closing.
+- **CI/CD** — must pass on every PR and push to `main`.
+- **Testing** — unit + integration tests required, coverage ≥ 30% for critical modules.
+- **Branch Protection** — PR approvals + CI required for merging.
 
-## Quality model
+## Release & Changelog
+- **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/v0.2.0)
+- **CHANGELOG.md:** [CHANGELOG.md](../../CHANGELOG.md)
 
-**ISO/IEC 25010 sub-characteristics used:**
+## Presentation & Media
+- **Demo Video:** [video](https://drive.google.com/file/d/15KcZhWxZc0COzW0FGXIrOBryH1YQ4cq3/view?usp=sharing)
+- **Presentation Slides:** [presentation](https://docs.google.com/presentation/d/1SNAzJcnGL-ysbFUlnl2ymxmEgd72nhBRrQzrYioJWyQ/edit?usp=sharing)
+- **Customer Review Transcript:** [customer review transcript](customer-review-transcript.md)
 
-| ID | Sub-characteristic | Summary |
-|----|-------------------|---------|
-| QR-01 | Reliability – Fault tolerance | Returns HTTP 503 (no stub dish) when AI backend is unavailable |
-| QR-02 | Performance efficiency – Time behaviour | `/display/recommendations` responds ≤ 500 ms under single-user stub load |
-| QR-03 | Security – Input validation | Invalid inputs (blank name, negative budget, missing header) rejected with 422 / 400 |
+## UAT Results Summary
+- **UAT-01** (Budget filtering) - Passed
+- **UAT-02** (Order confirmation) - Passed
+- **UAT-03** (Another option) - Partial (sometimes returns the same dish)
 
-See [docs/quality-requirements.md](../../docs/quality-requirements.md) for full scenario definitions.
 
----
+## Sprint Reports & Retrospectives
+- **Customer Review Summary:** [customer review summary](customer-review-summary.md)
+- **Sprint Reflection:** [Week 4 Reflection](reflection.md)
+- **Retrospective:** [Week 4 Retrospective](retrospective.md)
+- **LLM Report:** [LLM Report](llm-report.md)
 
-## Testing status
+## Current Status & Next Steps
+- **Current Product Status:**
+- Questionnaire, budget filtering, default menu recommendations, and UI flow are working.
+- OCR + AI are not yet connected to the frontend; preferences do not persist after page refresh.
+- **Next Steps:**  Implement preferences persistence (cookies/localStorage) and fix "Another option" to return distinct recommendations. Also connect OCR + AI to the frontend and start order history.
 
-| Module | Role | Coverage status |
-|--------|------|----------------|
-| `src/backend/budget_filter.py` | Budget post-filter | ≥ 30% (enforced) |
-| `src/backend/order_history.py` | Order history store | ≥ 30% (enforced) |
-| `src/backend/parser.py` | Menu text parser | ≥ 30% (enforced) |
-| `src/upload-menu-backend/main.py` | Upload + OCR endpoint | ≥ 30% (enforced) |
+## Contribution Traceability
 
-- **Unit tests:** [`src/backend/tests/test_budget_filter.py`](../../src/backend/tests/test_budget_filter.py), [`src/backend/tests/test_parser.py`](../../src/backend/tests/test_parser.py), [`src/backend/tests/test_history_router.py`](../../src/backend/tests/test_history_router.py)
-- **Integration tests:** [`src/backend/tests/test_budget_filter.py`](../../src/backend/tests/test_budget_filter.py), [`src/backend/tests/test_history_router.py`](../../src/backend/tests/test_history_router.py), [`src/upload-menu-backend/tests/test_upload.py`](../../src/upload-menu-backend/tests/test_upload.py)
-- **Quality requirement tests:** [docs/quality-requirement-tests.md](../../docs/quality-requirement-tests.md)
+| Team Member | Issues | PRs/MRs | Review Activity | Testing | Quality/Automation | Documentation |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Daria Gorshkova (dayeon761) | [#157](https://github.com/Orderly-Team24/team-24/issues/157), [#154](https://github.com/Orderly-Team24/team-24/issues/154), [#146](https://github.com/Orderly-Team24/team-24/issues/146) | [#198](https://github.com/Orderly-Team24/team-24/pull/198), [#196](https://github.com/Orderly-Team24/team-24/pull/196), [#195](https://github.com/Orderly-Team24/team-24/pull/195), [#194](https://github.com/Orderly-Team24/team-24/pull/194), [#192](https://github.com/Orderly-Team24/team-24/pull/192), [#191](https://github.com/Orderly-Team24/team-24/pull/191), [#190](https://github.com/Orderly-Team24/team-24/pull/190), [#186](https://github.com/Orderly-Team24/team-24/pull/186), [#175](https://github.com/Orderly-Team24/team-24/pull/175), [#174](https://github.com/Orderly-Team24/team-24/pull/174), [#173](https://github.com/Orderly-Team24/team-24/pull/173), [#168](https://github.com/Orderly-Team24/team-24/pull/168), [#163](https://github.com/Orderly-Team24/team-24/pull/163) | [#197](https://github.com/Orderly-Team24/team-24/pull/197), [#193](https://github.com/Orderly-Team24/team-24/pull/193), [#185](https://github.com/Orderly-Team24/team-24/pull/185), [#184](https://github.com/Orderly-Team24/team-24/pull/184), [#183](https://github.com/Orderly-Team24/team-24/pull/183), [#180](https://github.com/Orderly-Team24/team-24/pull/180), [#171](https://github.com/Orderly-Team24/team-24/pull/171), [#167](https://github.com/Orderly-Team24/team-24/pull/167) | [docs/testing.md](../../docs/testing.md) | [docs/user-acceptance-tests.md](../../docs/user-acceptance-tests.md), [docs/quality-requirement-tests.md](../../docs/quality-requirement-tests.md) | — |
+| Viktoriia Iakovleva (rxxtzz) | [#161](https://github.com/Orderly-Team24/team-24/issues/161), [#152](https://github.com/Orderly-Team24/team-24/issues/152) | [#193](https://github.com/Orderly-Team24/team-24/pull/193), [#187](https://github.com/Orderly-Team24/team-24/pull/187), [#181](https://github.com/Orderly-Team24/team-24/pull/181), [#178](https://github.com/Orderly-Team24/team-24/pull/178), [#172](https://github.com/Orderly-Team24/team-24/pull/172), [#171](https://github.com/Orderly-Team24/team-24/pull/171), [#170](https://github.com/Orderly-Team24/team-24/pull/170) | [#195](https://github.com/Orderly-Team24/team-24/pull/195), [#194](https://github.com/Orderly-Team24/team-24/pull/194), [#192](https://github.com/Orderly-Team24/team-24/pull/192), [#191](https://github.com/Orderly-Team24/team-24/pull/191), [#190](https://github.com/Orderly-Team24/team-24/pull/190), [#189](https://github.com/Orderly-Team24/team-24/pull/189), [#188](https://github.com/Orderly-Team24/team-24/pull/188), [#186](https://github.com/Orderly-Team24/team-24/pull/186), [#175](https://github.com/Orderly-Team24/team-24/pull/175), [#174](https://github.com/Orderly-Team24/team-24/pull/174), [#173](https://github.com/Orderly-Team24/team-24/pull/173) | — | — | [reports/week4/reflection.md](../../reports/week4/reflection.md) |
+| Polina Kharlova (Kharlova) | [#159](https://github.com/Orderly-Team24/team-24/issues/159), [#150](https://github.com/Orderly-Team24/team-24/issues/150) | [#180](https://github.com/Orderly-Team24/team-24/pull/180), [#167](https://github.com/Orderly-Team24/team-24/pull/167) | [#198](https://github.com/Orderly-Team24/team-24/pull/198), [#168](https://github.com/Orderly-Team24/team-24/pull/168), [#164](https://github.com/Orderly-Team24/team-24/pull/164), [#163](https://github.com/Orderly-Team24/team-24/pull/163) | — | — | [reports/week4/README.md](../../reports/week4/README.md) |
+| Vilena Zulkarnaeva (vianevi) | [#161](https://github.com/Orderly-Team24/team-24/issues/161), [#155](https://github.com/Orderly-Team24/team-24/issues/155), [#146](https://github.com/Orderly-Team24/team-24/issues/146) | [#197](https://github.com/Orderly-Team24/team-24/pull/197), [#189](https://github.com/Orderly-Team24/team-24/pull/189), [#188](https://github.com/Orderly-Team24/team-24/pull/188), [#184](https://github.com/Orderly-Team24/team-24/pull/184), [#183](https://github.com/Orderly-Team24/team-24/pull/183) | [#200](https://github.com/Orderly-Team24/team-24/pull/200), [#199](https://github.com/Orderly-Team24/team-24/pull/199), [#196](https://github.com/Orderly-Team24/team-24/pull/196), [#187](https://github.com/Orderly-Team24/team-24/pull/187), [#186](https://github.com/Orderly-Team24/team-24/pull/186), [#181](https://github.com/Orderly-Team24/team-24/pull/181), [#178](https://github.com/Orderly-Team24/team-24/pull/178), [#172](https://github.com/Orderly-Team24/team-24/pull/172), [#170](https://github.com/Orderly-Team24/team-24/pull/170) | — | — | [docs/roadmap.md](../../docs/roadmap.md), [reports/week4/retrospective.md](../../reports/week4/retrospective.md), [reports/week4/customer-review-transcript.md](../../reports/week4/customer-review-transcript.md), [reports/week4/customer-review-summary.md](../../reports/week4/customer-review-summary.md) |
+| Omar Nader (Ramy678) | [#151](https://github.com/Orderly-Team24/team-24/issues/151) | [#177](https://github.com/Orderly-Team24/team-24/pull/177) | [#176](https://github.com/Orderly-Team24/team-24/pull/176) | — | — | [reports/week4/customer-review-summary.md](../../reports/week4/customer-review-summary.md) |
+| Adelina Khafizova (adelinamikki) | [#153](https://github.com/Orderly-Team24/team-24/issues/153) | [#185](https://github.com/Orderly-Team24/team-24/pull/185), [#176](https://github.com/Orderly-Team24/team-24/pull/176), [#164](https://github.com/Orderly-Team24/team-24/pull/164) | [#177](https://github.com/Orderly-Team24/team-24/pull/177) | — | [docs/definition-of-done.md](../../docs/definition-of-done.md) | [reports/week4/images/](../../reports/week4/images/), [reports/week4/llm-report.md](../../reports/week4/llm-report.md) |
 
-### Additional QA check — Bandit (Security Static Analysis)
-
-**Options considered:**
-
-| Tool | Category | Reason not selected |
-|------|----------|-------------------|
-| `pip-audit` / `safety` | Dependency vulnerability scanning | Useful but doesn't cover application code; CVE feeds require network access in CI |
-| `semgrep` | Multi-language SAST | Powerful, but requires a paid account for Python rulesets beyond the open-source set |
-| `schemathesis` | OpenAPI fuzz / contract testing | No OpenAPI spec generated yet; deferred until spec is stabilised |
-| `hypothesis` | Property-based testing | Complements unit tests rather than replacing a QA gate; deferred to Sprint 3 |
-| **Bandit** | Python SAST — security | ✅ **Selected** — zero config, pip-installable, runs offline, covers the exact risk vectors in our stack |
-
-**Selected check:** [Bandit](https://bandit.readthedocs.io/) — Python security static analyser
-
-**QA objective:** Detect common security vulnerabilities in Python source code before they reach production: hardcoded credentials, unsafe `eval` / `exec`, shell-injection patterns in subprocess calls, and path-traversal risks in file-upload handlers.
-
-**Why this risk matters for Orderly:**
-Both backends handle externally-supplied data — user-uploaded image files and AI-generated text used to build HTTP responses. A path-traversal bug in the upload handler, or a shell-injection flaw in the Tesseract invocation, could expose the server. Bandit catches these patterns statically, before any deployment.
-
-**Where it runs in CI:** `.github/workflows/backend-ci.yml` — step "Run Bandit security scan (medium + high severity)", command `bandit -r src/backend src/upload-menu-backend -ll`. Runs on every push to `main` and every pull request.
-
-**Limitations:**
-- Bandit does not replace penetration testing or a full security audit.
-- False positives are possible; medium-severity findings are reviewed rather than auto-blocked.
-- Frontend JavaScript is not covered — `npm audit` for the React bundle is deferred to Sprint 3.
-- Dynamic/runtime vulnerabilities (e.g. SSRF via user-controlled URLs) are out of scope for static analysis.
-
----
-
-## CI pipeline
-
-- **CI pipeline:** [`.github/workflows/backend-ci.yml`](../../.github/workflows/backend-ci.yml)
-- **Latest CI run on main:** <!-- add link after first CI run passes on main -->
-- **Branch protection:** <!-- add screenshot in images/ after configuring branch protection rule -->
-
-These CI gates, QRTs, coverage thresholds, and Definition of Done requirements are maintained project assets. All later Sprints must keep them passing. New PBIs must not bypass or disable these checks.
-
----
-
-## UAT results summary
-
-UAT was conducted with the customer during the Sprint Review session.
-
-| Scenario | Result | Notes |
-|----------|--------|-------|
-| UAT-01 – Budget-filtered recommendation | <!-- Pass / Fail --> | <!-- notes --> |
-| UAT-02 – Menu photo upload and recommendation | <!-- Pass / Fail --> | <!-- notes --> |
-| UAT-03 – Save dish to order history | <!-- Pass / Fail --> | Frontend button not yet deployed; tested via API only |
-
-Most important feedback: <!-- fill after customer session -->
-
-Resulting PBIs: <!-- fill after customer session -->
-
-Full UAT scenarios: [docs/user-acceptance-tests.md](../../docs/user-acceptance-tests.md)
-
----
-
-## Customer review
-
-- **Customer review summary:** [reports/week4/customer-review-summary.md](customer-review-summary.md)
-- **Customer review transcript:** <!-- fill: either link to transcript or note that it is shared via Moodle only -->
-- **Public sanitized demo video:** <!-- add link, must be < 2 min -->
-
----
-
-## Contribution traceability
-
-| Team member | Issues | PRs | Reviews | Other |
-|-------------|--------|-----|---------|-------|
-| Daria Gorshkova (dayeon761) | [#57](https://github.com/Orderly-Team24/team-24/issues/57), [#146](https://github.com/Orderly-Team24/team-24/issues/146), [#157](https://github.com/Orderly-Team24/team-24/issues/157), [#162](https://github.com/Orderly-Team24/team-24/issues/162) | [#168](https://github.com/Orderly-Team24/team-24/pull/168) | <!-- fill --> | Quality docs, branch renaming, issue AC |
-| Viktoriia Iakovleva (rxxtzz) | <!-- fill --> | <!-- fill --> | <!-- fill --> | |
-| Polina Kharlova (Kharlova) | <!-- fill --> | <!-- fill --> | <!-- fill --> | |
-| Vilena Zulkarnaeva (vianevi) | <!-- fill --> | <!-- fill --> | <!-- fill --> | |
-| Omar Nader (Ramy678) | <!-- fill --> | <!-- fill --> | <!-- fill --> | |
-| Adelina Khafizova (adelinamikki) | <!-- fill --> | <!-- fill --> | <!-- fill --> | |
-
----
-
-## Current product status
-
-The core end-to-end flow (upload photo → OCR → recommendation with budget) is functional on the live deployment. Budget filtering and order history backend are complete. The preferences/allergens questionnaire frontend and the "I'll order it" button UI are in progress for Sprint 3.
-
-## Next steps
-
-- Complete US-004 preferences modal (frontend)
-- Deploy the "I'll order it" button (frontend, issue #158)
-- Implement authentication (US-002) — blocked on DB decision
-- Add image pre-processing to improve OCR quality
-- Enforce `--cov-fail-under=30` as a hard CI gate per critical module
-
----
-
-## Screenshots
-
-> Add screenshots to `reports/week4/images/` and link here.
-
-**Sprint milestone**
-<!-- ![Sprint milestone](images/sprint-milestone.png) -->
-
-**Latest CI run**
-<!-- ![CI run](images/ci-run.png) -->
-
-**Branch protection**
-<!-- ![Branch protection](images/branch-protection.png) -->
-
-**Coverage / test report**
-<!-- ![Coverage](images/coverage.png) -->
-
-**Bandit QA check result**
-<!-- ![Bandit](images/bandit.png) -->
-
-**SemVer release**
-<!-- ![Release](images/release.png) -->
-
-**Example reviewed issue-linked PR**
-<!-- ![PR example](images/pr-example.png) -->
-
----
-
-## Other report files
-
-- [Reflection](reflection.md)
-- [Retrospective](retrospective.md)
-- [LLM report](llm-report.md)
+## Visual Evidence (Screenshots)
+### Sprint Milestone
+![Sprint Milestone](images/sprint-milestone.png)
+### Latest Protected-Branch CI Run
+![CI Run](images/backend-ci.png)
+### Branch Protection / Rules Evidence
+![Branch Protection](images/branch-protection-or-rules-evidence.png)
+### Coverage / Test Report
+![Coverage Report](images/link-check.png)
+### SemVer Release
+![SemVer Release](images/SemVer-release.png)
+### Example Reviewed Issue-linked PR/MR
+![PR Review Example](images/example-reviewed-issue-linked-PR.png)
