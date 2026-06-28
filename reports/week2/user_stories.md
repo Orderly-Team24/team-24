@@ -182,5 +182,16 @@ User should upload photo, then we need to extract dish names and prices
 # Initial proposed MVP v1 scope
 - US-011
 
-> **Removed from MVP v1:** US-001 (Propose dishes according to the budget), US-002 (Ability to sign in), US-004 (Propose dishes according to preferences), US-005 (No allergy suggestions)
-> **Added to MVP v1:** US-011 (Upload photo of a menu)
+## Scope change log
+
+All changes below were made during or immediately after the customer meeting on **11 Jun 2026**.
+Evidence: [Customer Meeting Summary](customer-meeting-summary.md) · [Customer Meeting Transcript](customer-meeting-transcript.md)
+
+| Story | Change | Customer evidence |
+|-------|--------|-------------------|
+| US-001 – Budget | **Priority MUST → SHOULD.** Removed from MVP v1 scope. | Customer explicitly stated: *"Proposing dishes according to the budget is not a MUST, but SHOULD"* (Decisions section). Budget setting deferred after onboarding questionnaire in a later sprint. |
+| US-002 – Sign in | **Removed from MVP v1 scope.** Marked Active but deferred. | Customer explicitly stated: *"No sign-in for the first version of the project"* (Decisions section). Authentication blocks the core recommendation flow and adds complexity; customer accepted deferral. |
+| US-004 – Preferences | **Deferred from MVP v1.** Allergen and preference input will be added once the core upload-and-recommend flow is proven. | Customer prioritised the photo upload flow (US-011) as the single core value for MVP v1. US-004 was agreed as the next priority after delivery of US-011. |
+| US-005 – No allergens | **Deferred from MVP v1.** Same rationale as US-004; allergen filtering depends on structured preferences input. | Customer confirmed that a working photo-to-recommendation pipeline (US-011) is the MVP v1 deliverable. Allergen safety is Sprint 2 scope. |
+| US-006 – High speed | **Priority SHOULD → COULD.** | Customer explicitly stated: *"High speed of the search system is not a SHOULD, but COULD"* (Decisions section). |
+| US-011 – Upload photo | **Added to MVP v1 scope as the sole deliverable.** | Customer validated this as the core differentiating feature during the meeting. The minimum viable product is: upload a menu photo → receive a dish recommendation. |

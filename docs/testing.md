@@ -24,7 +24,7 @@ The following modules contain core product logic and must each maintain at least
 |--------|------|-----------|
 | `src/backend/budget_filter.py` | Filters dishes by max budget — safety-critical post-filter | [`tests/test_budget_filter.py`](../src/backend/tests/test_budget_filter.py) |
 | `src/backend/order_history.py` | In-memory order history store — thread safety required | [`tests/test_history_router.py`](../src/backend/tests/test_history_router.py) |
-| `src/backend/parser.py` | Parses OCR raw text into structured menu items | [`test_parser.py`](../src/backend/test_parser.py) |
+| `src/backend/parser.py` | Parses OCR raw text into structured menu items | [`tests/test_parser.py`](../src/backend/tests/test_parser.py) |
 | `src/upload-menu-backend/main.py` | File upload + Tesseract OCR endpoint | [`tests/test_upload.py`](../src/upload-menu-backend/tests/test_upload.py) |
 
 ---
@@ -34,7 +34,7 @@ The following modules contain core product logic and must each maintain at least
 Unit tests verify individual functions and modules in isolation.
 
 - [`src/backend/tests/test_budget_filter.py`](../src/backend/tests/test_budget_filter.py) — pure function tests for budget filtering logic
-- [`src/backend/test_parser.py`](../src/backend/test_parser.py) — regex-based menu parsing (price extraction, flagging unparseable items)
+- [`src/backend/tests/test_parser.py`](../src/backend/tests/test_parser.py) — regex-based menu parsing (price extraction, flagging unparseable items)
 - [`src/backend/tests/test_history_router.py`](../src/backend/tests/test_history_router.py) — order history store: happy path, idempotency, blank-name rejection, missing header
 
 ## Integration Tests

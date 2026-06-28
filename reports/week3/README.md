@@ -107,7 +107,7 @@ Completed. Delivered US-011 (photo upload + AI recommendations).
 - **MVP v1 deployment (runnable artifact):** [v0.1.0](https://frontend-pearl-sigma-1diis9tsn9.vercel.app/)
 - **Access/Run instructions:** [README.md](../../README.md)
 - **Public sanitized video demonstration:** [Link to video](https://drive.google.com/file/d/1g1bFizNBVim8eWnxBqWMCoE8kA2pbjC1/view?usp=drive_link)
-- **Customer review transcript (sanitized, English):** [Customer Meeting Transcript](customer-meeting-transcript.txt)
+- **Customer review transcript (sanitized, English):** [Customer Meeting Transcript](customer-review-transcript.md)
 - **Customer review summary:** [Customer Review Summary](customer-review-summary.md)
 - **Week 3 reflection:** [Week 3 Reflection](reflection.md)
 - **Retrospective:** [Week 3 Retrospective](retrospective.md)

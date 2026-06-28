@@ -1,45 +1,32 @@
 # Definition of Done
 
-A Product Backlog Item (PBI) may be marked as Done only when all of the following conditions are satisfied.
+A Product Backlog Item (PBI) may be marked as **Done** only when all of the following conditions are satisfied.
 
-## General Requirements
-
+## 1. Issue-Specific Requirements
 - All acceptance criteria defined in the issue are satisfied.
 - The implementation matches the requirements described in the issue.
-- The work has been reviewed by at least one other team member.
-- Required tests and validation checks pass successfully.
-- Verification evidence is available through normal workflow artifacts (issues, pull requests, comments, screenshots, test results, etc.).
-- All related documentation is updated if affected by the change.
+- The work has been reviewed by at least one other team member, and review evidence (comments, approvals) is linked in the PR/MR.
 
-## User Stories
+## 2. Quality Assurance & Testing
+- **Automated Tests:** All required unit tests, integration tests, and quality requirement tests (QRTs) pass successfully.
+- **Coverage:** Critical modules meet the minimum automated line coverage threshold (30%).
+- **Documentation:** All relevant documentation (including `docs/testing.md`, `docs/quality-requirements.md`, and `docs/user-acceptance-tests.md`) is updated to reflect changes.
+- **Manual Evidence:** If automation is not feasible for a specific requirement, manual testing evidence is documented as per project standards.
 
-For a User Story to be considered Done:
+## 3. CI/CD and Quality Gates
+- **CI Pipeline:** All CI checks required for the product stack—including linting, formatting/type checking, and automated tests—must pass on the Pull Request.
+- **Additional QA Check:** The mandatory additional automated QA check (e.g., dependency vulnerability scanning or static analysis) must pass.
+- **Branch Protection:** The PR is merged into the protected default branch only after all status checks are passing.
 
-- All linked supporting PBIs required for implementation are completed.
-- Implementation evidence is available in linked issues and pull requests.
-- Review evidence is available.
-- Verification evidence is available.
+## 4. Repository and Traceability Requirements
+- **Traceability:** The PR references the related issue number.
+- **Changelog:** For every user-visible change, `CHANGELOG.md` is updated before the PR is merged.
+- **Branching:** Branch naming follows the convention: `<issue-number>-short-description`.
+- **Status:** The related issue is updated with its final status upon merge.
 
-## Implementation and Supporting PBIs
+## 5. Maintenance Obligation
+- When project work changes the product stack, architecture, quality requirements, or CI configuration, the `Definition of Done` must be updated to maintain the current completion standard. 
 
-For implementation or supporting PBIs:
+---
 
-- The related pull request is linked to the issue.
-- The pull request has been reviewed and approved.
-- All required checks pass.
-- The pull request is merged into the protected default branch using a merge commit.
-
-## Repository Requirements
-
-- The related issue is updated with the final status.
-- The pull request references the related issue.
-- Branch naming follows the project convention:
-  `<issue-number>-short-description`.
-- For every user-visible change, `CHANGELOG.md` is updated before the pull request is merged.
-
-## Final Condition
-
-A PBI may be marked Done only when:
-
-1. Its issue-specific acceptance criteria are satisfied.
-2. This Definition of Done is fully satisfied.
+**Final Condition:** A PBI may be marked Done only when its issue-specific acceptance criteria are satisfied AND this global Definition of Done is fully satisfied.

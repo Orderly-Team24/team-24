@@ -1,0 +1,69 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # ── Recommender backend ────────────────────────────────────────────
+      - name: Install recommender backend dependencies
+        run: |
+          cd src/backend
+          pip install -r requirements.txt
+          pip install pytest-cov httpx
+
+      - name: Run recommender backend tests with coverage
+        run: |
+          cd src/backend
+          pytest tests/ -v --tb=short \
+            --cov=. --cov-report=term-missing \
+            --cov-report=xml:../../coverage-backend.xml \
+            --cov-fail-under=30
+        env:
+          AI_BACKEND: stub
+
+      # ── Upload / OCR backend ───────────────────────────────────────────
+      - name: Install upload backend dependencies
+        run: |
+          cd src/upload-menu-backend
+          pip install -r requirements.txt
+          pip install pytest-cov httpx
+
+      - name: Run upload backend tests with coverage
+        run: |
+          cd src/upload-menu-backend
+          pytest tests/ -v --tb=short \
+            --cov=. --cov-report=term-missing \
+            --cov-report=xml:../../coverage-upload.xml \
+            --cov-fail-under=30
+
+      # ── Bandit security scan ───────────────────────────────────────────
+      - name: Install Bandit
+        run: pip install bandit
+
+      - name: Run Bandit security scan (medium + high severity)
+        run: bandit -r src/backend src/upload-menu-backend -ll
+
+      # ── Upload coverage artifacts ──────────────────────────────────────
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage-backend.xml
+            coverage-upload.xml
