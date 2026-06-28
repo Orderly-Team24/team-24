@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+from recommendation_session import create_session, mark_shown
 
 from ai_service import (
     AIServiceUnavailableError,
@@ -29,9 +30,8 @@ class Preferences(BaseModel):
 
 class RecommendationRequest(BaseModel):
     message: str = ""
-    menu: list[dict] = []  # Из вашей ветки (для загруженного меню)
-    preferences: Preferences | None = None  # Из ветки main (для фильтрации и предпочтений)
-
+    menu: list[dict] = [] 
+    preferences: Preferences | None = None 
 
 @router.post("/recommendations")
 def display_recommendations(data: RecommendationRequest):
@@ -62,7 +62,7 @@ def display_recommendations(data: RecommendationRequest):
         if preferred_candidates:
             candidates = preferred_candidates
 
-    prefs_dict = prefs.dict() if prefs else None
+    prefs_dict = prefs.model_dump() if prefs else None
 
     try:
         if prefs is not None and prefs.max_budget is not None:
