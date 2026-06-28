@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
-const API_UPLOAD_URL = 'https://team-24-1.onrender.com/upload-menu';
+const API_UPLOAD_URL = 'https://team-24.onrender.com/upload-menu';
 
 function UploadMenu() {
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ function UploadMenu() {
 
     try {
       const formData = new FormData();
-      formData.append('photo', file);
+      formData.append('file', file);
 
       const response = await fetch(API_UPLOAD_URL, { method: 'POST', body: formData });
 
@@ -95,7 +95,8 @@ function UploadMenu() {
       setSuccess('Menu uploaded! Getting your recommendation...');
       setTimeout(() => navigate('/food-recommender'), 1200);
     } catch (err) {
-      setError(err.message || 'Upload failed');
+      const msg = err.message || 'Upload failed';
+      setError(msg + ' — you can skip the photo and use the default menu instead.');
     } finally {
       setUploading(false);
     }
