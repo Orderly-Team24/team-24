@@ -75,7 +75,7 @@ function UploadMenu() {
 
     try {
       const formData = new FormData();
-      formData.append('photo', file);
+      formData.append('file', file);
       const response = await fetch(API_UPLOAD_URL, { method: 'POST', body: formData });
 
       if (!response.ok) {
