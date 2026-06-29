@@ -92,6 +92,8 @@ const FoodRecommenderPage = () => {
     localStorage.removeItem('orderly_menu');
     localStorage.removeItem('orderly_preferences');
     localStorage.removeItem('orderly_budget');
+    localStorage.removeItem('orderly_access_token');
+    localStorage.removeItem('orderly_refresh_token');
     navigate('/');
   };
 
