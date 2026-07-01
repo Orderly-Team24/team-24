@@ -65,14 +65,11 @@ def display_recommendations(data: RecommendationRequest):
     prefs_dict = prefs.model_dump() if prefs else None
 
     try:
-        if prefs is not None and prefs.max_budget is not None:
-            pick = pick_from_pool(candidates, data.message)
-        else:
-            pick = get_recommendation_struct(
-                data.message,
-                preferences=prefs_dict,
-                menu=candidates,
-            )
+        pick = get_recommendation_struct(
+            data.message,
+            preferences=prefs_dict,
+            menu=candidates,
+        )
     except AIServiceUnavailableError as exc:
         raise HTTPException(
             status_code=503,
