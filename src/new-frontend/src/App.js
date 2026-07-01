@@ -18,7 +18,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Questionnaire />} />
             <Route path="/upload" element={<UploadMenu />} />
-            <Route path="/food-recommender" element={<FoodRecommenderPage />} /
+            <Route path="/food-recommender" element={<FoodRecommenderPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/food-recommender" element={<FoodRecommenderPage />} />
             <Route path="/register" element={<RegisterPage />} />
