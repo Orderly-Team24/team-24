@@ -3,6 +3,7 @@ uvicorn[standard]==0.49.0
 pydantic==2.13.4
 openai>=2.43,<3
 python-multipart==0.0.20
+passlib[bcrypt]==1.7.4
 
 # Database
 sqlalchemy>=2.0,<3
