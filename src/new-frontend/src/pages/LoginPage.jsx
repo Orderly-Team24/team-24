@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import '../styles/App.css';
 
+const API_URL = 'https://team-24.onrender.com';
+
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const newErrors = {};
@@ -20,7 +23,7 @@ function LoginPage() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -28,6 +31,29 @@ function LoginPage() {
       return;
     }
     setErrors({});
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        setErrors({ server: body.detail || 'Invalid email or password.' });
+        return;
+      }
+
+      const data = await response.json();
+      localStorage.setItem('orderly_access_token', data.access_token);
+      localStorage.setItem('orderly_refresh_token', data.refresh_token);
+    } catch (err) {
+      setErrors({ server: 'Something went wrong. Please try again.' });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,7 +90,9 @@ function LoginPage() {
           {errors.server && <div className="message error">{errors.server}</div>}
 
           <div className="form-actions">
-            <button type="submit" className="submit-btn">Sign in</button>
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
+            </button>
           </div>
         </form>
 
