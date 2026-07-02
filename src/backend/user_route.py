@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'db'))
 from fastapi import APIRouter, Header, HTTPException, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, Preferences, RefreshToken, OrderHistory, Dislike
+from models import User, Preferences, RefreshTokens, OrderHistory, Dislikes
 
 router = APIRouter(prefix="/users", tags=["users"])
 
