@@ -36,18 +36,18 @@ def recommend_food(data: dict):
 
 
 @app.post("/upload-menu")
-async def upload_menu(file: UploadFile):
+async def upload_menu(photo: UploadFile):
     from ocr_reader import extract_text
     from parser import parse_menu
 
-    contents = await file.read()
+    contents = await photo.read()
     if len(contents) > MAX_FILE_SIZE:
         raise HTTPException(status_code=413, detail="File size exceeds 8 MB")
 
-    if not file.content_type.startswith("image/"):
+    if not photo.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File must be an image")
 
-    temp_path = f"temp_{file.filename}"
+    temp_path = f"temp_{photo.filename}"
     with open(temp_path, "wb") as f:
         f.write(contents)
 
