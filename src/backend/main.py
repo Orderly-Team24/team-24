@@ -5,6 +5,7 @@ from ai_service import get_recommendation
 from display_recommendations import router as display_router
 from history_router import router as history_router
 from another_option import router as another_option_router
+from user_route import router as user_router
 from auth import router as auth_router
 ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 
@@ -18,8 +19,8 @@ app.add_middleware(
 app.include_router(display_router)
 app.include_router(history_router)
 app.include_router(another_option_router)
+app.include_router(user_router)
 app.include_router(auth_router)
-
 
 MAX_FILE_SIZE = 8 * 1024 * 1024  # 8 MB
 
