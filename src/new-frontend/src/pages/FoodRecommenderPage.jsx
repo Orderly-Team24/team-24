@@ -36,13 +36,14 @@ const FoodRecommenderPage = () => {
 
     const menu = JSON.parse(localStorage.getItem('orderly_menu') || 'null');
     const preferences = buildPreferences();
+    const mood = sessionStorage.getItem('orderly_mood') || '';
 
     try {
       const response = await fetch(`${API_RECOMMENDER}/display/recommendations`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: callCounter.current > 0 ? `option ${callCounter.current}` : 'Recommend a dish',
+          message: callCounter.current > 0 ? `option ${callCounter.current}` : (mood || 'Recommend a dish'),
           menu: menu || [],
           preferences,
         }),
@@ -92,6 +93,9 @@ const FoodRecommenderPage = () => {
     localStorage.removeItem('orderly_menu');
     localStorage.removeItem('orderly_preferences');
     localStorage.removeItem('orderly_budget');
+    localStorage.removeItem('orderly_access_token');
+    localStorage.removeItem('orderly_refresh_token');
+    sessionStorage.removeItem('orderly_mood');
     navigate('/');
   };
 
