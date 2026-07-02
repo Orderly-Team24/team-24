@@ -1,14 +1,20 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 
 const API_URL = 'https://team-24.onrender.com';
 
 function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('orderly_access_token');
+    if (token) navigate('/');
+  }, [navigate]);
 
   const validate = () => {
     const newErrors = {};
@@ -49,6 +55,7 @@ function LoginPage() {
       const data = await response.json();
       localStorage.setItem('orderly_access_token', data.access_token);
       localStorage.setItem('orderly_refresh_token', data.refresh_token);
+      navigate('/');
     } catch (err) {
       setErrors({ server: 'Something went wrong. Please try again.' });
     } finally {
