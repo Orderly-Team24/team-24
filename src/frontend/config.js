@@ -10,6 +10,6 @@
 //   API_UPLOAD       → POST /upload-menu               (src/upload-menu-backend)
 
 window.ORDERLY_CONFIG = {
-    API_RECOMMENDER: "http://127.0.0.1:8003",
+    API_RECOMMENDER: "https://team-24.onrender.com",
     API_UPLOAD:      "https://team-24-1.onrender.com",
 };

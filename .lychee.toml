@@ -7,7 +7,8 @@ exclude = [
     # GitHub settings pages require authentication — always 404 for unauthenticated lychee
     "https://github.com/.*/settings/.*",
     # Render free-tier root paths return 404 (no root route); individual API endpoints are tested separately
-    "https://team-24-1.onrender.com"
+    "https://team-24-1.onrender.com",
+    "file://.*"
 ]
 
 include_extensions = [

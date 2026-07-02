@@ -15,6 +15,7 @@ function UploadMenu() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [mood, setMood] = useState('');
 
   const fileInputRef = useRef(null);
 
@@ -63,6 +64,7 @@ function UploadMenu() {
     }
     if (budgetError) return;
 
+    sessionStorage.setItem('orderly_mood', mood);
     setUploading(true);
     setError('');
     setSuccess('');
@@ -75,8 +77,7 @@ function UploadMenu() {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
-
+      formData.append('photo', file);
       const response = await fetch(API_UPLOAD_URL, { method: 'POST', body: formData });
 
       if (!response.ok) {
@@ -117,6 +118,7 @@ function UploadMenu() {
     if (budget) localStorage.setItem('orderly_budget', budget);
     else localStorage.removeItem('orderly_budget');
     localStorage.removeItem('orderly_menu');
+    sessionStorage.setItem('orderly_mood', mood);
     navigate('/food-recommender');
   };
 
@@ -144,6 +146,20 @@ function UploadMenu() {
               <span style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#718096' }}>$</span>
             </div>
             {budgetError && <p className="error-message" style={{ color: '#e53e3e', fontSize: 13, marginTop: 4 }}>{budgetError}</p>}
+          </div>
+
+          <div className="form-group" style={{ textAlign: 'left', marginBottom: 24 }}>
+            <label className="form-label">
+              What are you in the mood for today? <span className="optional">(optional)</span>
+            </label>
+            <p className="hint">e.g. something light, warm soup, pasta...</p>
+            <input
+              type="text"
+              className="form-select"
+              placeholder="e.g. something light, warm soup, pasta..."
+              value={mood}
+              onChange={(e) => setMood(e.target.value)}
+            />
           </div>
 
           <input

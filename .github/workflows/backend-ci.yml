@@ -35,6 +35,7 @@ jobs:
             --cov-fail-under=30
         env:
           AI_BACKEND: stub
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       # ── Upload / OCR backend ───────────────────────────────────────────
       - name: Install upload backend dependencies
