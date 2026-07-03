@@ -29,6 +29,11 @@ class RegisterRequest(BaseModel):
     preferences: PreferencesRequest
 
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
 @router.post("/register", status_code=201)
 def register(data: RegisterRequest, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == data.email).first():
@@ -55,3 +60,24 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "User registered successfully", "user_id": user.id}
+
+
+@router.post("/login")
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    if not pwd_context.verify(data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+    return {
+        "message": "Login successful",
+        "user_id": user.id,
+    }
