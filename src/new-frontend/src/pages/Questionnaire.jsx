@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
+const API_URL = 'https://team-24.onrender.com';
+
 function Questionnaire() {
   const navigate = useNavigate();
   const [likes, setLikes] = useState('');
@@ -12,14 +14,41 @@ function Questionnaire() {
   const parseList = (value) =>
     value.split(',').map(item => item.trim()).filter(Boolean);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    localStorage.setItem('orderly_preferences', JSON.stringify({
+    const preferences = {
       cuisine: null,
       likes: parseList(likes),
       dislikes: parseList(dislikes),
       allergies: parseList(allergies),
-    }));
+    };
+    localStorage.setItem('orderly_preferences', JSON.stringify(preferences));
+
+    // This page is only reached right after registering (via RegisterPage,
+    // which logs in immediately) or as a guest browsing without an account.
+    // Returning users are sent straight to /upload from LoginPage instead.
+    const token = localStorage.getItem('orderly_access_token');
+    if (token) {
+      try {
+        const response = await fetch(`${API_URL}/users/me/preferences`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(preferences),
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          setError(body.detail || 'Could not save your preferences. Please try again.');
+          return;
+        }
+      } catch (err) {
+        setError('Something went wrong. Please try again.');
+        return;
+      }
+    }
+
     navigate('/upload');
   };
 
