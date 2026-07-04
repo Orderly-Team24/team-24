@@ -13,7 +13,7 @@ function LoginPage() {
 
   useEffect(() => {
     const token = localStorage.getItem('orderly_access_token');
-    if (token) navigate('/');
+    if (token) navigate('/upload');
   }, [navigate]);
 
   const validate = () => {
@@ -55,7 +55,23 @@ function LoginPage() {
       const data = await response.json();
       localStorage.setItem('orderly_access_token', data.access_token);
       localStorage.setItem('orderly_refresh_token', data.refresh_token);
-      navigate('/');
+
+      // Existing accounts already have preferences saved from signup/profile —
+      // pull them into the cache FoodRecommenderPage reads from, so we can
+      // skip the questionnaire entirely instead of asking again.
+      try {
+        const prefsResponse = await fetch(`${API_URL}/users/me/preferences`, {
+          headers: { Authorization: `Bearer ${data.access_token}` },
+        });
+        if (prefsResponse.ok) {
+          const prefs = await prefsResponse.json();
+          localStorage.setItem('orderly_preferences', JSON.stringify(prefs));
+        }
+      } catch (_) {
+        // Non-fatal — recommendations just fall back to no preferences.
+      }
+
+      navigate('/upload');
     } catch (err) {
       setErrors({ server: 'Something went wrong. Please try again.' });
     } finally {

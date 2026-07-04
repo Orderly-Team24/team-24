@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 
+const API_URL = 'https://team-24.onrender.com';
+
 function RegisterPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -31,7 +33,7 @@ function RegisterPage() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -39,8 +41,44 @@ function RegisterPage() {
       return;
     }
     setErrors({});
-    sessionStorage.setItem('orderly_reg_credentials', JSON.stringify({ email, username, password }));
-    navigate('/questionnaire');
+
+    try {
+      const registerResponse = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          username,
+          password,
+          preferences: {},
+        }),
+      });
+
+      if (!registerResponse.ok) {
+        const body = await registerResponse.json().catch(() => ({}));
+        setErrors({ server: body.detail || 'Could not create your account. Please try again.' });
+        return;
+      }
+
+      // /auth/register doesn't issue tokens itself, so log in right away to
+      // get one — Questionnaire.jsx needs it to save preferences to this
+      // account instead of just localStorage.
+      const loginResponse = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (loginResponse.ok) {
+        const tokens = await loginResponse.json();
+        localStorage.setItem('orderly_access_token', tokens.access_token);
+        localStorage.setItem('orderly_refresh_token', tokens.refresh_token);
+      }
+
+      navigate('/');
+    } catch (err) {
+      setErrors({ server: 'Something went wrong. Please try again.' });
+    }
   };
 
   const clearError = (field) => setErrors(prev => ({ ...prev, [field]: '' }));
