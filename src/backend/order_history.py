@@ -106,7 +106,35 @@ def clear_history(user_id: str) -> None:
         _store.pop(user_id, None)
 
 
+# --- dislikes (US-015) ---------------------------------------------------
+#
+# user_id -> set[dish_id]. Separate dict from _store on purpose (per the
+# issue spec) — a dish can be disliked without ever leaving history, and we
+# don't want to touch the order records to express that.
+
+_dislikes: dict[str, set[int]] = {}
+
+
+def add_dislike(user_id: str, dish_id: int) -> None:
+    if not user_id:
+        raise ValueError("user_id is required")
+    with _lock:
+        _dislikes.setdefault(user_id, set()).add(int(dish_id))
+
+
+def get_dislikes(user_id: str) -> set[int]:
+    """Return the set of dish ids this user has disliked."""
+    with _lock:
+        return set(_dislikes.get(user_id, set()))
+
+
+def is_disliked(user_id: str, dish_id: int) -> bool:
+    with _lock:
+        return int(dish_id) in _dislikes.get(user_id, set())
+
+
 def reset_for_tests() -> None:
     """Wipe the whole in-memory store. For tests only."""
     with _lock:
         _store.clear()
+        _dislikes.clear()

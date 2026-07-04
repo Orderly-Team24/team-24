@@ -15,7 +15,9 @@ from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from order_history import (
+    add_dislike,
     add_order,
+    get_dislikes,
     get_history,
     has_ordered,
     make_dish_id,
@@ -72,6 +74,16 @@ class CheckResponse(BaseModel):
     already_ordered: bool
 
 
+class DislikeResponse(BaseModel):
+    status: str
+    dish_id: int
+
+
+class DislikesListResponse(BaseModel):
+    user_id: str
+    dislikes: list[int]
+
+
 @router.post("/orders", response_model=OrderResponse)
 def post_order(
     dish: DishIn,
@@ -124,6 +136,30 @@ def check_order(
         dish_id=dish_id,
         already_ordered=has_ordered(user_id, dish_id),
     )
+
+
+@router.post("/orders/{dish_id}/dislike", response_model=DislikeResponse)
+def dislike_dish(
+    dish_id: int,
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+):
+    """Mark a dish as disliked for this user (US-015).
+
+    Idempotent-ish: disliking twice just keeps it disliked (it's a set).
+    Doesn't require the dish to be in the user's order history — a user
+    might dislike something recommended but never actually ordered.
+    """
+    user_id = _user_id(x_user_id)
+    add_dislike(user_id, dish_id)
+    return DislikeResponse(status="disliked", dish_id=dish_id)
+
+
+@router.get("/dislikes", response_model=DislikesListResponse)
+def list_dislikes(
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+):
+    user_id = _user_id(x_user_id)
+    return DislikesListResponse(user_id=user_id, dislikes=sorted(get_dislikes(user_id)))
 
 
 # --- dev / test helpers -------------------------------------------------

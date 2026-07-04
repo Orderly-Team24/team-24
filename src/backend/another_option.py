@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
+from order_history import get_dislikes, make_dish_id
 from recommendation_session import (
     get_session,
     get_remaining,
@@ -14,7 +15,10 @@ class AnotherOptionRequest(BaseModel):
     session_id: str
 
 @router.post("/another-option")
-def another_option(data: AnotherOptionRequest):
+def another_option(
+    data: AnotherOptionRequest,
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+):
     session = get_session(data.session_id)
 
     if not session:
@@ -22,7 +26,12 @@ def another_option(data: AnotherOptionRequest):
             status_code=404,
             detail="Session not found"
         )
-    remaining = get_remaining(data.session_id)
+
+    # US-015: skip dishes the user has disliked, same as /display/recommendations.
+    user_id = (x_user_id or "").strip()
+    disliked_ids = get_dislikes(user_id) if user_id else set()
+
+    remaining = get_remaining(data.session_id, disliked_ids)
 
     if not remaining:
         return {
@@ -39,7 +48,9 @@ def another_option(data: AnotherOptionRequest):
     return {
     "recommendations": [
         {
-            "id": 1,
+            # Was hardcoded to 1 — broke dislike-by-id for cards shown via
+            # "Another option" (frontend would always send dish_id=1).
+            "id": make_dish_id(dish),
             "name": dish["name"],
             "price": dish["price"],
             "description": dish.get("description", ""),
