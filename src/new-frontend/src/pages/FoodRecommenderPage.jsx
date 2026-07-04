@@ -2,20 +2,19 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
-const API_RECOMMENDER = 'https://team-24.onrender.com';
+const API_RECOMMENDER = 'https://team-24-1.onrender.com';
 
 function buildPreferences() {
   const raw = JSON.parse(localStorage.getItem('orderly_preferences') || 'null');
   const budget = localStorage.getItem('orderly_budget');
   if (!raw && !budget) return null;
-  return {
-    cuisine: raw?.cuisine || null,
-    exclude_ingredients: [
+  return {cuisine: raw?.cuisine || null, exclude_ingredients: [
       ...(raw?.allergies || []),
       ...(raw?.dislikes || []),
     ],
     favorite_ingredients: raw?.likes || [],
     max_budget: budget ? parseFloat(budget) : null,
+    restrictions: raw?.restrictions || [],
   };
 }
 
