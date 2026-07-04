@@ -138,3 +138,16 @@ def test_patch_preferences_updates_saved_data():
 
     resp = client.get("/users/me/preferences", headers=_auth_header(user_id=1))
     assert resp.json() == {"allergies": ["gluten"], "likes": ["pasta"], "dislikes": ["mushroom"]}
+
+
+def test_patch_preferences_partial_body_only_updates_named_fields():
+    _create_user(user_id=1)
+    _create_preferences(user_id=1, allergies=["nuts"], likes=["tomato"], dislikes=["onion"])
+
+    resp = client.patch(
+        "/users/me/preferences",
+        headers=_auth_header(user_id=1),
+        json={"likes": ["pasta"]},
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"allergies": ["nuts"], "likes": ["pasta"], "dislikes": ["onion"]}

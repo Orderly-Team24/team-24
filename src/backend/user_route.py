@@ -40,9 +40,11 @@ class PreferencesUpdate(BaseModel):
     # cuisine isn't a real column on Preferences yet — accepted and ignored
     # so ProfilePage.jsx (which always sends it) doesn't get a 422.
     cuisine: str | None = None
-    allergies: list[str] = []
-    likes: list[str] = []
-    dislikes: list[str] = []
+    # None (the "not sent") default vs. [] ("explicitly cleared") lets a
+    # partial body update only the fields it names, per US-016's AC.
+    allergies: list[str] | None = None
+    likes: list[str] | None = None
+    dislikes: list[str] | None = None
 
 
 @router.delete("/me")
@@ -82,9 +84,12 @@ def update_my_preferences(
     if not prefs:
         raise HTTPException(status_code=404, detail="Preferences not found")
 
-    prefs.allergies = data.allergies
-    prefs.likes = data.likes
-    prefs.dislikes = data.dislikes
+    if data.allergies is not None:
+        prefs.allergies = data.allergies
+    if data.likes is not None:
+        prefs.likes = data.likes
+    if data.dislikes is not None:
+        prefs.dislikes = data.dislikes
     db.commit()
 
     return {
