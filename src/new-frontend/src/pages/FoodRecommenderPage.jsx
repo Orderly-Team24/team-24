@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
 
-const API_RECOMMENDER = 'https://team-24-1.onrender.com';
+const API_RECOMMENDER = 'https://team-24.onrender.com';
 
 function buildPreferences() {
   const raw = JSON.parse(localStorage.getItem('orderly_preferences') || 'null');
