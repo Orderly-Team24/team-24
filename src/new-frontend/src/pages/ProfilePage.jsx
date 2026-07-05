@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 
-const API_URL = 'https://team-24-1.onrender.com';
+const API_URL = 'https://team-24.onrender.com';
 
 function ProfilePage() {
   const navigate = useNavigate();
