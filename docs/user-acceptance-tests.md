@@ -135,7 +135,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 
 ---
 
-## UAT-05 — End Session
+## UAT-06 — End Session
 **Related US:** [US-014 – Button "End session"](https://github.com/Orderly-Team24/team-24/issues/148)
 **Precondition:** The app is deployed and accessible at https://team-24-navy.vercel.app/. The user is signed in and has reached the recommendation page (Step 3 of 3).
 
