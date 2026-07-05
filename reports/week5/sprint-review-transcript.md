@@ -84,11 +84,11 @@
 
 **Interviewer:**
 
-`00:02:48` - And you said- Okay. Mm-hmm.
+`00:02:48` - And you said- Okay.
 
 **Customer:**
 
-`00:02:50` - Mm-hmm. Nothing from my side. If you can send me, like, a link to test it in the evening, I think that would be nice.
+`00:02:50` - Nothing from my side. If you can send me, like, a link to test it in the evening, I think that would be nice.
 
 **Interviewer:**
 
