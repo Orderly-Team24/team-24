@@ -133,6 +133,25 @@ def _format_preferences(preferences: Any) -> str:
     )
 
 
+def _format_menu(menu: list[dict] | None) -> str:
+    valid_items = [m for m in (menu or []) if not m.get("flagged")]
+    if not valid_items:
+        return ""
+
+    lines = []
+    for item in valid_items:
+        price = item.get("price")
+        price_str = f" (${price})" if price is not None else ""
+        ingredients = item.get("ingredients") or []
+        ingredients_str = f" — {', '.join(ingredients)}" if ingredients else ""
+        lines.append(f"- {item.get('name', 'Unnamed dish')}{price_str}{ingredients_str}")
+
+    return (
+        "Available menu (recommend ONLY one dish from this list, copying its "
+        "name and price exactly):\n" + "\n".join(lines) + "\n"
+    )
+
+
 def filter_fallback_pool_by_preferences(
     pool: list[dict[str, Any]],
     preferences: Any,
@@ -212,6 +231,7 @@ _OPENAI_SYSTEM_PROMPT = (
 
 _OPENAI_USER_TEMPLATE = """User request: {message}
 
+{menu}
 {preferences}
 
 Return ONLY the JSON object, nothing else."""
@@ -244,6 +264,7 @@ def _extract_json_object(text: str) -> dict[str, Any]:
 def _openai_compatible(
     user_message: str,
     preferences: Any = None,
+    menu: list[dict] | None = None,
     *,
     base_url: str,
     api_key: str,
@@ -261,6 +282,7 @@ def _openai_compatible(
                 "role": "user",
                 "content": _OPENAI_USER_TEMPLATE.format(
                     message=user_message or "",
+                    menu=_format_menu(menu),
                     preferences=_format_preferences(preferences),
                 ),
             },
@@ -271,24 +293,34 @@ def _openai_compatible(
     return _extract_json_object(content)
 
 
-def _openai_backend(user_message: str, preferences: Any = None) -> dict[str, Any]:
+def _openai_backend(
+    user_message: str,
+    preferences: Any = None,
+    menu: list[dict] | None = None,
+) -> dict[str, Any]:
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
         raise RuntimeError("AI_BACKEND=openai but OPENAI_API_KEY is not set")
     return _openai_compatible(
         user_message,
         preferences,
+        menu,
         base_url=os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
         api_key=api_key,
         model=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
     )
 
 
-def _lmstudio_backend(user_message: str, preferences: Any = None) -> dict[str, Any]:
+def _lmstudio_backend(
+    user_message: str,
+    preferences: Any = None,
+    menu: list[dict] | None = None,
+) -> dict[str, Any]:
     base_url = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
     return _openai_compatible(
         user_message,
         preferences,
+        menu,
         base_url=base_url,
         api_key=os.getenv("LMSTUDIO_API_KEY", "lm-studio"),
         model=os.getenv("LMSTUDIO_MODEL", "qwen/qwen3.5-9b"),
@@ -329,9 +361,7 @@ def _call_backend(
     """Call the configured backend. Raises AIServiceUnavailableError on failure."""
     backend_name, fn = _resolve_backend()
     try:
-        if backend_name == "stub":
-            return backend_name, fn(user_message, preferences, menu)
-        return backend_name, fn(user_message, preferences)
+        return backend_name, fn(user_message, preferences, menu)
     except AIServiceUnavailableError:
         raise
     except Exception as exc:
