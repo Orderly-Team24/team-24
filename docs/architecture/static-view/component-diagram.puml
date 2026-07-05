@@ -1,0 +1,40 @@
+@startuml component-diagram
+!theme plain
+title Orderly – Component Diagram
+
+actor "User" as user
+
+package "Frontend (Vercel)" {
+  component "React SPA" as frontend
+}
+
+package "Recommender Service (Render)" {
+  component "FastAPI App" as backend
+  component "AI Service" as ai
+  component "Budget Filter" as budget
+  component "Display Router" as display
+  component "History Router" as history
+  component "User Router" as userrouter
+}
+
+package "OCR Service (Render)" {
+  component "FastAPI App" as ocr
+  component "Tesseract OCR" as tesseract
+  component "Menu Parser" as parser
+}
+
+package "Infrastructure" {
+  database "PostgreSQL (Render)" as db
+  component "OpenAI API" as openai
+}
+
+user --> frontend : HTTPS
+frontend --> ocr : POST /upload-menu
+frontend --> backend : POST /display/recommendations\nGET/POST /history/orders\nDELETE /users/me
+ocr --> tesseract : extract text
+tesseract --> parser : raw text
+backend --> ai : get recommendation
+backend --> db : read/write users,\nhistory, preferences
+ai --> openai : prompt
+
+@enduml

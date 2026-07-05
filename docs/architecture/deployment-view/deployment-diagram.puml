@@ -1,0 +1,42 @@
+@startuml deployment-diagram
+!theme plain
+title Orderly – Deployment View
+
+node "User Browser" as browser {
+  component "React SPA" as spa
+}
+
+cloud "Vercel" as vercel {
+  node "CDN / Edge Network" as cdn {
+    component "Static Frontend Build" as frontend
+  }
+}
+
+cloud "Render" as render {
+  node "Web Service: team-24" as recommender_node {
+    component "Recommender FastAPI" as recommender
+    component "AI Service" as ai
+  }
+
+  node "Web Service: team-24-1" as ocr_node {
+    component "OCR FastAPI" as ocr
+    component "Tesseract" as tesseract
+  }
+
+  node "PostgreSQL Instance" as pg_node {
+    database "orderly_db" as db
+  }
+}
+
+cloud "OpenAI Platform" as openai_cloud {
+  component "OpenAI API" as openai
+}
+
+browser --> cdn : HTTPS
+cdn --> frontend
+frontend ..> recommender : HTTPS REST
+frontend ..> ocr : HTTPS REST
+recommender --> db : TCP (internal)\nPostgreSQL wire protocol
+recommender --> openai : HTTPS
+
+@enduml
