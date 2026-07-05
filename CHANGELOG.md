@@ -1,14 +1,47 @@
 ## [Unreleased]
 
-### Planned
-- **OCR locally via Tesseract** — move `/upload-menu` from HTTP-forward stub to local Tesseract OCR (pytesseract + system `tesseract-ocr` binary in Docker). Returns `{status, filename, extracted_text}` and integrates with downstream parser. This was prototyped in branch `feat/connect-backends-deploy` (commits `80a1e9e`, `9aae267`) but rolled back before merge — to be re-done in the next sprint.
-- **CORS middleware on upload-menu backend** — same `ALLOWED_ORIGINS` env pattern as recommender; needed for browser `fetch()` from the deployed frontend.
-- **Absolute paths for static assets** — `style.css` / `script.js` on sub-pages resolved relative to the current URL; switched to absolute `/<page>/<asset>` so deep links work.
-
 ### Notes for next-sprint owner
-- Tesseract must be installed **system-wide** (not via pip). On Render: `apt-get install tesseract-ocr tesseract-ocr-eng` in the Dockerfile. On dev machines: `brew install tesseract` (macOS) or download from UB-Mannheim (Windows, set `TESSERACT_PATH` env).
-- The current `OCR_SERVICE_URL = "http://localhost:8002/extract-text"` default in `src/upload-menu-backend/main.py` is a **stub** and will return 502 for every upload — fine for development, broken for demos.
-- A shared PostgreSQL database on Render is the agreed-upon storage layer for upcoming auth, dislikes, and likes user stories.
+- JWT signing secret is hardcoded in `src/backend/jwt_handler.py` rather than sourced from an environment variable — externalize before relying on this for anything beyond a course project.
+- `cuisine` is accepted by `POST /auth/register` and the preferences endpoints but not persisted — the `preferences` table has no `cuisine` column yet.
+- Order history (`/history/orders*`) is still an in-memory store, not PostgreSQL — data is lost on every restart/redeploy.
+- Two Render services (`team-24`, `team-24-1`) and two frontend hosts have drifted in the past (different `API_URL` values hardcoded per page) — worth auditing before the next release.
+
+---
+
+## [0.3.0] - 2026-07-05 "MVP v2"
+
+### Added
+- PostgreSQL database (SQLAlchemy models + Alembic migrations) backing users, preferences, refresh tokens, and order history tables.
+- User registration (`POST /auth/register`) and login (`POST /auth/login`), issuing JWT access/refresh tokens.
+- Profile page: view and edit saved preferences (`GET`/`PATCH /users/me/preferences`), Bearer-token authenticated.
+- Delete account (`DELETE /users/me`), Bearer-token authenticated, cascades to preferences and refresh tokens.
+- "End session" button and "specify today's meal intent" alongside budget on the upload step.
+- Architecture documentation (`docs/architecture/`: component, sequence, and deployment diagrams, plus 3 ADRs) and `docs/development-process.md`.
+
+### Changed
+- Registration now actually calls the backend and logs the user in immediately, instead of only caching form input in the browser and never creating an account.
+- Returning (logged-in) users skip the preferences questionnaire and go straight to the upload step; their saved preferences are pulled from the backend automatically.
+- `PATCH /users/me/preferences` now supports partial updates — a body with only one field no longer wipes the other two.
+
+### Fixed
+- AI recommendations silently ignored the uploaded/OCR'd menu when using the `openai`/`lmstudio` backends — the menu never reached the LLM prompt (only the `stub` backend used it). Recommendations are now always based on the actual uploaded menu.
+- `bcrypt==4.0.1` crashed passlib's backend self-test on any password hash/verify call, breaking registration and login entirely; pinned to `bcrypt==3.2.2`.
+- The recommender's Dockerfile was missing `user_route.py`, `auth.py`, `users.py`, and `jwt_handler.py`, and couldn't reach `src/db/` from its build context — both broke Render deploys. Rebuilt around a repo-root build context that can see both `src/backend/` and `src/db/`.
+- Removed a fully duplicated OCR endpoint/module from the recommender service — the dedicated `upload-menu-backend` service is the one the frontend actually calls; the copy in the recommender was dead code with its own `tesseract-ocr` apt dependency bloating that image.
+- Two parallel PRs implemented the same `/users/me/preferences` endpoints in different files, registering duplicate routes on the same path; consolidated into one implementation.
+
+## [0.2.0] - 2026-06-28 "Sprint 2"
+
+### Added
+- Preferences questionnaire with allergen and diet fields.
+- Menu upload and manual menu parsing (dish name + price structuring).
+- Budget filtering and recommendation logic based on user preferences.
+- "Another option" flow without re-uploading the menu.
+- Order history stub ("I'll order it" button).
+- Frontend migration to React with a 3-page flow.
+- Docker deployment and CI pipeline with tests and link checking.
+- Local Tesseract OCR (pytesseract + system `tesseract-ocr` binary in Docker) replacing the HTTP-forward stub from 0.1.0.
+- CORS middleware on the upload-menu backend.
 
 ---
 
