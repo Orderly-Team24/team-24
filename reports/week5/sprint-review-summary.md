@@ -1,6 +1,7 @@
 # Customer Review Summary - Sprint 3
 
 **Date:** 05.07.2026
+
 **Time:** 10:00 аm
 
 ---
