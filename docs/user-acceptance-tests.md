@@ -82,3 +82,53 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
 | Sprint 2 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-04 — Sign In With Existing Account
+
+**Related US:** [US-002 – Ability to sign in](https://github.com/Orderly-Team24/team-24/issues/63)
+
+**Precondition:** The app is deployed and accessible at https://team-24-navy.vercel.app/. An account already exists (e.g. created via the registration page).
+
+**Steps:**
+1. Navigate to `/login`.
+2. Enter the correct email and password.
+3. Click **"Sign in"**.
+4. Repeat with an incorrect password.
+
+**Expected result:**
+- With correct credentials: the user is redirected to `/upload`, skipping the questionnaire (their saved preferences are loaded automatically in the background).
+- With an incorrect password: an inline error message is shown (e.g. "Invalid email or password."); the user stays on `/login`.
+- No unhandled crash or blank page in either case.
+
+**Status history:**
+
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-05 — Delete Account
+
+**Related US:** [US-017 – Delete account](https://github.com/Orderly-Team24/team-24/issues/221)
+
+**Precondition:** The app is deployed. The tester is signed in to a disposable test account (do not use a real/shared account — this is irreversible).
+
+**Steps:**
+1. Navigate to `/profile`.
+2. Click **"Delete account"**.
+3. On the confirmation prompt, click **"Yes, delete my account"**.
+4. Try to sign in again with the same credentials.
+
+**Expected result:**
+- A confirmation step is shown before deletion (clicking "Delete account" alone must NOT delete immediately).
+- After confirming, the user is redirected to `/register` and all local session data is cleared.
+- Signing in again with the deleted account's credentials fails with an error (account no longer exists).
+
+**Status history:**
+
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
