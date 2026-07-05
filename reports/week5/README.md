@@ -27,7 +27,7 @@
 | No order history yet | [#149](https://github.com/Orderly-Team24/team-24/issues/149) — US-015: Managing history of orders |
 
 ### Feedback Not Addressed
-The customer could not test the application duringt the meeting because the deployment was unavailable.
+The customer did not raise any new critical issues or change requests. He agreed with the team's plan for next week.
 
 ## Documentation
 - **Roadmap:** [docs/roadmap.md](../../docs/roadmap.md)
@@ -77,18 +77,18 @@ Quality requirements are directly supported by the architecture decisions. Separ
 ## Forward Governance
 **How Assignment 4 artifacts will govern future work:**
 All future work will be governed by the Assignment 4 artifacts:
-- **DoD** — all tasks must meet Definition of Done before closing.
-- **CI/CD** — must pass on every PR and push to `main`.
-- **Testing** — unit + integration tests required, coverage ≥ 30% for critical modules.
-- **Branch Protection** — PR approvals + CI required for merging.
+- **DoD** - all tasks must meet Definition of Done before closing.
+- **CI/CD** - must pass on every PR and push to `main`.
+- **Testing** - unit + integration tests required, coverage ≥ 30% for critical modules.
+- **Branch Protection** - PR approvals + CI required for merging.
 
 ## Release & Changelog
-- **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/0.3.0)
+- **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/v0.3.0)
 - **CHANGELOG.md:** [CHANGELOG.md](../../CHANGELOG.md)
 
 ## Presentation & Media
 - **Demo Video:** [video](https://drive.google.com/file/d/1n7aTGUpr3jBHVEm6FIkM_EXHW4KH5D3y/view?usp=drivesdk)
-- **Customer Review Transcript:** [customer review transcript](customer-review-transcript.md)
+- **Customer Review Transcript:** [sprint review transcript](sprint-review-transcript.md)
 
 ## UAT Results Summary
 **UAT-04 (Sign In With Existing Account)** - passed (US-002 – Ability to sign in)
@@ -98,7 +98,7 @@ All future work will be governed by the Assignment 4 artifacts:
 
 ## Sprint Reports & Retrospectives
 - **Sprint review transcript:** [sprint review transcript](sprint-review-transcript.md)
-- **Customer Review Summary:** [customer review summary](customer-review-summary.md)
+- **Customer Review Summary:** [sprint review summary](sprint-review-summary.md)
 - **Sprint Reflection:** [Week 5 Reflection](reflection.md)
 - **Retrospective:** [Week 5 Retrospective](retrospective.md)
 - **LLM Report:** [LLM Report](llm-report.md)
