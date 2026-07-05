@@ -75,7 +75,7 @@ function RegisterPage() {
         localStorage.setItem('orderly_refresh_token', tokens.refresh_token);
       }
 
-      navigate('/');
+      navigate('/questionnaire');
     } catch (err) {
       setErrors({ server: 'Something went wrong. Please try again.' });
     }
