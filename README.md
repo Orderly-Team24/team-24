@@ -80,13 +80,21 @@ pytest tests/ -v --cov=. --cov-report=term-missing
 ## Documentation
 
 - [User stories](docs/user-stories.md)
+- [Architecture documentation](docs/architecture/README.md) — component, sequence, and deployment views, plus ADRs
+- [Development process](docs/development-process.md) — git workflow, PR process, CI pipeline, configuration management
 - [Quality requirements](docs/quality-requirements.md)
+- [Quality requirement tests](docs/quality-requirement-tests.md)
 - [Testing strategy](docs/testing.md)
+- [Definition of Done](docs/definition-of-done.md)
+- [User acceptance tests](docs/user-acceptance-tests.md)
+- [Roadmap](docs/roadmap.md)
 - [MVP v0 Report](reports/week2/mvp-v0-report.md)
 - [CHANGELOG](CHANGELOG.md)
 - [Week 2 report](reports/week2/README.md)
 - [Week 3 report](reports/week3/README.md)
 - [Week 4 report](reports/week4/README.md)
+
+Hosted (browsable) version of the docs above: https://orderly-team24.github.io/team-24/
 
 ## License
 
