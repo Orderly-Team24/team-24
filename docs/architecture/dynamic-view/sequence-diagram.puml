@@ -1,0 +1,34 @@
+@startuml sequence-diagram
+!theme plain
+title Orderly – Menu Upload and Recommendation Flow
+
+actor "User" as user
+participant "React SPA" as frontend
+participant "OCR Service" as ocr
+participant "Recommender Service" as backend
+participant "OpenAI API" as openai
+database "PostgreSQL" as db
+
+user -> frontend : fills preferences\nand budget
+user -> frontend : uploads menu photo
+frontend -> ocr : POST /upload-menu (image)
+ocr -> ocr : Tesseract extracts text
+ocr -> ocr : Parser structures dishes
+ocr --> frontend : { menu: [...] }
+frontend -> frontend : saves menu\nto localStorage
+
+user -> frontend : clicks "Get recommendation"
+frontend -> backend : POST /display/recommendations\n{ message, menu, preferences }
+backend -> backend : filter by budget\nand preferences
+backend -> openai : prompt with menu + preferences
+openai --> backend : recommended dish
+backend --> frontend : { recommendations: [...] }
+frontend --> user : shows dish card
+
+user -> frontend : clicks "I'll order this"
+frontend -> backend : POST /history/orders\n(X-User-Id header)
+backend -> db : INSERT order_history
+db --> backend : ok
+backend --> frontend : { status: "saved" }
+
+@enduml
