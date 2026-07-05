@@ -35,6 +35,10 @@ team-24/
 
 ### Backend services
 
+The recommender service requires `DATABASE_URL` (PostgreSQL in production, see
+[ADR-002](docs/architecture/adr/ADR-002-postgresql-sqlalchemy.md)) — it will not start without it.
+For local development, SQLite works fine since it's just a SQLAlchemy connection string:
+
 ```bash
 # Create and activate a virtualenv
 python -m venv venv
@@ -43,6 +47,14 @@ source venv/bin/activate          # Windows: venv\Scripts\activate
 # Install dependencies for both backend services
 pip install -r src/backend/requirements.txt
 pip install -r src/upload-menu-backend/requirements.txt
+
+# Point at a local SQLite file (swap for a real postgres:// URL to match production)
+export DATABASE_URL="sqlite:///$(pwd)/local.db"
+
+# Create the tables
+cd src/db
+alembic upgrade head
+cd ../..
 
 # Run the recommender service (http://localhost:8003)
 cd src/backend
@@ -94,7 +106,6 @@ pytest tests/ -v --cov=. --cov-report=term-missing
 - [Week 3 report](reports/week3/README.md)
 - [Week 4 report](reports/week4/README.md)
 - [Week 5 report](reports/week5/README.md)
-
 
 Hosted (browsable) version of the docs above: https://orderly-team24.github.io/team-24/
 
