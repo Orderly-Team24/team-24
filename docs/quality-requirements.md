@@ -26,6 +26,8 @@ and prevents unsafe recommendations from being shown.
 
 **Linked QRT:** [QRT-01](quality-requirement-tests.md#qrt-01)
 
+**Related ADRs:** [ADR-003](architecture/adr/ADR-003-openai-integration.md) (the stub fallback and 503 handling this requirement describes is a direct consequence of depending on the OpenAI API) and [ADR-001](architecture/adr/ADR-001-split-backend-services.md) (splitting OCR into its own service means an OCR outage can't take the recommender down with it).
+
 ---
 
 ## QR-02 — Response Time (Performance Efficiency)
@@ -45,6 +47,8 @@ indicates an internal bottleneck in filtering or routing logic.
 **Acceptance threshold:** p95 response time ≤ 500 ms in CI (stub backend, single-process Uvicorn).
 
 **Linked QRT:** [QRT-02](quality-requirement-tests.md#qrt-02)
+
+**Related ADR:** [ADR-003](architecture/adr/ADR-003-openai-integration.md) — the 1-3s OpenAI latency is the dominant cost in production; this requirement's 500ms budget is specifically scoped to the stub backend so CI can measure internal filtering/routing overhead in isolation from that external dependency.
 
 ---
 
@@ -66,3 +70,9 @@ This was already observed during development: blank names caused ID collisions o
 **Acceptance threshold:** 100% of invalid input cases must be rejected with the correct HTTP status code.
 
 **Linked QRT:** [QRT-03](quality-requirement-tests.md#qrt-03)
+
+**Related ADR:** [ADR-002](architecture/adr/ADR-002-postgresql-sqlalchemy.md) — this requirement covers request-level validation (Pydantic models rejecting malformed input with 422/400); ADR-002's move to SQLAlchemy adds a second layer underneath it, using parameterized queries instead of hand-built SQL so malformed/malicious input can't reach the database as raw strings.
+
+---
+
+> **Note:** the ADRs' own "Quality requirements addressed" sections reference `QR-001`–`QR-005`, an earlier numbering that doesn't match the `QR-01`–`QR-03` IDs defined in this file (some, like `QR-001` "Functional Correctness" and `QR-003` "Maintainability", don't correspond to any requirement documented here at all). The links above map by the actual scenario each QR describes, not by number. Reconciling the two numbering schemes — either by renumbering the ADRs or by documenting the missing requirements — is tracked as follow-up work, not done in this pass.

@@ -83,7 +83,7 @@ All future work will be governed by the Assignment 4 artifacts:
 - **Branch Protection** — PR approvals + CI required for merging.
 
 ## Release & Changelog
-- **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/0.3.0)
+- **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/v0.3.0)
 - **CHANGELOG.md:** [CHANGELOG.md](../../CHANGELOG.md)
 
 ## Presentation & Media
