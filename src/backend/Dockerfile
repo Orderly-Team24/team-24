@@ -9,21 +9,32 @@ RUN apt-get update \
 
 WORKDIR /app
 
-COPY requirements.txt ./
+# Build context must be the repository root (not src/backend) — this service
+# imports src/db/database.py and models.py via a `../db` sys.path hack, which
+# Docker can only satisfy if db/ is inside the same build context as backend/.
+COPY src/backend/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py ./
-COPY ai_service.py ./
-COPY display_recommendations.py ./
-COPY budget_filter.py ./
-COPY order_history.py ./
-COPY history_router.py ./
-COPY another_option.py ./
-COPY recommendation_session.py ./
-COPY ocr_reader.py ./
-COPY parser.py ./
+COPY src/backend/main.py ./
+COPY src/backend/ai_service.py ./
+COPY src/backend/display_recommendations.py ./
+COPY src/backend/budget_filter.py ./
+COPY src/backend/order_history.py ./
+COPY src/backend/history_router.py ./
+COPY src/backend/another_option.py ./
+COPY src/backend/recommendation_session.py ./
+COPY src/backend/ocr_reader.py ./
+COPY src/backend/parser.py ./
+COPY src/backend/user_route.py ./
+COPY src/backend/auth.py ./
+COPY src/backend/users.py ./
+COPY src/backend/jwt_handler.py ./
 
-RUN useradd --create-home appuser && chown -R appuser /app
+# Sibling of /app, matching os.path.join(os.path.dirname(__file__), '..', 'db')
+# as resolved from /app/<module>.py.
+COPY src/db/database.py src/db/models.py /db/
+
+RUN useradd --create-home appuser && chown -R appuser /app /db
 USER appuser
 
 ENV PORT=8000 \
