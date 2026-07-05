@@ -38,7 +38,7 @@ The customer did not raise any new critical issues or change requests. He agreed
 - **User Acceptance Tests (UAT):** [docs/user-acceptance-tests.md](../../docs/user-acceptance-tests.md)
 - **Development process:** [docs/development-process.md](../../docs/development-process.md)
 - **README of Architecture** [docs/architecture/README.md](../../docs/architecture/README.md)
-- **Hosted Documentation Site:** [Orderly Docs](../../docs)
+- **Hosted Documentation Site:** [Orderly Docs](https://orderly-team24.github.io/team-24/)
 
 ### Test Links
 - **Unit Tests:** test_budget_filter.py, test_history_router.py, test_parser.py, test_preferences.py, test_upload.py, test_parser.py
