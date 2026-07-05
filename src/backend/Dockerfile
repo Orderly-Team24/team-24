@@ -1,12 +1,5 @@
 FROM python:3.12-slim
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        tesseract-ocr \
-        tesseract-ocr-eng \
-        tesseract-ocr-rus \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /app
 
 # Build context must be the repository root (not src/backend) — this service
@@ -23,7 +16,6 @@ COPY src/backend/order_history.py ./
 COPY src/backend/history_router.py ./
 COPY src/backend/another_option.py ./
 COPY src/backend/recommendation_session.py ./
-COPY src/backend/ocr_reader.py ./
 COPY src/backend/parser.py ./
 COPY src/backend/user_route.py ./
 COPY src/backend/auth.py ./

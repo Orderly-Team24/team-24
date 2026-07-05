@@ -114,30 +114,39 @@ curl -X POST http://127.0.0.1:8003/display/recommendations \
 
 1. **New → Web Service** on Render, pick the repo.
 2. Configure:
-   - **Root directory:** `src/backend`
-   - **Runtime:** Docker (Render auto-detects the `Dockerfile`)
+   - **Root directory:** leave empty (repository root) — this service's
+     code imports `src/db/database.py`/`models.py` via a `../db` path, and
+     Docker can only reach that if the build context includes both
+     `src/backend/` and `src/db/`. Setting Root Directory to `src/backend`
+     will fail with `requirements.txt: not found` at build time.
+   - **Dockerfile Path:** `src/backend/Dockerfile` (relative to repo root)
+   - **Runtime:** Docker
    - **Instance type:** Free
    - **Environment variables:**
      - `AI_BACKEND` → `stub` (default) or `openai`
      - `OPENAI_API_KEY` → your key (only if `AI_BACKEND=openai`)
      - `ALLOWED_ORIGINS` → `https://<your-site>.netlify.app`
+     - `DATABASE_URL`, `JWT_SECRET_KEY` — see `src/db`'s and `auth.py`'s docs
 3. **Create Web Service**. Once live you'll get a URL like
    `https://orderly-recommender.onrender.com`.
-4. Paste that URL into `src/frontend/config.js` as `API_RECOMMENDER`,
-   alongside the upload-menu URL in `API_UPLOAD`.
+4. This service no longer handles menu-photo upload/OCR at all — that's
+   `src/upload-menu-backend`, deployed separately. Point
+   `src/new-frontend`'s upload flow at that service's URL.
 
 ## What's NOT in this service anymore
 
-The previous version imported `pytesseract` and called LM Studio directly,
-which crashed on Linux and required the model to run on the same host. Both
-have been moved out:
-
-- `ocr_reader.py` is now unused by the live endpoints. It still works for
-  the `test_parser.py` script.
-- `ai_service.py` no longer touches LM Studio by default. Set
-  `AI_BACKEND=lmstudio` to bring it back locally.
-- `retriever.py` (LangChain + Chroma) is also unused by the live endpoints
-  but kept in the repo for the offline scripts in `test_*.py`.
+- OCR (menu photo upload) — this used to be duplicated here (`ocr_reader.py`,
+  a `POST /upload-menu` endpoint, `tesseract-ocr` installed in the image)
+  even though the frontend only ever called the dedicated
+  `src/upload-menu-backend` service for it (see ADR-001). Removed the dead
+  copy; `parser.py` stays since `tests/test_parser.py` still covers it and
+  it has no OCR dependencies of its own.
+- The previous version also called LM Studio directly, which crashed on
+  Linux and required the model to run on the same host:
+  - `ai_service.py` no longer touches LM Studio by default. Set
+    `AI_BACKEND=lmstudio` to bring it back locally.
+  - `retriever.py` (LangChain + Chroma) is unused by the live endpoints but
+    kept in the repo for the offline scripts in `test_*.py`.
 
 If you want to put RAG back into the live service, the seam is
 `ai_service._lmstudio_backend` — extend it to call the retriever before
