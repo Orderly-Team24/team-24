@@ -1,5 +1,10 @@
 ## [Unreleased]
 
+### Fixed
+- README: fresh-clone backend setup crashed with `RuntimeError: DATABASE_URL is not set` — the Postgres migration (ADR-002) has required it since 0.3.0, but the README never mentioned it. Added the env var (SQLite connection string for local dev) and the missing `alembic upgrade head` step; verified end-to-end on a clean clone.
+- README: linked the Week 5 report, which existed but wasn't linked from anywhere.
+- CI: fixed lychee (link-checker) failures on open PRs — a release link left dangling by the `0.3.0` → `v0.3.0` tag rename, and a GitHub Pages link that 404s on PR branches since Pages only ever builds from `main` (excluded from the check for now).
+
 ### Notes for next-sprint owner
 - JWT signing secret is hardcoded in `src/backend/jwt_handler.py` rather than sourced from an environment variable — externalize before relying on this for anything beyond a course project.
 - `cuisine` is accepted by `POST /auth/register` and the preferences endpoints but not persisted — the `preferences` table has no `cuisine` column yet.
