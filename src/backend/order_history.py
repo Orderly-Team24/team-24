@@ -50,6 +50,7 @@ def make_dish_id(dish: dict[str, Any]) -> int:
 
 _lock = threading.RLock()
 _store: dict[str, list[dict[str, Any]]] = {}
+_dislikes: dict[str, set[int]] = {}
 
 
 def _serialize(dish: dict[str, Any]) -> dict[str, Any]:
@@ -106,7 +107,23 @@ def clear_history(user_id: str) -> None:
         _store.pop(user_id, None)
 
 
+def add_dislike(user_id: str, dish_id: int) -> None:
+    """Mark a dish as disliked for the user. Idempotent — a set dedups."""
+    if not user_id:
+        raise ValueError("user_id is required")
+    with _lock:
+        _dislikes.setdefault(user_id, set()).add(dish_id)
+    log.info("Disliked dish id=%s for user=%s", dish_id, user_id)
+
+
+def get_dislikes(user_id: str) -> list[int]:
+    """Return the user's disliked dish ids."""
+    with _lock:
+        return list(_dislikes.get(user_id, set()))
+
+
 def reset_for_tests() -> None:
     """Wipe the whole in-memory store. For tests only."""
     with _lock:
         _store.clear()
+        _dislikes.clear()
