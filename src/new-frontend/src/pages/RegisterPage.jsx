@@ -63,6 +63,9 @@ function RegisterPage() {
         return;
       }
 
+      // /auth/register doesn't issue tokens itself, so log in right away to
+      // get one — Questionnaire.jsx needs it to save preferences to this
+      // account instead of just localStorage.
       const loginResponse = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
