@@ -268,3 +268,52 @@ def test_upload_returns_500_on_tesseract_failure(
     )
     assert response.status_code == 500, response.text
     assert "OCR engine failed" in response.json()["detail"]
+
+
+# --- issue #283 regression: two different menu photos in one session -----
+
+
+def test_second_menu_photo_with_different_layout_still_parses_correctly(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Reproduces the customer UAT scenario from #283.
+
+    First photo: simple "name  price" per line — always worked.
+    Second photo: real-menu layout (name on its own line, description +
+    price on the next) — this is what tripped up the old line-by-line
+    parser into returning garbled dish names as the "menu".
+    """
+    fake = _FakeTesseract()
+    monkeypatch.setattr("main.pytesseract.image_to_string", fake)
+
+    # Upload #1: simple single-line format.
+    fake._text = "Margherita Pizza $12.99\n\nCaesar Salad $8.00"
+    resp1 = client.post(
+        "/upload-menu",
+        files={"photo": ("menu1.png", _minimal_png(), "image/png")},
+    )
+    assert resp1.status_code == 200, resp1.text
+    menu1 = resp1.json()["menu"]
+    assert menu1[0]["name"] == "Margherita Pizza"
+    assert menu1[0]["price"] == 12.99
+
+    # Upload #2 in the same session: real two-line scan layout.
+    fake._text = (
+        "Sundried Tomato Risotto Cakes\n"
+        "with basil aioli and creme fraiche 7\n"
+        "\n"
+        "Potato Skins\n"
+        "With melty mozzarella, cheddar and bacon 7"
+    )
+    resp2 = client.post(
+        "/upload-menu",
+        files={"photo": ("menu2.png", _minimal_png(), "image/png")},
+    )
+    assert resp2.status_code == 200, resp2.text
+    menu2 = resp2.json()["menu"]
+
+    # The bug: dish name must be the real dish name, not the description.
+    assert menu2[0]["name"] == "Sundried Tomato Risotto Cakes"
+    assert menu2[0]["price"] == 7.0
+    assert menu2[1]["name"] == "Potato Skins"
+    assert menu2[1]["price"] == 7.0
