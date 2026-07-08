@@ -26,7 +26,7 @@ export default function HistoryPage() {
           },
         });
 
-        if (res.ok == false) {
+        if (!res.ok) {
           throw new Error(`Request failed with status ${res.status}`);
         }
 
