@@ -11,6 +11,7 @@ function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const validate = () => {
     const newErrors = {};
@@ -35,12 +36,14 @@ function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
     setErrors({});
+    setLoading(true);
 
     try {
       const registerResponse = await fetch(`${API_URL}/auth/register`, {
@@ -60,9 +63,6 @@ function RegisterPage() {
         return;
       }
 
-      // /auth/register doesn't issue tokens itself, so log in right away to
-      // get one — Questionnaire.jsx needs it to save preferences to this
-      // account instead of just localStorage.
       const loginResponse = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,6 +78,8 @@ function RegisterPage() {
       navigate('/questionnaire');
     } catch (err) {
       setErrors({ server: 'Something went wrong. Please try again.' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,13 +143,15 @@ function RegisterPage() {
           {errors.server && <div className="message error">{errors.server}</div>}
 
           <div className="form-actions">
-            <button type="submit" className="submit-btn">Next: Set preferences →</button>
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? 'Creating account...' : 'Next: Set preferences →'}
+            </button>
           </div>
         </form>
 
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: '#666' }}>
           Already have an account?{' '}
-          <Link to="/login" style={{ color: '#4a9d6f', fontWeight: 600 }}>
+          <Link to="/login" style={{  color: '#4a9d6f', fontWeight: 600 }}>
             Sign in
           </Link>
         </p>
