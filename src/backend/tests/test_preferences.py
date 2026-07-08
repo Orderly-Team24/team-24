@@ -271,3 +271,59 @@ def test_endpoint_excludes_wins_over_same_ingredient_in_likes():
     recs = resp.json()["recommendations"]
     assert recs
     assert "salmon" not in [item.lower() for item in recs[0]["ingredients"]]
+
+
+# --- negation in the free-text mood/craving message ----------------------
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("I don't want steak today", ["steak"]),
+        ("I don't want steak", ["steak"]),
+        ("do not want shellfish please", ["shellfish"]),
+        ("I'm not in the mood for pasta", ["pasta"]),
+        ("not feeling sushi tonight", ["sushi"]),
+        ("something light, without dairy", ["dairy"]),
+        ("no nuts please", ["nuts"]),
+        ("Surprise me!", []),
+        ("", []),
+    ],
+)
+def test_extract_negated_terms(message, expected):
+    assert ai_service.extract_negated_terms(message) == expected
+
+
+def test_endpoint_never_recommends_a_dish_the_user_said_they_dont_want():
+    """Reproduces the reported bug: typing "I don't want steak" into the
+    mood field must never result in a steak recommendation, even when steak
+    is on the uploaded menu."""
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "I don't want steak today",
+            "menu": [
+                {"name": "Ribeye steak", "price": 24, "ingredients": ["steak", "butter"]},
+                {"name": "Grilled chicken", "price": 15, "ingredients": ["chicken", "herbs"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert recs[0]["name"] == "Grilled chicken"
+
+
+def test_endpoint_returns_empty_when_every_menu_dish_is_the_unwanted_food():
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "I don't want steak",
+            "menu": [
+                {"name": "Ribeye steak", "price": 24, "ingredients": ["steak", "butter"]},
+                {"name": "Steak frites", "price": 20, "ingredients": ["steak", "potato"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["recommendations"] == []
