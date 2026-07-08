@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 from recommendation_session import create_session, mark_shown
 
@@ -10,7 +10,7 @@ from ai_service import (
     pick_from_pool,
 )
 from budget_filter import filter_by_budget
-from order_history import make_dish_id
+from order_history import get_dislikes, make_dish_id
 
 router = APIRouter(prefix="/display", tags=["display"])
 
@@ -34,7 +34,10 @@ class RecommendationRequest(BaseModel):
     preferences: Preferences | None = None 
 
 @router.post("/recommendations")
-def display_recommendations(data: RecommendationRequest):
+def display_recommendations(
+    data: RecommendationRequest,
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+):
     """
     Return a single recommendation formatted for the frontend card UI.
 
@@ -44,6 +47,9 @@ def display_recommendations(data: RecommendationRequest):
     When `preferences.max_budget` is set, only dishes with
     `price <= max_budget` are considered. If none fit, returns 200 with
     `recommendations: []`.
+
+    When `X-User-Id` header is provided, dishes the user has disliked
+    (via US-015-1) are excluded from recommendations.
     """
     prefs = data.preferences
 
@@ -61,6 +67,18 @@ def display_recommendations(data: RecommendationRequest):
         preferred_candidates = filter_fallback_pool_by_preferences(candidates, prefs)
         if preferred_candidates:
             candidates = preferred_candidates
+
+    # --- Filter out disliked dishes (US-015-2) ---------------------------
+    if x_user_id:
+        disliked_ids = set(get_dislikes(x_user_id))
+        if disliked_ids:
+            candidates = [
+                dish
+                for dish in candidates
+                if make_dish_id(dish) not in disliked_ids
+            ]
+            if not candidates:
+                return {"recommendations": []}
 
     prefs_dict = prefs.model_dump() if prefs else None
 
