@@ -158,13 +158,17 @@ def filter_fallback_pool_by_preferences(
 ) -> list[dict[str, Any]]:
     """Filter the stub pool by excludes, then cuisine when possible.
 
-    If either preference filter would remove every dish, keep the previous
-    candidate set so stub mode still returns a recommendation.
+    Excludes (allergies and dislikes) are a hard safety constraint: if every
+    dish contains an excluded ingredient, the result is an empty list — we
+    never fall back to recommending an excluded dish just to have *something*
+    to show. Cuisine is a soft preference: if nothing matches, cuisine
+    filtering is skipped and the pre-cuisine candidate set (already free of
+    excluded ingredients) is kept, since missing a cuisine match isn't unsafe.
     """
     candidates = list(pool)
     excludes = [item.lower() for item in _clean_list(_preference_value(preferences, "exclude_ingredients"))]
     if excludes:
-        without_excludes = [
+        candidates = [
             dish
             for dish in candidates
             if not any(
@@ -173,8 +177,8 @@ def filter_fallback_pool_by_preferences(
                 for ingredient in dish.get("ingredients", [])
             )
         ]
-        if without_excludes:
-            candidates = without_excludes
+        if not candidates:
+            return []
 
     cuisine = str(_preference_value(preferences, "cuisine", "") or "").strip().lower()
     if cuisine:
@@ -188,7 +192,7 @@ def filter_fallback_pool_by_preferences(
         if cuisine_matches:
             candidates = cuisine_matches
 
-    return candidates or list(pool)
+    return candidates
 
 
 # --- backend: stub ------------------------------------------------------
@@ -198,7 +202,7 @@ def _stub(
     user_message: str,
     preferences: Any = None,
     menu: list[dict] | None = None,
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     if menu:
         valid_items = [m for m in menu if not m.get("flagged")]
         if valid_items:
@@ -212,6 +216,11 @@ def _stub(
             }
 
     pool = filter_fallback_pool_by_preferences(FALLBACK_POOL, preferences)
+    if not pool:
+        # Every fallback dish contains an excluded (e.g. allergen) ingredient —
+        # no safe recommendation exists, so return none rather than picking
+        # one anyway.
+        return None
     return pick_from_pool(pool, user_message)
 
 
@@ -379,13 +388,32 @@ def get_recommendation_struct(
     user_message: str,
     preferences: Any = None,
     menu: list[dict] | None = None,
-) -> dict[str, Any]:
+) -> dict[str, Any] | None:
     """Structured recommendation for /display/recommendations.
 
     Raises AIServiceUnavailableError when the AI backend fails — callers must
-    convert this to HTTP 503 and must not substitute a stub dish.
+    convert this to HTTP 503 and must not substitute a stub dish. Returns
+    None when no dish satisfies the user's preferences (e.g. every candidate
+    contains an excluded/allergen ingredient) — callers must treat this as
+    "no recommendation", never substitute an unfiltered dish.
     """
     _, pick = _call_backend(user_message, preferences, menu)
+    if not pick:
+        return None
+
+    # Defense in depth for LLM backends: the candidate pool passed to the
+    # prompt is already excludes-free, but nothing stops a model from
+    # ignoring the "pick only from this list" instruction. Never let an
+    # excluded (e.g. allergen) ingredient reach the user regardless of which
+    # backend produced the pick.
+    excludes = [item.lower() for item in _clean_list(_preference_value(preferences, "exclude_ingredients"))]
+    if excludes:
+        pick_ingredients = [str(i).lower() for i in (pick.get("ingredients") or [])]
+        if any(excluded in ingredient for excluded in excludes for ingredient in pick_ingredients):
+            raise AIServiceUnavailableError(
+                "AI recommendation contained an excluded ingredient"
+            )
+
     return {
         "name":        str(pick.get("name", "Chef's special")),
         "price":       float(pick.get("price", 0) or 0),
