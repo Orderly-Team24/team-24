@@ -5,6 +5,7 @@ from recommendation_session import create_session, mark_shown
 from ai_service import (
     AIServiceUnavailableError,
     FALLBACK_POOL,
+    extract_negated_terms,
     filter_fallback_pool_by_preferences,
     get_recommendation_struct,
     pick_from_pool,
@@ -47,7 +48,19 @@ def display_recommendations(data: RecommendationRequest):
     """
     prefs = data.preferences
 
-    
+    # Fold explicit negations in the free-text mood/craving message (e.g.
+    # "I don't want steak") into exclude_ingredients, so they get the same
+    # hard-filter + post-hoc guarantee as allergies instead of relying on
+    # the LLM to infer them from prose alone.
+    negated_terms = extract_negated_terms(data.message)
+    if negated_terms:
+        existing_excludes = list(prefs.exclude_ingredients or []) if prefs else []
+        existing_lower = {item.lower() for item in existing_excludes}
+        merged_excludes = existing_excludes + [
+            term for term in negated_terms if term.lower() not in existing_lower
+        ]
+        prefs = (prefs or Preferences()).model_copy(update={"exclude_ingredients": merged_excludes})
+
     candidates = data.menu if data.menu else FALLBACK_POOL
 
     

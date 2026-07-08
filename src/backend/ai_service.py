@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from typing import Any
 
 # --- shared "shape" of a recommendation ---------------------------------
@@ -106,6 +107,40 @@ def _clean_list(value: Any) -> list[str]:
     if isinstance(value, str):
         value = [value]
     return [str(item).strip() for item in value if str(item).strip()]
+
+
+_NEGATION_PATTERNS = [
+    re.compile(r"\b(?:don'?t|do not|doesn'?t|does not)\s+want\s+(.+?)(?:[.,;!?]|$)", re.IGNORECASE),
+    re.compile(r"\bnot\s+(?:in the mood for|feeling)\s+(.+?)(?:[.,;!?]|$)", re.IGNORECASE),
+    re.compile(r"\bwithout\s+(.+?)(?:[.,;!?]|$)", re.IGNORECASE),
+    re.compile(r"\bno\s+(.+?)(?:[.,;!?]|$)", re.IGNORECASE),
+]
+
+_NEGATION_TRAILING_STOPWORDS = re.compile(
+    r"\s+(?:and|or|but|today|tonight|please|thanks|thank you)\b.*$", re.IGNORECASE
+)
+
+
+def extract_negated_terms(message: str) -> list[str]:
+    """Best-effort extraction of foods the user says they don't want, e.g.
+    "I don't want steak today" -> ["steak"].
+
+    This is a heuristic (regex, not real NLP) — it won't catch every possible
+    phrasing. What it does catch gets merged into `exclude_ingredients` by
+    the caller, so the existing hard exclude filter and post-hoc check
+    (see `filter_fallback_pool_by_preferences` / `get_recommendation_struct`)
+    apply to it exactly like an allergy: never recommend a matching dish.
+    """
+    if not message:
+        return []
+
+    terms: list[str] = []
+    for pattern in _NEGATION_PATTERNS:
+        for match in pattern.finditer(message):
+            term = _NEGATION_TRAILING_STOPWORDS.sub("", match.group(1)).strip()
+            if term and len(term.split()) <= 4:
+                terms.append(term)
+    return terms
 
 
 def _format_preferences(preferences: Any) -> str:
@@ -232,6 +267,12 @@ def _stub(
 
 _OPENAI_SYSTEM_PROMPT = (
     "You are Orderly, a food recommendation AI. "
+    "If the user's request says they don't want, dislike, or aren't in the "
+    'mood for something (e.g. "I don\'t want steak", "no seafood"), treat '
+    "that exactly like an excluded ingredient in the preferences below — "
+    "never recommend a dish containing it, even if nothing else matches as "
+    "well. Excluded ingredients always take priority over liked ingredients "
+    "and cuisine preference. "
     "Always reply with exactly ONE JSON object, no prose, no markdown, "
     "matching this schema: "
     '{"name": str, "price": number, "description": str, '
