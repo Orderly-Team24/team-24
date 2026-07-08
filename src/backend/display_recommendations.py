@@ -5,7 +5,9 @@ from recommendation_session import create_session, mark_shown
 from ai_service import (
     AIServiceUnavailableError,
     FALLBACK_POOL,
+    extract_meal_type,
     extract_negated_terms,
+    filter_by_meal_type,
     filter_fallback_pool_by_preferences,
     get_recommendation_struct,
     pick_from_pool,
@@ -76,6 +78,11 @@ def display_recommendations(data: RecommendationRequest):
             # Every candidate dish contains an excluded (e.g. allergen)
             # ingredient — no safe recommendation exists.
             return {"recommendations": []}
+
+    # Meal type (breakfast/lunch/dinner) named in the mood/craving message is
+    # a soft preference like cuisine, not a safety constraint — narrow to
+    # matching dishes when we can, otherwise keep the current candidates.
+    candidates = filter_by_meal_type(candidates, extract_meal_type(data.message))
 
     prefs_dict = prefs.model_dump() if prefs else None
 
