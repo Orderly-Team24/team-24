@@ -58,9 +58,11 @@ def display_recommendations(data: RecommendationRequest):
             return {"recommendations": []}
 
     if prefs is not None:
-        preferred_candidates = filter_fallback_pool_by_preferences(candidates, prefs)
-        if preferred_candidates:
-            candidates = preferred_candidates
+        candidates = filter_fallback_pool_by_preferences(candidates, prefs)
+        if not candidates:
+            # Every candidate dish contains an excluded (e.g. allergen)
+            # ingredient — no safe recommendation exists.
+            return {"recommendations": []}
 
     prefs_dict = prefs.model_dump() if prefs else None
 
