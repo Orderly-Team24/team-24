@@ -42,7 +42,9 @@ const FoodRecommenderPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: callCounter.current > 0 ? `option ${callCounter.current}` : (mood || 'Recommend a dish'),
+          message: callCounter.current > 0
+            ? `${mood || 'Recommend a dish'}. (option ${callCounter.current})`
+            : (mood || 'Recommend a dish'),
           menu: menu || [],
           preferences,
         }),
