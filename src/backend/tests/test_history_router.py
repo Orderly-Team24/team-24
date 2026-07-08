@@ -217,3 +217,49 @@ def test_display_recommendations_id_is_repeatable():
     a = client.post("/display/recommendations", json={"message": ""}).json()
     b = client.post("/display/recommendations", json={"message": ""}).json()
     assert a["recommendations"][0]["id"] == b["recommendations"][0]["id"]
+
+
+# --- Dislikes ------------------------------------------------------------
+
+
+def test_dislike_marks_dish():
+    resp = client.post("/history/orders/42/dislike", headers=HEADERS)
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "disliked", "dish_id": 42}
+
+
+def test_get_dislikes_returns_disliked_ids():
+    client.post("/history/orders/42/dislike", headers=HEADERS)
+    client.post("/history/orders/7/dislike", headers=HEADERS)
+    resp = client.get("/history/dislikes", headers=HEADERS)
+    assert resp.status_code == 200
+    assert set(resp.json()["dislikes"]) == {42, 7}
+
+
+def test_dislike_is_idempotent():
+    client.post("/history/orders/42/dislike", headers=HEADERS)
+    client.post("/history/orders/42/dislike", headers=HEADERS)
+    resp = client.get("/history/dislikes", headers=HEADERS)
+    assert resp.json()["dislikes"] == [42]
+
+
+def test_dislike_requires_user_id():
+    resp = client.post("/history/orders/42/dislike")
+    assert resp.status_code == 400
+
+
+def test_get_dislikes_requires_user_id():
+    resp = client.get("/history/dislikes")
+    assert resp.status_code == 400
+
+
+def test_dislikes_are_per_user():
+    client.post("/history/orders/42/dislike", headers={"X-User-Id": "alice"})
+    resp = client.get("/history/dislikes", headers={"X-User-Id": "bob"})
+    assert resp.json()["dislikes"] == []
+
+
+def test_get_dislikes_empty_for_new_user():
+    resp = client.get("/history/dislikes", headers={"X-User-Id": "fresh-user"})
+    assert resp.status_code == 200
+    assert resp.json() == {"user_id": "fresh-user", "dislikes": []}

@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 from types import SimpleNamespace
 
+import pytest
 from fastapi.testclient import TestClient
 
 import ai_service
@@ -121,6 +122,33 @@ def test_call_backend_passes_menu_to_non_stub_backends(monkeypatch):
     assert received["menu"] == menu
 
 
+def test_get_recommendation_struct_rejects_llm_pick_that_ignores_excludes(monkeypatch):
+    """Defense in depth: even if the configured backend (e.g. an LLM) returns
+    a dish containing an excluded/allergen ingredient, it must never reach
+    the caller — it should surface as AIServiceUnavailableError instead."""
+
+    def fake_backend(user_message, preferences=None, menu=None):
+        return {
+            "name": "Peanut noodles",
+            "price": 9,
+            "description": "",
+            "ingredients": ["peanut", "noodles"],
+            "reason": "ok",
+        }
+
+    monkeypatch.setenv("AI_BACKEND", "openai")
+    monkeypatch.setitem(ai_service._BACKENDS, "openai", fake_backend)
+
+    try:
+        with pytest.raises(ai_service.AIServiceUnavailableError):
+            ai_service.get_recommendation_struct(
+                "",
+                {"exclude_ingredients": ["peanut"]},
+            )
+    finally:
+        monkeypatch.delenv("AI_BACKEND", raising=False)
+
+
 def test_stub_filters_by_exclude_ingredients():
     pick = ai_service._stub(
         "",
@@ -137,21 +165,59 @@ def test_stub_filters_by_cuisine_when_possible():
     assert pick["cuisine"] == "Italian"
 
 
-def test_stub_falls_back_to_full_pool_when_preferences_filter_everything():
+def test_stub_falls_back_to_cuisine_ignored_pool_when_no_cuisine_matches():
+    """Cuisine is a soft preference: if nothing matches, we keep the
+    (excludes-filtered) candidates instead of returning nothing."""
     pick = ai_service._stub(
         "",
         {
             "cuisine": "Martian",
-            "exclude_ingredients": [
-                "salmon",
-                "mushroom",
-                "chicken",
-                "lentils",
-                "tomato",
-            ],
+            "exclude_ingredients": ["salmon"],
         },
     )
-    assert pick in ai_service.FALLBACK_POOL
+    assert pick is not None
+    assert "salmon" not in [item.lower() for item in pick["ingredients"]]
+
+
+def test_stub_returns_none_when_every_dish_is_excluded():
+    """Safety property: if excludes (allergens) remove every candidate dish,
+    the stub must return no recommendation at all — never fall back to an
+    unfiltered dish that could contain the allergen."""
+    all_ingredients = {
+        ingredient.lower()
+        for dish in ai_service.FALLBACK_POOL
+        for ingredient in dish["ingredients"]
+    }
+    pick = ai_service._stub(
+        "",
+        {"exclude_ingredients": sorted(all_ingredients)},
+    )
+    assert pick is None
+
+
+def test_filter_returns_empty_when_excludes_remove_every_dish():
+    pool = ai_service.filter_fallback_pool_by_preferences(
+        [
+            {"name": "Peanut noodles", "ingredients": ["peanut", "noodles"]},
+            {"name": "Almond cake", "ingredients": ["almond", "flour", "sugar"]},
+        ],
+        {"exclude_ingredients": ["peanut", "almond"]},
+    )
+    assert pool == []
+
+
+def test_filter_excludes_wins_over_same_ingredient_in_likes():
+    """If the same ingredient is listed as both a like and an exclude
+    (e.g. user mistakenly liked something they're allergic to), the
+    exclude must win — likes are never used to override a hard exclude."""
+    pool = ai_service.filter_fallback_pool_by_preferences(
+        ai_service.FALLBACK_POOL,
+        {"exclude_ingredients": ["salmon"], "favorite_ingredients": ["salmon"]},
+    )
+    assert pool
+    assert all(
+        "salmon" not in [i.lower() for i in dish["ingredients"]] for dish in pool
+    )
 
 
 def test_endpoint_honors_preferences_in_stub_mode():
@@ -169,3 +235,95 @@ def test_endpoint_honors_preferences_in_stub_mode():
     dish = resp.json()["recommendations"][0]
     assert dish["name"] == "Mushroom risotto"
     assert "tomato" not in [item.lower() for item in dish["ingredients"]]
+
+
+def test_endpoint_returns_empty_recommendations_when_all_dishes_excluded():
+    """End-to-end safety check: if every dish on the (uploaded) menu contains
+    an excluded ingredient, the endpoint must return an empty recommendation
+    list — never a dish containing that ingredient."""
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "",
+            "menu": [
+                {"name": "Peanut noodles", "price": 9, "ingredients": ["peanut", "noodles"]},
+                {"name": "Almond cake", "price": 6, "ingredients": ["almond", "flour", "sugar"]},
+            ],
+            "preferences": {"exclude_ingredients": ["peanut", "almond"]},
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["recommendations"] == []
+
+
+def test_endpoint_excludes_wins_over_same_ingredient_in_likes():
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "",
+            "preferences": {
+                "exclude_ingredients": ["salmon"],
+                "favorite_ingredients": ["salmon"],
+            },
+        },
+    )
+    assert resp.status_code == 200
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert "salmon" not in [item.lower() for item in recs[0]["ingredients"]]
+
+
+# --- negation in the free-text mood/craving message ----------------------
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("I don't want steak today", ["steak"]),
+        ("I don't want steak", ["steak"]),
+        ("do not want shellfish please", ["shellfish"]),
+        ("I'm not in the mood for pasta", ["pasta"]),
+        ("not feeling sushi tonight", ["sushi"]),
+        ("something light, without dairy", ["dairy"]),
+        ("no nuts please", ["nuts"]),
+        ("Surprise me!", []),
+        ("", []),
+    ],
+)
+def test_extract_negated_terms(message, expected):
+    assert ai_service.extract_negated_terms(message) == expected
+
+
+def test_endpoint_never_recommends_a_dish_the_user_said_they_dont_want():
+    """Reproduces the reported bug: typing "I don't want steak" into the
+    mood field must never result in a steak recommendation, even when steak
+    is on the uploaded menu."""
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "I don't want steak today",
+            "menu": [
+                {"name": "Ribeye steak", "price": 24, "ingredients": ["steak", "butter"]},
+                {"name": "Grilled chicken", "price": 15, "ingredients": ["chicken", "herbs"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert recs[0]["name"] == "Grilled chicken"
+
+
+def test_endpoint_returns_empty_when_every_menu_dish_is_the_unwanted_food():
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "I don't want steak",
+            "menu": [
+                {"name": "Ribeye steak", "price": 24, "ingredients": ["steak", "butter"]},
+                {"name": "Steak frites", "price": 20, "ingredients": ["steak", "potato"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["recommendations"] == []

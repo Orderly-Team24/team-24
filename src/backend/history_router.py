@@ -1,9 +1,11 @@
 """Order history HTTP endpoints (stub storage).
 
 Routes:
-- POST /history/orders        — record a dish into a user's history
-- GET  /history/orders        — list a user's history
-- GET  /history/orders/check  — whether a given dish is already in history
+- POST /history/orders               — record a dish into a user's history
+- GET  /history/orders               — list a user's history
+- GET  /history/orders/check         — whether a given dish is already in history
+- POST /history/orders/{dish_id}/dislike — mark a dish as disliked
+- GET  /history/dislikes             — list a user's disliked dish ids
 
 No auth yet — `user_id` is passed as a query/header parameter so we can
 swap it for a real session later without changing the URL shape.
@@ -15,7 +17,9 @@ from fastapi import APIRouter, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from order_history import (
+    add_dislike,
     add_order,
+    get_dislikes,
     get_history,
     has_ordered,
     make_dish_id,
@@ -124,6 +128,36 @@ def check_order(
         dish_id=dish_id,
         already_ordered=has_ordered(user_id, dish_id),
     )
+
+
+class DislikeResponse(BaseModel):
+    status: str
+    dish_id: int
+
+
+class DislikesResponse(BaseModel):
+    user_id: str
+    dislikes: list[int]
+
+
+@router.post("/orders/{dish_id}/dislike", response_model=DislikeResponse)
+def post_dislike(
+    dish_id: int,
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+):
+    """Mark a dish as disliked so it's excluded from future recommendations."""
+    user_id = _user_id(x_user_id)
+    add_dislike(user_id, dish_id)
+    return DislikeResponse(status="disliked", dish_id=dish_id)
+
+
+@router.get("/dislikes", response_model=DislikesResponse)
+def list_dislikes(
+    x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+):
+    """Return the user's disliked dish ids."""
+    user_id = _user_id(x_user_id)
+    return DislikesResponse(user_id=user_id, dislikes=get_dislikes(user_id))
 
 
 # --- dev / test helpers -------------------------------------------------

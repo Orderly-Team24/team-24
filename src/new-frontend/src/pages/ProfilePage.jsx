@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 
@@ -22,12 +22,22 @@ function ProfilePage() {
 
   const listToString = (arr) => (arr || []).join(', ');
 
+  const redirectToLogin = useCallback(() => {
+    localStorage.removeItem('orderly_access_token');
+    localStorage.removeItem('orderly_refresh_token');
+    navigate('/login');
+  }, [navigate]);
+
   useEffect(() => {
     const fetchPreferences = async () => {
       try {
         const response = await fetch(`${API_URL}/users/me/preferences`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (response.status === 401) {
+          redirectToLogin();
+          return;
+        }
         if (!response.ok) {
           setLoadError('Failed to load preferences.');
           return;
@@ -42,7 +52,7 @@ function ProfilePage() {
     };
 
     fetchPreferences();
-  }, [token]);
+  }, [token, redirectToLogin]);
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -64,6 +74,11 @@ function ProfilePage() {
         }),
       });
 
+      if (response.status === 401) {
+        redirectToLogin();
+        return;
+      }
+
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
         setSaveError(body.detail || 'Failed to save preferences.');
@@ -82,6 +97,11 @@ function ProfilePage() {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (response.status === 401) {
+        redirectToLogin();
+        return;
+      }
 
       if (!response.ok) {
         const body = await response.json().catch(() => ({}));
