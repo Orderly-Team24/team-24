@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/App.css';
 
@@ -22,11 +22,11 @@ function ProfilePage() {
 
   const listToString = (arr) => (arr || []).join(', ');
 
-  const redirectToLogin = () => {
+  const redirectToLogin = useCallback(() => {
     localStorage.removeItem('orderly_access_token');
     localStorage.removeItem('orderly_refresh_token');
     navigate('/login');
-  };
+  }, [navigate]);
 
   useEffect(() => {
     const fetchPreferences = async () => {
@@ -52,7 +52,7 @@ function ProfilePage() {
     };
 
     fetchPreferences();
-  }, [token]);
+  }, [token, redirectToLogin]);
 
   const handleSave = async (e) => {
     e.preventDefault();
