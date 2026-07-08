@@ -26,13 +26,13 @@ export default function HistoryPage() {
           },
         });
 
-        if (!res.ok) {
+        if (res.ok == false) {
           throw new Error(`Request failed with status ${res.status}`);
         }
 
         const data = await res.json();
         if (!cancelled) {
-          setOrders(data.orders || []);
+          setOrders(data.history || []);
         }
       } catch (err) {
         if (!cancelled) {
@@ -74,13 +74,13 @@ export default function HistoryPage() {
 
       setOrders((prev) =>
         prev.map((order) =>
-          order.dish_id === dishId ? { ...order, disliked: true } : order
+          order.id === dishId ? { ...order, disliked: true } : order
         )
       );
     } catch (err) {
       setOrders((prev) =>
         prev.map((order) =>
-          order.dish_id === dishId
+          order.id === dishId
             ? { ...order, dislikeError: true }
             : order
         )
@@ -121,10 +121,10 @@ export default function HistoryPage() {
       ) : (
         <div className="history-list">
           {orders.map((order) => {
-            const isPending = !!pendingDislikes[order.dish_id];
+            const isPending = !!pendingDislikes[order.id];
             return (
               <div
-                key={order.dish_id}
+                key={order.id}
                 className={`history-card${order.disliked ? " disliked" : ""}`}
               >
                 <div className="history-card-info">
@@ -145,7 +145,7 @@ export default function HistoryPage() {
                 <button
                   className="dislike-button"
                   disabled={order.disliked || isPending}
-                  onClick={() => handleDislike(order.dish_id)}
+                  onClick={() => handleDislike(order.id)}
                 >
                   {order.disliked
                     ? "Disliked ✓"
