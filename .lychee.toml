@@ -8,6 +8,11 @@ exclude = [
     "https://github.com/.*/settings/.*",
     # Render free-tier root paths return 404 (no root route); individual API endpoints are tested separately
     "https://team-24-1.onrender.com",
+    # TEMPORARY: GitHub Pages (docs/index.md) only builds from main, so this
+    # 404s on every PR that adds/changes it, before main has ever seen the
+    # content. Remove this line in a follow-up PR once the site is confirmed
+    # live at https://orderly-team24.github.io/team-24/ after merging.
+    "https://orderly-team24.github.io/team-24/",
     "file://.*"
 ]
 

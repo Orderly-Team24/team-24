@@ -50,6 +50,7 @@ def make_dish_id(dish: dict[str, Any]) -> int:
 
 _lock = threading.RLock()
 _store: dict[str, list[dict[str, Any]]] = {}
+_dislikes: dict[str, set[int]] = {}
 
 # --- dislike store (in-memory) ------------------------------------------
 #
@@ -112,39 +113,23 @@ def clear_history(user_id: str) -> None:
         _store.pop(user_id, None)
 
 
+def add_dislike(user_id: str, dish_id: int) -> None:
+    """Mark a dish as disliked for the user. Idempotent — a set dedups."""
+    if not user_id:
+        raise ValueError("user_id is required")
+    with _lock:
+        _dislikes.setdefault(user_id, set()).add(dish_id)
+    log.info("Disliked dish id=%s for user=%s", dish_id, user_id)
+
+
+def get_dislikes(user_id: str) -> list[int]:
+    """Return the user's disliked dish ids."""
+    with _lock:
+        return list(_dislikes.get(user_id, set()))
+
+
 def reset_for_tests() -> None:
     """Wipe the whole in-memory store. For tests only."""
     with _lock:
         _store.clear()
-
-
-# --- dislike helpers (US-015) -------------------------------------------
-
-
-def add_dislike(user_id: str, dish_id: int) -> None:
-    """Record a dish as disliked by the given user."""
-    if not user_id:
-        raise ValueError("user_id is required")
-    if dish_id <= 0:
-        raise ValueError("dish_id must be a positive integer")
-    with _lock:
-        _dislike_store.setdefault(user_id, set()).add(dish_id)
-    log.info("Added dislike dish_id=%s for user=%s", dish_id, user_id)
-
-
-def get_dislikes(user_id: str) -> list[int]:
-    """Return the list of dish ids the user has disliked."""
-    with _lock:
-        return sorted(_dislike_store.get(user_id, set()))
-
-
-def clear_dislikes(user_id: str) -> None:
-    """Wipe a single user's dislikes. Mostly useful for tests."""
-    with _lock:
-        _dislike_store.pop(user_id, None)
-
-
-def reset_dislikes_for_tests() -> None:
-    """Wipe the whole in-memory dislike store. For tests only."""
-    with _lock:
-        _dislike_store.clear()
+        _dislikes.clear()

@@ -1,7 +1,8 @@
 # Roadmap
 
 ## Sprint 1
-- **Milestone:** [Sprint 1](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20state%3Aopen%20milestone%3A%22Sprint%201%22)
+- **Milestone:** [Milestone - Sprint 1](https://github.com/Orderly-Team24/team-24/milestone/1?closed=1)
+- **Issues:** [Closed issues - Sprint 1](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20state%3Aclosed%20milestone%3A%22Sprint%201%22)
 - **Dates:** 15-06-2026 – 21-06-2026
 - **Goal:** MVP-V1, enable users to upload a photo of a menu from the gallery and receive a dish recommendation based on the menu.
 - **Focus or expected outcome statement:** 
@@ -10,10 +11,20 @@
 	- Write backend for uploading menu and displaying recommendations
 - **Planned items:** 
 	- [US-011: Upload photo of a menu - Issue #62](https://github.com/Orderly-Team24/team-24/issues/62)
+	- [US-011-1: Choose photo from gallery - Issue #71](https://github.com/Orderly-Team24/team-24/issues/71)
+	- [US-011-1: Frontend - Issue #92](https://github.com/Orderly-Team24/team-24/issues/92)
+	- [US-011-1: Backend - Issue #93](https://github.com/Orderly-Team24/team-24/issues/93)
+	- [US-011-2: Text parsing - Issue #72](https://github.com/Orderly-Team24/team-24/issues/72)
+	- [US-011-3: Dish choice - Issue #73](https://github.com/Orderly-Team24/team-24/issues/73)
+	- [US-011-4: Displaying menu recommendations - Issue #75](https://github.com/Orderly-Team24/team-24/issues/75)
+	- [US-011-4: Frontend - Issue #94](https://github.com/Orderly-Team24/team-24/issues/94)
+	- [US-011-4: Backend - Issue #95](https://github.com/Orderly-Team24/team-24/issues/95)
+	- [US-011-5: Deploy publicly - Issue #122](https://github.com/Orderly-Team24/team-24/issues/122)
 
 
 ## Sprint 2
-- **Milestone:** [Sprint 2](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20state%3Aopen%20milestone%3A%22Sprint%202%22)
+- **Milestone:** [Milestone - Sprint 2](https://github.com/Orderly-Team24/team-24/milestone/2?closed=1)
+- **Issues:** [Closed issues - Sprint 2](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20state%3Aclosed%20milestone%3A%22Sprint%202%22)
 - **Dates:** 22-06-2026 – 28-06-2026
 - **Goal:** End-to-end flow works on the live deployment. Users fill a preferences questionnaire (with mandatory allergens), upload a menu photo with a budget, OCR extracts the text, the parser structures it, and the recommender returns a dish that matches preferences, contains no allergens, and fits the budget.
 - **Focus or expected outcome statement:** 
@@ -22,6 +33,44 @@
 	- The AI model can recommend a dish according to the preferences
 - **Planned items:** 
 	- [US-001: Propose dishes according to the budget - Issue #57](https://github.com/Orderly-Team24/team-24/issues/57)
+	- [US-001-1: Budget: API + filter = Issue #154](https://github.com/Orderly-Team24/team-24/issues/154)
+	- [US-001-2: Budget: UI - Issue #155](https://github.com/Orderly-Team24/team-24/issues/155)
 	- [US-004: Propose dishes according to preferences - Issue #64](https://github.com/Orderly-Team24/team-24/issues/64)
+	- [US-004-1: Preferences+API contract - Issue #150](https://github.com/Orderly-Team24/team-24/issues/150)
+	- [US-004-2: Preferences: prompt + stub - Issue #151](https://github.com/Orderly-Team24/team-24/issues/151)
+	- [US-004-3: Preferences: UI - Issue #152](https://github.com/Orderly-Team24/team-24/issues/152)
+	- [US-004-4: Preferences: parser-binding - Issue #153](https://github.com/Orderly-Team24/team-24/issues/153)
 	- [US-012: Button "I'll order dish" - Issue #146](https://github.com/Orderly-Team24/team-24/issues/146)
+	- [US-012-1: Frontend - Issue #156](https://github.com/Orderly-Team24/team-24/issues/156)
+	- [US-012-2: Backend - Issue #157](https://github.com/Orderly-Team24/team-24/issues/157)
 	- [US-013: "Button "Another option" - Issue #147](https://github.com/Orderly-Team24/team-24/issues/147)
+	- [US-013-1: Frontend - Issue #158](https://github.com/Orderly-Team24/team-24/issues/158)
+	- [US-013-2: Backend - Issue #159](https://github.com/Orderly-Team24/team-24/issues/159)
+	- [Migrate frontend to React - Issue #161](https://github.com/Orderly-Team24/team-24/issues/161)
+	- [Re-deploy frontend after US-011/US-004/US-001 work - Issue #162](https://github.com/Orderly-Team24/team-24/issues/162)
+
+
+## Sprint 3
+- **Milestone:** [Milestone - Sprint 3](https://github.com/Orderly-Team24/team-24/milestone/3?closed=1)
+- **Issues:** [Closed issues - Sprint 3](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20state%3Aclosed%20milestone%3A%22Sprint%203%22)
+- **Dates:** 29-06-2026 – 05.07.2026
+- **Goal:** Polish existing features, add sign-in and sign-up pages, add history management.
+- **Focus or expected outcome statement:** 
+	- Create frontend for buttons "End session" and implement sign-in functionality
+	- Allow users to specify today's meal intent alongside budget
+	- Enable account management (sign-in, delete account)
+	- Fix critical backend issues: OpenAI API key configuration, preferences ignored with budget, and broken OCR
+- **Planned items:** 
+	- [US-002: Ability to sign in - Issue #63](https://github.com/Orderly-Team24/team-24/issues/63)
+	- [US-002-1: Create login page - Issue #74](https://github.com/Orderly-Team24/team-24/issues/74)
+	- [US-002-2: Implement client-side validation and error handling - Issue #76](https://github.com/Orderly-Team24/team-24/issues/76)
+	- [US-002-3: Implement password verification for login - Issue #77](https://github.com/Orderly-Team24/team-24/issues/77)
+	- [US-002-4: Set up JWT token generation and storage - Issue #78](https://github.com/Orderly-Team24/team-24/issues/78)
+	- [US-002-5: Implement redirect after successful login - Issue #79](https://github.com/Orderly-Team24/team-24/issues/79)
+	- [US-002-6: Implement user registration - Issue #216](https://github.com/Orderly-Team24/team-24/issues/216)
+	- [US-014: Button "End session" - Issue #148](https://github.com/Orderly-Team24/team-24/issues/148)
+	- [US-017: Delete account - Issue #221](https://github.com/Orderly-Team24/team-24/issues/221)
+	- [US-018: Specify today's meal intent alongside budget - Issue #222](https://github.com/Orderly-Team24/team-24/issues/222)
+	- [Fix: add OPENAI_API_KEY to Render environment - Issue #217](https://github.com/Orderly-Team24/team-24/issues/217)
+	- [Fix: preferences ignored when max_budget is set in display_recommendations.py - Issue #218](https://github.com/Orderly-Team24/team-24/issues/218)
+	- [Fix: OCR broken in both backend services - Issue #219](https://github.com/Orderly-Team24/team-24/issues/219)

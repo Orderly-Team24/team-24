@@ -2,13 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
+from jwt_handler import create_access_token, create_refresh_token, decode_token
+from models import RefreshTokens
+from datetime import datetime, timedelta
+from database import get_db
+from models import User, Preferences
 
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'db'))
-
-from database import get_db
-from models import User, Preferences
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,6 +29,11 @@ class RegisterRequest(BaseModel):
     username: str
     password: str
     preferences: PreferencesRequest
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 @router.post("/register", status_code=201)
@@ -55,3 +62,62 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "User registered successfully", "user_id": user.id}
+
+
+@router.post("/login")
+def login(data: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == data.email).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+
+    if not pwd_context.verify(data.password, user.hashed_password):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password",
+        )
+    access_token = create_access_token(user.id)
+    refresh_token = create_refresh_token(user.id)
+
+    db.add(RefreshTokens(
+        user_id=user.id,
+        token_hash=pwd_context.hash(refresh_token),
+        expires_at=datetime.utcnow() + timedelta(days=7),
+    ))
+    db.commit()
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+    }
+
+
+class RefreshRequest(BaseModel):
+    refresh_token: str
+
+
+@router.post("/refresh")
+def refresh(data: RefreshRequest, db: Session = Depends(get_db)):
+    payload = decode_token(data.refresh_token)
+
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+    user_id = int(payload["sub"])
+
+    stored_tokens = db.query(RefreshTokens).filter(
+        RefreshTokens.user_id == user_id,
+        RefreshTokens.expires_at > datetime.utcnow(),
+    ).all()
+
+    valid = any(pwd_context.verify(data.refresh_token, t.token_hash) for t in stored_tokens)
+
+    if not valid:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+
+    return {
+        "access_token": create_access_token(user_id)
+    }

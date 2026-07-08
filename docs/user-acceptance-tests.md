@@ -82,3 +82,101 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
 | Sprint 2 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-04 — Sign In With Existing Account
+
+**Related US:** [US-002 – Ability to sign in](https://github.com/Orderly-Team24/team-24/issues/63)
+
+**Precondition:** The app is deployed and accessible at https://team-24-navy.vercel.app/. An account already exists (e.g. created via the registration page).
+
+**Steps:**
+1. Navigate to `/login`.
+2. Enter the correct email and password.
+3. Click **"Sign in"**.
+4. Repeat with an incorrect password.
+
+**Expected result:**
+- With correct credentials: the user is redirected to `/upload`, skipping the questionnaire (their saved preferences are loaded automatically in the background).
+- With an incorrect password: an inline error message is shown (e.g. "Invalid email or password."); the user stays on `/login`.
+- No unhandled crash or blank page in either case.
+
+**Status history:**
+
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-05 — Delete Account
+
+**Related US:** [US-017 – Delete account](https://github.com/Orderly-Team24/team-24/issues/221)
+
+**Precondition:** The app is deployed. The tester is signed in to a disposable test account (do not use a real/shared account — this is irreversible).
+
+**Steps:**
+1. Navigate to `/profile`.
+2. Click **"Delete account"**.
+3. On the confirmation prompt, click **"Yes, delete my account"**.
+4. Try to sign in again with the same credentials.
+
+**Expected result:**
+- A confirmation step is shown before deletion (clicking "Delete account" alone must NOT delete immediately).
+- After confirming, the user is redirected to `/register` and all local session data is cleared.
+- Signing in again with the deleted account's credentials fails with an error (account no longer exists).
+
+**Status history:**
+
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-06 — End Session
+**Related US:** [US-014 – Button "End session"](https://github.com/Orderly-Team24/team-24/issues/148)
+**Precondition:** The app is deployed and accessible at https://team-24-navy.vercel.app/. The user is signed in and has reached the recommendation page (Step 3 of 3).
+
+**Steps:**
+1. On the recommendation page, click **"End session"**.
+2. Observe the redirect.
+3. Try to navigate back to `/food-recommender`.
+
+**Expected result:**
+- The user is redirected to `/upload` (the menu upload page).
+- Session data is cleared from `localStorage`.
+- Auth tokens are NOT cleared — the user remains logged in.
+- Navigating back to `/food-recommender` starts a fresh session with no stale data.
+- No error message is shown.
+
+**Status history:**
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-07 — Specify Today's Meal Intent Alongside Budget
+**Related US:** [US-018 – Specify today's meal intent alongside budget](https://github.com/Orderly-Team24/team-24/issues/222)
+**Precondition:** The app is deployed and accessible at https://team-24-navy.vercel.app/. The user is signed in and has reached the Budget & Menu Photo page (Step 2 of 3).
+
+**Steps:**
+1. On the Budget & Menu Photo page, locate the optional **"What are you in the mood for today?"** field.
+2. Leave it empty and proceed to get a recommendation.
+3. Go back and repeat, this time filling in the mood field (e.g. "something warm and light").
+4. Proceed to get a recommendation.
+5. Click **"End session"** and check if the mood field is cleared.
+
+**Expected result:**
+- The mood field is visible, optional, and shows the correct placeholder text.
+- When left empty, the recommendation behaves as usual based on saved preferences.
+- When filled, the recommendation reason reflects the entered craving.
+- Clicking "End session" clears the mood field.
+- No error message is shown in either case.
+
+**Status history:**
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |

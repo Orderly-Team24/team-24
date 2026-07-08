@@ -8,14 +8,13 @@ function buildPreferences() {
   const raw = JSON.parse(localStorage.getItem('orderly_preferences') || 'null');
   const budget = localStorage.getItem('orderly_budget');
   if (!raw && !budget) return null;
-  return {
-    cuisine: raw?.cuisine || null,
-    exclude_ingredients: [
+  return {cuisine: raw?.cuisine || null, exclude_ingredients: [
       ...(raw?.allergies || []),
       ...(raw?.dislikes || []),
     ],
     favorite_ingredients: raw?.likes || [],
     max_budget: budget ? parseFloat(budget) : null,
+    restrictions: raw?.restrictions || [],
   };
 }
 
@@ -43,7 +42,9 @@ const FoodRecommenderPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: callCounter.current > 0 ? `option ${callCounter.current}` : (mood || 'Recommend a dish'),
+          message: callCounter.current > 0
+            ? `${mood || 'Recommend a dish'}. (option ${callCounter.current})`
+            : (mood || 'Recommend a dish'),
           menu: menu || [],
           preferences,
         }),
@@ -93,8 +94,6 @@ const FoodRecommenderPage = () => {
     localStorage.removeItem('orderly_menu');
     localStorage.removeItem('orderly_preferences');
     localStorage.removeItem('orderly_budget');
-    localStorage.removeItem('orderly_access_token');
-    localStorage.removeItem('orderly_refresh_token');
     sessionStorage.removeItem('orderly_mood');
     navigate('/');
   };
