@@ -70,12 +70,14 @@ const FoodRecommenderPage = () => {
     }
   };
 
+  const userId = localStorage.getItem("userId");
+
   const handleOrder = async () => {
     if (!dish || saved) return;
     try {
       const response = await fetch(`${API_RECOMMENDER}/history/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-User-Id': 'user_123' },
+        headers: { 'Content-Type': 'application/json', 'X-User-Id': userId},
         body: JSON.stringify(dish),
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
