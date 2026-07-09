@@ -6,6 +6,7 @@ from ai_service import (
     AIServiceUnavailableError,
     FALLBACK_POOL,
     extract_negated_terms,
+    extract_negated_terms_via_llm,
     filter_fallback_pool_by_preferences,
     get_recommendation_struct,
     pick_from_pool,
@@ -57,8 +58,16 @@ def display_recommendations(
     # Fold explicit negations in the free-text mood/craving message (e.g.
     # "I don't want steak") into exclude_ingredients, so they get the same
     # hard-filter + post-hoc guarantee as allergies instead of relying on
-    # the LLM to infer them from prose alone.
+    # the recommendation LLM to infer them from prose alone. The regex
+    # extractor runs first (free, catches common phrasings); the LLM-backed
+    # extractor is a best-effort supplement for phrasings it misses.
     negated_terms = extract_negated_terms(data.message)
+    llm_negated_terms = extract_negated_terms_via_llm(data.message)
+    if llm_negated_terms:
+        existing_lower = {t.lower() for t in negated_terms}
+        negated_terms = negated_terms + [
+            t for t in llm_negated_terms if t.lower() not in existing_lower
+        ]
     if negated_terms:
         existing_excludes = list(prefs.exclude_ingredients or []) if prefs else []
         existing_lower = {item.lower() for item in existing_excludes}
