@@ -399,3 +399,57 @@ def test_endpoint_returns_empty_when_menu_is_drinks_only():
     )
     assert resp.status_code == 200
     assert resp.json()["recommendations"] == []
+
+
+# --- meal type (breakfast/lunch/dinner) recognition -----------------------
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("Something for breakfast please", "breakfast"),
+        ("I want brunch", "brunch"),
+        ("What's good for lunch today?", "lunch"),
+        ("Looking for dinner", "dinner"),
+        ("Surprise me!", None),
+        ("", None),
+    ],
+)
+def test_extract_meal_type(message, expected):
+    assert ai_service.extract_meal_type(message) == expected
+
+
+def test_filter_by_meal_type_narrows_to_breakfast_dishes():
+    pool = [
+        {"name": "Ribeye steak", "description": "Grilled to order", "ingredients": ["steak"]},
+        {"name": "Fluffy pancakes", "description": "With maple syrup", "ingredients": ["flour", "egg", "milk"]},
+    ]
+    result = ai_service.filter_by_meal_type(pool, "breakfast")
+    assert result == [pool[1]]
+
+
+def test_filter_by_meal_type_keeps_pool_unchanged_when_nothing_matches():
+    pool = [{"name": "Ribeye steak", "description": "", "ingredients": ["steak"]}]
+    assert ai_service.filter_by_meal_type(pool, "breakfast") == pool
+
+
+def test_filter_by_meal_type_no_op_without_a_meal_type():
+    pool = [{"name": "Ribeye steak", "description": "", "ingredients": ["steak"]}]
+    assert ai_service.filter_by_meal_type(pool, None) == pool
+
+
+def test_endpoint_prefers_breakfast_dish_when_breakfast_is_requested():
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "Something for breakfast",
+            "menu": [
+                {"name": "Ribeye steak", "price": 24, "ingredients": ["steak", "butter"]},
+                {"name": "Fluffy pancakes", "price": 9, "ingredients": ["flour", "egg", "milk"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert recs[0]["name"] == "Fluffy pancakes"
