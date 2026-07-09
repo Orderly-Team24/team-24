@@ -1,6 +1,12 @@
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
-from recommendation_session import create_session, mark_shown
+from recommendation_session import (
+    create_session,
+    get_remaining,
+    get_session,
+    mark_shown,
+    reset_shown,
+)
 
 from ai_service import (
     AIServiceUnavailableError,
@@ -31,8 +37,9 @@ class Preferences(BaseModel):
 
 class RecommendationRequest(BaseModel):
     message: str = ""
-    menu: list[dict] = [] 
-    preferences: Preferences | None = None 
+    menu: list[dict] = []
+    preferences: Preferences | None = None
+    session_id: str | None = None
 
 @router.post("/recommendations")
 def display_recommendations(
@@ -51,6 +58,12 @@ def display_recommendations(
 
     When `X-User-Id` header is provided, dishes the user has disliked
     (via US-015-1) are excluded from recommendations.
+
+    `session_id` (returned in the response) tracks which dishes have
+    already been shown in this "Another option" rotation, so repeat calls
+    with the same `session_id` never show the same dish twice until every
+    remaining candidate has been shown once, at which point the rotation
+    starts over.
     """
     prefs = data.preferences
 
@@ -95,6 +108,21 @@ def display_recommendations(
             if not candidates:
                 return {"recommendations": []}
 
+    # --- Don't repeat a dish already shown in this "Another option"
+    # rotation ------------------------------------------------------------
+    if data.session_id and get_session(data.session_id):
+        session_id = data.session_id
+        remaining_names = {d["name"] for d in get_remaining(session_id)}
+        narrowed = [dish for dish in candidates if dish.get("name") in remaining_names]
+        if not narrowed:
+            # Every candidate has already been shown this session — start
+            # the rotation over rather than returning nothing.
+            reset_shown(session_id)
+            narrowed = candidates
+        candidates = narrowed
+    else:
+        session_id = create_session(candidates)
+
     prefs_dict = prefs.model_dump() if prefs else None
 
     try:
@@ -110,7 +138,7 @@ def display_recommendations(
         ) from exc
 
     if not pick:
-        return {"recommendations": []}
+        return {"recommendations": [], "session_id": session_id}
 
     dish = {
         "name": str(pick.get("name", "Chef's special")),
@@ -119,6 +147,8 @@ def display_recommendations(
         "ingredients": list(pick.get("ingredients", []) or []),
         "reason": str(pick.get("reason", "Recommended by AI")),
     }
+
+    mark_shown(session_id, dish["name"])
 
     return {
         "recommendations": [
@@ -130,5 +160,6 @@ def display_recommendations(
                 "ingredients": dish["ingredients"],
                 "reason":      dish["reason"],
             }
-        ]
+        ],
+        "session_id": session_id,
     }

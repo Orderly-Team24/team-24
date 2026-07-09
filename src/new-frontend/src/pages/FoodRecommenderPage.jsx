@@ -25,6 +25,7 @@ const FoodRecommenderPage = () => {
   const [error, setError] = useState(null);
   const [saved, setSaved] = useState(false);
   const callCounter = useRef(0);
+  const sessionId = useRef(null);
 
   useEffect(() => { loadRecommendation(); }, []);
 
@@ -47,6 +48,7 @@ const FoodRecommenderPage = () => {
             : (mood || 'Recommend a dish'),
           menu: menu || [],
           preferences,
+          session_id: sessionId.current,
         }),
       });
 
@@ -57,6 +59,9 @@ const FoodRecommenderPage = () => {
       }
 
       const data = await response.json();
+      if (data.session_id) {
+        sessionId.current = data.session_id;
+      }
       if (!data.recommendations || data.recommendations.length === 0) {
         setDish(null);
         setError('No dishes found within your budget. Try raising it on the previous step.');
