@@ -17,7 +17,6 @@ function Questionnaire() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const preferences = {
-      cuisine: null,
       likes: parseList(likes),
       dislikes: parseList(dislikes),
       allergies: parseList(allergies),

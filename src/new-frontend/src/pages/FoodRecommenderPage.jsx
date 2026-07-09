@@ -8,7 +8,7 @@ function buildPreferences() {
   const raw = JSON.parse(localStorage.getItem('orderly_preferences') || 'null');
   const budget = localStorage.getItem('orderly_budget');
   if (!raw && !budget) return null;
-  return {cuisine: raw?.cuisine || null, exclude_ingredients: [
+  return {exclude_ingredients: [
       ...(raw?.allergies || []),
       ...(raw?.dislikes || []),
     ],

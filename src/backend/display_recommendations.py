@@ -23,7 +23,6 @@ class Preferences(BaseModel):
     which keeps backward compatibility with the original `message`-only API.
     """
 
-    cuisine: str | None = None
     exclude_ingredients: list[str] | None = None
     favorite_ingredients: list[str] | None = None
     max_budget: float | None = Field(default=None, ge=0)
