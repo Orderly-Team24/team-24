@@ -19,6 +19,7 @@ function ProtectedRoute({ children }) {
     localStorage.removeItem("orderly_refresh_token");
     return <Navigate to="/login" />;
   }
+  
   return children;
 }
 
