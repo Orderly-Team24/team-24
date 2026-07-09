@@ -138,6 +138,65 @@ def extract_negated_terms(message: str) -> list[str]:
     return terms
 
 
+_MEAL_TYPE_PATTERN = re.compile(r"\b(breakfast|brunch|lunch|dinner|supper)\b", re.IGNORECASE)
+
+# Words that typically show up in a dish's name/description/ingredients for
+# a given meal type. Best-effort — real menus don't tag dishes with a meal
+# type, so this is how we approximate it when nothing else is available.
+_MEAL_TYPE_KEYWORDS: dict[str, list[str]] = {
+    "breakfast": [
+        "breakfast", "brunch", "pancake", "waffle", "omelet", "omelette",
+        "egg", "toast", "cereal", "oatmeal", "porridge", "granola",
+        "bacon", "croissant", "bagel", "yogurt", "yoghurt", "smoothie",
+        "muffin", "hash brown",
+    ],
+    "lunch": ["lunch", "sandwich", "wrap", "panini", "salad", "burger"],
+    "dinner": ["dinner", "supper", "steak", "roast", "risotto", "curry", "stew"],
+}
+_MEAL_TYPE_KEYWORDS["brunch"] = _MEAL_TYPE_KEYWORDS["breakfast"]
+_MEAL_TYPE_KEYWORDS["supper"] = _MEAL_TYPE_KEYWORDS["dinner"]
+
+
+def extract_meal_type(message: str) -> str | None:
+    """Best-effort detection of a requested meal type from the free-text
+    mood/craving message, e.g. "something for breakfast" -> "breakfast".
+
+    Heuristic (keyword match, not real NLP) — only recognizes the meal type
+    when the user names it explicitly.
+    """
+    if not message:
+        return None
+    match = _MEAL_TYPE_PATTERN.search(message)
+    return match.group(1).lower() if match else None
+
+
+def filter_by_meal_type(
+    pool: list[dict[str, Any]],
+    meal_type: str | None,
+) -> list[dict[str, Any]]:
+    """Soft-filter `pool` to dishes that look like they fit `meal_type`.
+
+    This is a preference, not a safety constraint: if nothing in the pool
+    looks like a match, the original pool is returned unchanged rather than
+    producing an empty result.
+    """
+    if not meal_type:
+        return pool
+    keywords = _MEAL_TYPE_KEYWORDS.get(meal_type.lower(), [])
+    if not keywords:
+        return pool
+
+    def _dish_matches(dish: dict[str, Any]) -> bool:
+        text = " ".join(
+            [str(dish.get("name", "")), str(dish.get("description", ""))]
+            + [str(i) for i in dish.get("ingredients", [])]
+        ).lower()
+        return any(keyword in text for keyword in keywords)
+
+    matches = [dish for dish in pool if _dish_matches(dish)]
+    return matches or pool
+
+
 def _format_preferences(preferences: Any) -> str:
     likes = _clean_list(
         _preference_value(
@@ -251,6 +310,9 @@ _OPENAI_SYSTEM_PROMPT = (
     "that exactly like an excluded ingredient in the preferences below — "
     "never recommend a dish containing it, even if nothing else matches as "
     "well. Excluded ingredients always take priority over liked ingredients. "
+    "If the user's request names a meal type (breakfast, brunch, lunch, "
+    "dinner, supper), prefer a dish that fits that meal type when the menu "
+    "offers one. "
     "Always reply with exactly ONE JSON object, no prose, no markdown, "
     "matching this schema: "
     '{"name": str, "price": number, "description": str, '
