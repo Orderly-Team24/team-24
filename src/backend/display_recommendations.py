@@ -7,6 +7,7 @@ from ai_service import (
     FALLBACK_POOL,
     extract_negated_terms,
     filter_fallback_pool_by_preferences,
+    filter_out_beverages,
     get_recommendation_struct,
     pick_from_pool,
 )
@@ -82,6 +83,12 @@ def display_recommendations(
             # Every candidate dish contains an excluded (e.g. allergen)
             # ingredient — no safe recommendation exists.
             return {"recommendations": []}
+
+    # A drink on its own is never a valid "meal" recommendation, regardless
+    # of meal type or other preferences.
+    candidates = filter_out_beverages(candidates)
+    if not candidates:
+        return {"recommendations": []}
 
     # --- Filter out disliked dishes (US-015-2) ---------------------------
     if x_user_id:

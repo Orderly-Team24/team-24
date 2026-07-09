@@ -327,3 +327,75 @@ def test_endpoint_returns_empty_when_every_menu_dish_is_the_unwanted_food():
     )
     assert resp.status_code == 200
     assert resp.json()["recommendations"] == []
+
+
+# --- drinks must never be recommended as the "dish" -----------------------
+
+
+@pytest.mark.parametrize(
+    "name,expected",
+    [
+        ("Water", True),
+        ("Sparkling water", True),
+        ("Orange juice", True),
+        ("Coca-Cola", True),
+        ("Cappuccino", True),
+        ("Fluffy pancakes", False),
+        ("Ribeye steak", False),
+    ],
+)
+def test_is_beverage(name, expected):
+    assert ai_service.is_beverage({"name": name}) == expected
+
+
+def test_is_beverage_does_not_flag_food_with_milk_as_an_ingredient():
+    """A dish shouldn't be excluded just because "milk" is an ingredient —
+    only the dish's own name is checked, not its ingredient list."""
+    assert ai_service.is_beverage(
+        {"name": "Fluffy pancakes", "ingredients": ["flour", "egg", "milk"]}
+    ) is False
+
+
+def test_filter_out_beverages_removes_drinks_but_keeps_food():
+    pool = [
+        {"name": "Water", "price": 0},
+        {"name": "Fluffy pancakes", "price": 9},
+    ]
+    assert ai_service.filter_out_beverages(pool) == [pool[1]]
+
+
+def test_filter_out_beverages_returns_empty_when_everything_is_a_drink():
+    pool = [{"name": "Water"}, {"name": "Orange juice"}]
+    assert ai_service.filter_out_beverages(pool) == []
+
+
+def test_endpoint_never_recommends_a_drink_for_breakfast():
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "Something for breakfast",
+            "menu": [
+                {"name": "Water", "price": 0, "ingredients": []},
+                {"name": "Fluffy pancakes", "price": 9, "ingredients": ["flour", "egg", "milk"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert recs[0]["name"] == "Fluffy pancakes"
+
+
+def test_endpoint_returns_empty_when_menu_is_drinks_only():
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "Something for breakfast",
+            "menu": [
+                {"name": "Water", "price": 0, "ingredients": []},
+                {"name": "Orange juice", "price": 3, "ingredients": []},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["recommendations"] == []
