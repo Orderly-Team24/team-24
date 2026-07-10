@@ -26,7 +26,6 @@ from typing import Any
 FALLBACK_POOL = [
     {
         "name": "Grilled salmon with lemon-dill sauce",
-        "cuisine": "American",
         "price": 18.50,
         "description": "Pan-seared Atlantic salmon, served with seasonal vegetables and jasmine rice.",
         "ingredients": ["salmon", "lemon", "dill", "rice", "asparagus"],
@@ -34,7 +33,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Mushroom risotto",
-        "cuisine": "Italian",
         "price": 14.00,
         "description": "Creamy Arborio rice with porcini and cremini mushrooms, finished with parmesan.",
         "ingredients": ["arborio rice", "porcini", "cremini", "parmesan", "white wine"],
@@ -42,7 +40,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Chicken pho",
-        "cuisine": "Vietnamese",
         "price": 12.50,
         "description": "Vietnamese rice-noodle soup with poached chicken, herbs, and lime.",
         "ingredients": ["chicken", "rice noodles", "ginger", "star anise", "lime", "basil"],
@@ -50,7 +47,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Lentil shepherd's pie",
-        "cuisine": "British",
         "price": 11.00,
         "description": "Brown lentils and vegetables under a creamy mashed-potato crust.",
         "ingredients": ["lentils", "carrot", "onion", "potato", "tomato"],
@@ -58,7 +54,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Margherita pizza",
-        "cuisine": "Italian",
         "price": 13.00,
         "description": "Wood-fired pizza with San Marzano tomato, fior di latte, and basil.",
         "ingredients": ["flour", "tomato", "mozzarella", "basil", "olive oil"],
@@ -174,10 +169,10 @@ def is_beverage(dish: dict[str, Any]) -> bool:
 def filter_out_beverages(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Remove drink-only items from the candidate pool.
 
-    Unlike cuisine/meal type, this is a hard constraint, not a soft
-    preference: recommending "Water" as someone's breakfast is never
-    correct, so if literally everything left is a beverage, the result is
-    an empty list rather than falling back to a drink.
+    Unlike meal type, this is a hard constraint, not a soft preference:
+    recommending "Water" as someone's breakfast is never correct, so if
+    literally everything left is a beverage, the result is an empty list
+    rather than falling back to a drink.
     """
     return [dish for dish in pool if not is_beverage(dish)]
 
@@ -220,9 +215,9 @@ def filter_by_meal_type(
 ) -> list[dict[str, Any]]:
     """Soft-filter `pool` to dishes that look like they fit `meal_type`.
 
-    Like cuisine, this is a preference, not a safety constraint: if nothing
-    in the pool looks like a match, the original pool is returned unchanged
-    rather than producing an empty result.
+    This is a preference, not a safety constraint: if nothing in the pool
+    looks like a match, the original pool is returned unchanged rather than
+    producing an empty result.
     """
     if not meal_type:
         return pool
@@ -242,7 +237,6 @@ def filter_by_meal_type(
 
 
 def _format_preferences(preferences: Any) -> str:
-    cuisine = _preference_value(preferences, "cuisine") or "Any"
     likes = _clean_list(
         _preference_value(
             preferences,
@@ -259,7 +253,6 @@ def _format_preferences(preferences: Any) -> str:
     )
     return (
         "User preferences:\n"
-        f"- Cuisine: {cuisine}\n"
         f"- Likes: {', '.join(likes) if likes else 'None'}\n"
         f"- Excludes: {', '.join(excludes) if excludes else 'None'}\n\n"
         "Recommend a single dish matching these preferences."
@@ -289,14 +282,12 @@ def filter_fallback_pool_by_preferences(
     pool: list[dict[str, Any]],
     preferences: Any,
 ) -> list[dict[str, Any]]:
-    """Filter the stub pool by excludes, then cuisine when possible.
+    """Filter the stub pool by excludes.
 
     Excludes (allergies and dislikes) are a hard safety constraint: if every
     dish contains an excluded ingredient, the result is an empty list — we
     never fall back to recommending an excluded dish just to have *something*
-    to show. Cuisine is a soft preference: if nothing matches, cuisine
-    filtering is skipped and the pre-cuisine candidate set (already free of
-    excluded ingredients) is kept, since missing a cuisine match isn't unsafe.
+    to show.
     """
     candidates = list(pool)
     excludes = [item.lower() for item in _clean_list(_preference_value(preferences, "exclude_ingredients"))]
@@ -312,18 +303,6 @@ def filter_fallback_pool_by_preferences(
         ]
         if not candidates:
             return []
-
-    cuisine = str(_preference_value(preferences, "cuisine", "") or "").strip().lower()
-    if cuisine:
-        cuisine_matches = [
-            dish
-            for dish in candidates
-            if cuisine in str(dish.get("cuisine", "")).lower()
-            or cuisine in str(dish.get("description", "")).lower()
-            or cuisine in str(dish.get("name", "")).lower()
-        ]
-        if cuisine_matches:
-            candidates = cuisine_matches
 
     return candidates
 
@@ -369,8 +348,7 @@ _OPENAI_SYSTEM_PROMPT = (
     'mood for something (e.g. "I don\'t want steak", "no seafood"), treat '
     "that exactly like an excluded ingredient in the preferences below — "
     "never recommend a dish containing it, even if nothing else matches as "
-    "well. Excluded ingredients always take priority over liked ingredients "
-    "and cuisine preference. "
+    "well. Excluded ingredients always take priority over liked ingredients. "
     "Never recommend a beverage/drink on its own (e.g. water, soda, coffee, "
     "juice, tea) as the dish — the recommendation must be an actual meal, "
     "not a drink. "

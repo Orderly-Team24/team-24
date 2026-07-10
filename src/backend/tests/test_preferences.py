@@ -44,7 +44,6 @@ def test_openai_compatible_prompt_includes_preferences(monkeypatch):
     ai_service._openai_compatible(
         "Recommend dinner",
         {
-            "cuisine": "Italian",
             "favorite_ingredients": ["tomato", "basil"],
             "exclude_ingredients": ["nuts", "shellfish"],
         },
@@ -55,7 +54,6 @@ def test_openai_compatible_prompt_includes_preferences(monkeypatch):
 
     user_prompt = captured["messages"][1]["content"]
     assert "User preferences:" in user_prompt
-    assert "- Cuisine: Italian" in user_prompt
     assert "- Likes: tomato, basil" in user_prompt
     assert "- Excludes: nuts, shellfish" in user_prompt
     assert "Recommend a single dish matching these preferences." in user_prompt
@@ -157,28 +155,6 @@ def test_stub_filters_by_exclude_ingredients():
     assert "salmon" not in [item.lower() for item in pick["ingredients"]]
 
 
-def test_stub_filters_by_cuisine_when_possible():
-    pick = ai_service._stub(
-        "",
-        {"cuisine": "Italian"},
-    )
-    assert pick["cuisine"] == "Italian"
-
-
-def test_stub_falls_back_to_cuisine_ignored_pool_when_no_cuisine_matches():
-    """Cuisine is a soft preference: if nothing matches, we keep the
-    (excludes-filtered) candidates instead of returning nothing."""
-    pick = ai_service._stub(
-        "",
-        {
-            "cuisine": "Martian",
-            "exclude_ingredients": ["salmon"],
-        },
-    )
-    assert pick is not None
-    assert "salmon" not in [item.lower() for item in pick["ingredients"]]
-
-
 def test_stub_returns_none_when_every_dish_is_excluded():
     """Safety property: if excludes (allergens) remove every candidate dish,
     the stub must return no recommendation at all — never fall back to an
@@ -226,14 +202,13 @@ def test_endpoint_honors_preferences_in_stub_mode():
         json={
             "message": "",
             "preferences": {
-                "cuisine": "Italian",
                 "exclude_ingredients": ["tomato"],
             },
         },
     )
     assert resp.status_code == 200
     dish = resp.json()["recommendations"][0]
-    assert dish["name"] == "Mushroom risotto"
+    assert dish["name"] == "Grilled salmon with lemon-dill sauce"
     assert "tomato" not in [item.lower() for item in dish["ingredients"]]
 
 
