@@ -180,3 +180,75 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
 | Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-08 — View Order History and Dislike a Dish
+
+**Related US:** [US-015 – Managing history of orders](https://github.com/Orderly-Team24/team-24/issues/149)
+
+**Precondition:** The app is deployed and accessible at https://team-24-navy.vercel.app/. The user is signed in.
+
+**Steps:**
+1. Reach the recommendation page and click **"I'll order it"** on a dish.
+2. Click **"History"** in the top navigation.
+3. Locate the dish just ordered in the list.
+4. Click **"Dislike"** on that dish.
+5. Go back and click **"Another option"** a few times from the same menu.
+
+**Expected result:**
+- The History page loads and shows the ordered dish (name, price, order date if available) — not a blank page.
+- Clicking "Dislike" shows a brief "Saving…" state, then relabels the button "Disliked ✓" and greys out the card, without a full page reload.
+- The disliked dish is never returned by "Another option" or future recommendations for this account.
+
+**Status history:**
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 4 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-09 — AI Never Recommends an Excluded or Allergen Food
+
+**Related US:** [US-005 – No allergen suggestions](https://github.com/Orderly-Team24/team-24/issues/59)
+
+**Precondition:** The app is deployed. The user is signed in with at least one allergy saved on the Profile page (e.g. "shellfish").
+
+**Steps:**
+1. Confirm an allergy (e.g. "shellfish") is saved on the Profile page.
+2. Get a recommendation from a menu that includes both shellfish and non-shellfish dishes.
+3. In the "What are you in the mood for today?" field, type a plain-language exclusion that is NOT one of your saved allergies (e.g. "I don't want steak").
+4. Get a recommendation from a menu that includes steak and at least one alternative.
+5. Repeat with a menu where every dish contains the excluded/allergen ingredient.
+
+**Expected result:**
+- The recommended dish never contains the saved allergen ingredient.
+- The recommended dish never contains the food named as unwanted in the mood field, even though it wasn't entered as a formal allergy.
+- If every available dish contains the excluded ingredient, the app shows no recommendation rather than recommending an unsafe dish.
+
+**Status history:**
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 4 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+
+---
+
+## UAT-10 — AI Recognizes Meal Type and Never Recommends a Drink as the Dish
+
+**Related US:** [US-018 – Specify today's meal intent alongside budget](https://github.com/Orderly-Team24/team-24/issues/222)
+
+**Precondition:** The app is deployed. The user is signed in and has reached the Budget & Menu Photo page.
+
+**Steps:**
+1. In the "What are you in the mood for today?" field, type "something for breakfast".
+2. Get a recommendation from a menu that includes both breakfast-style dishes (e.g. pancakes, eggs) and non-breakfast dishes (e.g. steak).
+3. Repeat with a menu that also includes a beverage-only item (e.g. "Water", "Orange juice").
+
+**Expected result:**
+- When a breakfast-appropriate dish is available on the menu, it is recommended over a dinner-style dish.
+- A beverage-only item (water, juice, soda, coffee, etc.) is never returned as the recommended dish — the recommendation is always an actual meal.
+
+**Status history:**
+| Sprint | Date | Executed by | Result | Notes |
+|--------|------|-------------|--------|-------|
+| Sprint 4 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
