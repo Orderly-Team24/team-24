@@ -76,6 +76,7 @@ function RegisterPage() {
         const tokens = await loginResponse.json();
         localStorage.setItem('orderly_access_token', tokens.access_token);
         localStorage.setItem('orderly_refresh_token', tokens.refresh_token);
+        localStorage.setItem('userId', tokens.user_id);
       }
 
       navigate('/questionnaire');
