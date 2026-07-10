@@ -7,6 +7,7 @@ import Questionnaire from './pages/Questionnaire';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ProfilePage from './pages/ProfilePage';
+import HistoryPage from './pages/HistoryPage';
 import './styles/App.css';
 
 function ProtectedRoute({ children }) {
@@ -59,6 +60,7 @@ function App() {
             <Route path="/upload" element={<ProtectedRoute><UploadMenu /></ProtectedRoute>} />
             <Route path="/food-recommender" element={<ProtectedRoute><FoodRecommenderPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
           </Routes>
         </main>
         <Footer />
