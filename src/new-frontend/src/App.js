@@ -10,15 +10,39 @@ import ProfilePage from './pages/ProfilePage';
 import './styles/App.css';
 
 function ProtectedRoute({ children }) {
-  const token = localStorage.getItem('orderly_access_token');
-  if (!token) return <Navigate to="/login" />;
+  const token = localStorage.getItem("orderly_access_token");
+  if (!token) {
+    return <Navigate to="/login" />;
+  }
+  if (isJwtExpired(token)) {
+    localStorage.removeItem("orderly_access_token");
+    localStorage.removeItem("orderly_refresh_token");
+    return <Navigate to="/login" />;
+  }
+  
   return children;
 }
 
+function isJwtExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp * 1000 < Date.now();
+  } catch {
+    return true;
+  }
+}
+
 function PublicRoute({ children }) {
-  const token = localStorage.getItem('orderly_access_token');
-  if (token) return <Navigate to="/upload" />;
-  return children;
+  const token = localStorage.getItem("orderly_access_token");
+  if (!token) {
+    return children;
+  }
+  if (isJwtExpired(token)) {
+    localStorage.removeItem("orderly_access_token");
+    localStorage.removeItem("orderly_refresh_token");
+    return children;
+  }
+  return <Navigate to="/upload" />;
 }
 
 function App() {
