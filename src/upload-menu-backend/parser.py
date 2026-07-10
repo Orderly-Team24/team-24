@@ -1,6 +1,10 @@
 import re
 
-_PRICE_PATTERN = r'\$?\s*(\d+(?:\.\d{1,2})?)\s*\$?'
+# $, €, £, ₽ before or after the number — see "Currencies и форматы цены"
+# improvement note. The number itself accepts either a dot or a comma as
+# the decimal separator ("12.50" or European-style "12,50").
+_CURRENCY = r'[$€£₽]'
+_PRICE_PATTERN = rf'{_CURRENCY}?\s*(\d+(?:[.,]\d{{1,2}})?)\s*{_CURRENCY}?'
 
 
 def _find_price(line: str) -> tuple[float, str] | None:
@@ -8,7 +12,7 @@ def _find_price(line: str) -> tuple[float, str] | None:
     match = re.search(_PRICE_PATTERN, line)
     if not match:
         return None
-    price = float(match.group(1))
+    price = float(match.group(1).replace(',', '.'))
     remainder = re.sub(_PRICE_PATTERN, '', line)
     remainder = re.sub(r'[.\-–]+', '', remainder).strip()
     return price, remainder
@@ -17,7 +21,7 @@ def _find_price(line: str) -> tuple[float, str] | None:
 def parse_menu_line(line: str) -> dict:
     """
     Парсит одну строку меню и извлекает название блюда и цену.
-    Поддерживает форматы: $10, 10$, $10.99, 10.99$
+    Поддерживает форматы: $10, 10$, $10.99, 10.99$, €10, £10, ₽350, 12,50€
 
     Для меню, где название и описание+цена лежат на разных строках
     (реальные сканы), используй parse_menu — он группирует строки в блоки.
@@ -52,12 +56,15 @@ def _split_into_blocks(raw_text: str) -> list[list[str]]:
 def _parse_block(lines: list[str]) -> dict:
     """Parse one blank-line-delimited block into a single dish entry.
 
-    Real menus put the dish name on its own line, then one or more
-    description lines, with the price stuck onto the end of the last
-    description line — e.g. "with basil aioli and creme fraiche  7".
-    Line 0 is ALWAYS the name; price is only looked for in the remaining
-    lines (or line 0 itself for single-line blocks), so description text
-    never overwrites the real dish name (bug behind issue #283).
+    Real menus put the price in one of two places relative to the name:
+      (a) stuck onto the end of the last description line, e.g.
+          "Dish Name\nwith basil aioli and creme fraiche  7"
+      (b) right next to the name itself, description below, e.g.
+          "Dish Name  $10\nwith basil aioli and creme fraiche"
+    We check the name line for a price first (case b) — if found, the rest
+    of the block is pure description. Otherwise we fall back to searching
+    the description lines for it (case a). Either way the name never gets
+    overwritten by description text (the bug behind issue #283).
     """
     name_line, *rest = lines
 
@@ -67,6 +74,12 @@ def _parse_block(lines: list[str]) -> dict:
             price, name = found
             return {"name": name or name_line.strip(), "price": price, "description": "", "flagged": False}
         return {"name": name_line.strip(), "price": None, "description": "", "flagged": True}
+
+    name_found = _find_price(name_line)
+    if name_found:
+        price, name = name_found
+        description = " ".join(rest).strip()
+        return {"name": name or name_line.strip(), "price": price, "description": description, "flagged": False}
 
     description_parts: list[str] = []
     price = None
@@ -90,31 +103,63 @@ def _parse_block(lines: list[str]) -> dict:
     }
 
 
+def _looks_like_section_header(name: str) -> bool:
+    """Heuristic: real menu section titles (STARTERS, DESSERTS, MAINS) are
+    conventionally printed in caps. A dish whose OCR simply failed to catch
+    a price (e.g. "Caesar Salad") keeps normal capitalization, so it won't
+    get mistaken for a new section and silently swallow the real one.
+    """
+    letters = [c for c in name if c.isalpha()]
+    return bool(letters) and all(c.isupper() for c in letters)
+
+
 def parse_menu(raw_text: str) -> list:
     """
     Принимает сырой текст меню (после OCR) и возвращает список
-    структурированных блюд в формате [{name, price, description, flagged}, ...]
+    структурированных блюд в формате:
+    [{name, price, description, flagged, section}, ...]
 
     Группирует строки в блоки по пустым строкам-разделителям, чтобы название
     блюда не путалось с его описанием, когда цена стоит в конце описания,
     а не рядом с названием (типичный случай для реальных сканов меню —
     см. issue #283).
+
+    Также отслеживает разделы меню: блок без цены, состоящий из КАПСА
+    (например "STARTERS", "DESSERTS"), становится активным разделом для
+    всех следующих за ним блюд, пока не встретится следующий такой блок.
+    Это позволяет AI-рекомендателю использовать раздел как доп. контекст
+    (естественно сочетается с существующим meal-type фильтром в
+    ai_service.py — десерт с большей вероятностью не предложат на завтрак).
+    КАПС-эвристика специально отличает настоящий заголовок раздела от
+    блюда, для которого OCR просто не распознал цену (например "Caesar
+    Salad" без цены — это не новый раздел, а просто блюдо с пропуском).
     """
     blocks = _split_into_blocks(raw_text)
-    return [_parse_block(block) for block in blocks]
+    results = []
+    current_section: str | None = None
+    for block in blocks:
+        dish = _parse_block(block)
+        dish["section"] = current_section
+        results.append(dish)
+        if dish["flagged"] and dish["price"] is None and _looks_like_section_header(dish["name"]):
+            current_section = dish["name"]
+    return results
 
 
 if __name__ == "__main__":
-    test_menu = """Margherita Pizza $12.99
+    test_menu = """STARTERS
+
+Margherita Pizza $12.99
 
 Caesar Salad
 
 Sundried Tomato Risotto Cakes
 with basil aioli and creme fraiche 7
 
-Sweet Onion Rings
-Sweet Vidalias glazed with honey, deep fried
-in beer batter 6"""
+DESSERTS
+
+Tiramisu
+Classic Italian dessert 6,50€"""
 
     parsed = parse_menu(test_menu)
     for item in parsed:

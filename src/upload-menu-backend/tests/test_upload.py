@@ -4,9 +4,13 @@ Run with:
     cd src/upload-menu-backend
     pytest -v
 
-The endpoint runs OCR locally via pytesseract. Tests use a fake
-`pytesseract.image_to_string` (via the `fake_tesseract` fixture) so no real
-Tesseract binary needs to be installed.
+The endpoint runs OCR locally via pytesseract.image_to_data (word-level
+bounding boxes, used for column-aware reconstruction — see ocr_layout.py).
+Tests use a fake `pytesseract.image_to_data` (via the `fake_tesseract`
+fixture) so no real Tesseract binary needs to be installed. The fake is
+configured with plain text (`fake._text = "..."`); it converts that text
+into synthetic single-column word-position data behind the scenes, so
+existing tests didn't need to change how they configure OCR output.
 """
 from __future__ import annotations
 
@@ -25,11 +29,58 @@ MAX_BYTES = MAX_IMAGE_SIZE
 # --- fixtures ------------------------------------------------------------
 
 
+def _fake_ocr_data_from_text(text: str, image_width: int = 1000) -> dict:
+    """Build a synthetic Tesseract `image_to_data` dict from plain
+    multi-line text. Each blank-line-delimited block in `text` gets its
+    own `block_num` (matching real Tesseract, which assigns one block per
+    dish entry — name line + description line(s) together), and every
+    word is kept comfortably left of the image midpoint so the output
+    stays single-column — i.e. reconstruct_text() should hand back
+    (approximately) the same text image_to_string would have given.
+    """
+    data = {
+        "text": [], "left": [], "top": [], "height": [],
+        "block_num": [], "par_num": [], "line_num": [], "conf": [],
+    }
+
+    top = 10
+    block_num = 0
+    line_num = 0
+    block_has_content = False
+    for raw_line in text.split("\n"):
+        line = raw_line.strip()
+        if not line:
+            if block_has_content:
+                block_num += 1
+                line_num = 0
+                block_has_content = False
+            top += 40
+            continue
+        left = 10
+        for word in line.split(" "):
+            if not word:
+                continue
+            data["text"].append(word)
+            data["left"].append(left)
+            data["top"].append(top)
+            data["height"].append(20)
+            data["block_num"].append(block_num)
+            data["par_num"].append(0)
+            data["line_num"].append(line_num)
+            data["conf"].append(95)
+            left += len(word) * 8 + 10
+        top += 25
+        line_num += 1
+        block_has_content = True
+
+    return data
+
+
 class _FakeTesseract:
-    """Drop-in for `pytesseract.image_to_string`.
+    """Drop-in for `pytesseract.image_to_data`.
 
     Configure per-test via attributes:
-      - extracted_text="..."   → what image_to_string returns
+      - extracted_text="..."   → text that reconstruct_text() will produce
       - raise_on_call=Exception → simulates OCR engine failure
     """
 
@@ -43,11 +94,12 @@ class _FakeTesseract:
         self._raise = raise_on_call
         self.calls: list[object] = []
 
-    def __call__(self, image, *args, **kwargs) -> str:
+    def __call__(self, image, *args, **kwargs) -> dict:
         self.calls.append(image)
         if self._raise is not None:
             raise self._raise
-        return self._text
+        width = getattr(image, "width", 1000)
+        return _fake_ocr_data_from_text(self._text, width)
 
 
 @pytest.fixture
@@ -57,13 +109,13 @@ def client() -> TestClient:
 
 @pytest.fixture
 def fake_tesseract(monkeypatch: pytest.MonkeyPatch) -> _FakeTesseract:
-    """Replace pytesseract.image_to_string with a configurable fake.
+    """Replace pytesseract.image_to_data with a configurable fake.
 
-    main.py does `import pytesseract`, so `main.pytesseract.image_to_string`
+    main.py does `import pytesseract`, so `main.pytesseract.image_to_data`
     is the attribute we patch.
     """
     fake = _FakeTesseract()
-    monkeypatch.setattr("main.pytesseract.image_to_string", fake)
+    monkeypatch.setattr("main.pytesseract.image_to_data", fake)
     return fake
 
 
@@ -238,7 +290,7 @@ def test_upload_undecodable_image_returns_422(
     """If PIL can't decode the bytes, return 422 (not 500)."""
     # Use a fake tesseract that doesn't get reached (PIL will reject this first)
     monkeypatch.setattr(
-        "main.pytesseract.image_to_string",
+        "main.pytesseract.image_to_data",
         _FakeTesseract(),
     )
     # JPEG bytes that PIL won't actually decode
@@ -260,7 +312,7 @@ def test_upload_returns_500_on_tesseract_failure(
     fake = _FakeTesseract(
         raise_on_call=RuntimeError("tesseract binary exploded"),
     )
-    monkeypatch.setattr("main.pytesseract.image_to_string", fake)
+    monkeypatch.setattr("main.pytesseract.image_to_data", fake)
 
     response = client.post(
         "/upload-menu",
@@ -284,7 +336,7 @@ def test_second_menu_photo_with_different_layout_still_parses_correctly(
     parser into returning garbled dish names as the "menu".
     """
     fake = _FakeTesseract()
-    monkeypatch.setattr("main.pytesseract.image_to_string", fake)
+    monkeypatch.setattr("main.pytesseract.image_to_data", fake)
 
     # Upload #1: simple single-line format.
     fake._text = "Margherita Pizza $12.99\n\nCaesar Salad $8.00"

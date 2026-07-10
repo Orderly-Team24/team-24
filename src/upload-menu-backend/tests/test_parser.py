@@ -119,3 +119,107 @@ Two skewers of grilled marinated shrimp 7"""
     assert results[0]["flagged"] is True
     assert results[1]["name"] == "Buffalo Shrimp"
     assert results[1]["price"] == 7.0
+
+
+# --- Currency symbols and European decimal comma --------------------------
+
+
+def test_euro_symbol_before_and_after():
+    assert parse_menu_line("Tiramisu €6.50")["price"] == 6.50
+    assert parse_menu_line("Tiramisu 6.50€")["price"] == 6.50
+
+
+def test_pound_and_ruble_symbols():
+    assert parse_menu_line("Fish and Chips £9")["price"] == 9.0
+    assert parse_menu_line("Borscht ₽350")["price"] == 350.0
+
+
+def test_european_decimal_comma():
+    result = parse_menu_line("Classic Italian dessert 6,50€")
+    assert result["price"] == 6.50
+    assert "6,50" not in result["name"]
+    assert "€" not in result["name"]
+
+
+def test_currency_symbol_stripped_from_name():
+    result = parse_menu_line("Soup $5")
+    assert "$" not in result["name"]
+
+
+# --- Section context --------------------------------------------------
+
+
+def test_section_attached_to_dishes_that_follow_a_header():
+    menu_text = """STARTERS
+
+Margherita Pizza $12.99
+
+Caesar Salad
+
+DESSERTS
+
+Tiramisu
+Classic Italian dessert 6,50€"""
+
+    results = parse_menu(menu_text)
+
+    headers = [r for r in results if r["name"] in ("STARTERS", "DESSERTS")]
+    assert [h["section"] for h in headers] == [None, "STARTERS"]
+
+    pizza = next(r for r in results if r["name"] == "Margherita Pizza")
+    salad = next(r for r in results if r["name"] == "Caesar Salad")
+    tiramisu = next(r for r in results if r["name"] == "Tiramisu")
+
+    assert pizza["section"] == "STARTERS"
+    assert salad["section"] == "STARTERS"
+    assert tiramisu["section"] == "DESSERTS"
+
+
+def test_section_is_none_before_any_header():
+    menu_text = """Margherita Pizza $12.99
+
+STARTERS
+
+Caesar Salad"""
+
+    results = parse_menu(menu_text)
+    assert results[0]["section"] is None
+    assert results[2]["section"] == "STARTERS"
+
+
+def test_dish_with_missing_price_does_not_reset_section():
+    """A dish whose price OCR failed to catch (e.g. "Caesar Salad" with no
+    price on the photo) must NOT be mistaken for a new section header —
+    only genuine ALL-CAPS section titles should do that."""
+    menu_text = """STARTERS
+
+Margherita Pizza $12.99
+
+Caesar Salad
+
+DESSERTS
+
+Tiramisu $6"""
+
+    results = parse_menu(menu_text)
+    salad = next(r for r in results if r["name"] == "Caesar Salad")
+    tiramisu = next(r for r in results if r["name"] == "Tiramisu")
+
+    assert salad["section"] == "STARTERS"
+    assert tiramisu["section"] == "DESSERTS"
+
+
+def test_price_on_name_line_with_description_below():
+    """Some menus put the price right next to the name, with the
+    description on the following line(s) instead — the opposite order
+    from the #283 layout. The price must still be found, and the name
+    must not get swallowed by the description in either direction."""
+    menu_text = """Dish Name $10
+with basil aioli and creme fraiche"""
+
+    results = parse_menu(menu_text)
+    assert len(results) == 1
+    assert results[0]["name"] == "Dish Name"
+    assert results[0]["price"] == 10.0
+    assert results[0]["description"] == "with basil aioli and creme fraiche"
+    assert results[0]["flagged"] is False
