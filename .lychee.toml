@@ -13,6 +13,14 @@ exclude = [
     # content. Remove this line in a follow-up PR once the site is confirmed
     # live at https://orderly-team24.github.io/team-24/ after merging.
     "https://orderly-team24.github.io/team-24/",
+    # TEMPORARY: CONTRIBUTING.md and AGENTS.md live at the repo root, outside
+    # the /docs Pages source — docs/index.md links to them via absolute
+    # GitHub blob URLs (a relative link would 404 on the hosted Pages site,
+    # which only serves /docs). Same chicken-and-egg as the Pages link
+    # above: 404s on this PR because main hasn't seen the files yet. Remove
+    # these two lines in a follow-up PR once this PR is merged.
+    "https://github.com/Orderly-Team24/team-24/blob/main/CONTRIBUTING.md",
+    "https://github.com/Orderly-Team24/team-24/blob/main/AGENTS.md",
     "file://.*"
 ]
 
