@@ -18,7 +18,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class PreferencesRequest(BaseModel):
-    cuisine: str | None = None
     allergies: list[str] = []
     likes: list[str] = []
     dislikes: list[str] = []
@@ -92,6 +91,7 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "user_id": user.id,
     }
 
 

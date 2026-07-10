@@ -26,7 +26,6 @@ from typing import Any
 FALLBACK_POOL = [
     {
         "name": "Grilled salmon with lemon-dill sauce",
-        "cuisine": "American",
         "price": 18.50,
         "description": "Pan-seared Atlantic salmon, served with seasonal vegetables and jasmine rice.",
         "ingredients": ["salmon", "lemon", "dill", "rice", "asparagus"],
@@ -34,7 +33,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Mushroom risotto",
-        "cuisine": "Italian",
         "price": 14.00,
         "description": "Creamy Arborio rice with porcini and cremini mushrooms, finished with parmesan.",
         "ingredients": ["arborio rice", "porcini", "cremini", "parmesan", "white wine"],
@@ -42,7 +40,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Chicken pho",
-        "cuisine": "Vietnamese",
         "price": 12.50,
         "description": "Vietnamese rice-noodle soup with poached chicken, herbs, and lime.",
         "ingredients": ["chicken", "rice noodles", "ginger", "star anise", "lime", "basil"],
@@ -50,7 +47,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Lentil shepherd's pie",
-        "cuisine": "British",
         "price": 11.00,
         "description": "Brown lentils and vegetables under a creamy mashed-potato crust.",
         "ingredients": ["lentils", "carrot", "onion", "potato", "tomato"],
@@ -58,7 +54,6 @@ FALLBACK_POOL = [
     },
     {
         "name": "Margherita pizza",
-        "cuisine": "Italian",
         "price": 13.00,
         "description": "Wood-fired pizza with San Marzano tomato, fior di latte, and basil.",
         "ingredients": ["flour", "tomato", "mozzarella", "basil", "olive oil"],
@@ -209,8 +204,66 @@ def extract_negated_terms_via_llm(message: str) -> list[str]:
         return []
 
 
+_MEAL_TYPE_PATTERN = re.compile(r"\b(breakfast|brunch|lunch|dinner|supper)\b", re.IGNORECASE)
+
+# Words that typically show up in a dish's name/description/ingredients for
+# a given meal type. Best-effort — real menus don't tag dishes with a meal
+# type, so this is how we approximate it when nothing else is available.
+_MEAL_TYPE_KEYWORDS: dict[str, list[str]] = {
+    "breakfast": [
+        "breakfast", "brunch", "pancake", "waffle", "omelet", "omelette",
+        "egg", "toast", "cereal", "oatmeal", "porridge", "granola",
+        "bacon", "croissant", "bagel", "yogurt", "yoghurt", "smoothie",
+        "muffin", "hash brown",
+    ],
+    "lunch": ["lunch", "sandwich", "wrap", "panini", "salad", "burger"],
+    "dinner": ["dinner", "supper", "steak", "roast", "risotto", "curry", "stew"],
+}
+_MEAL_TYPE_KEYWORDS["brunch"] = _MEAL_TYPE_KEYWORDS["breakfast"]
+_MEAL_TYPE_KEYWORDS["supper"] = _MEAL_TYPE_KEYWORDS["dinner"]
+
+
+def extract_meal_type(message: str) -> str | None:
+    """Best-effort detection of a requested meal type from the free-text
+    mood/craving message, e.g. "something for breakfast" -> "breakfast".
+
+    Heuristic (keyword match, not real NLP) — only recognizes the meal type
+    when the user names it explicitly.
+    """
+    if not message:
+        return None
+    match = _MEAL_TYPE_PATTERN.search(message)
+    return match.group(1).lower() if match else None
+
+
+def filter_by_meal_type(
+    pool: list[dict[str, Any]],
+    meal_type: str | None,
+) -> list[dict[str, Any]]:
+    """Soft-filter `pool` to dishes that look like they fit `meal_type`.
+
+    This is a preference, not a safety constraint: if nothing in the pool
+    looks like a match, the original pool is returned unchanged rather than
+    producing an empty result.
+    """
+    if not meal_type:
+        return pool
+    keywords = _MEAL_TYPE_KEYWORDS.get(meal_type.lower(), [])
+    if not keywords:
+        return pool
+
+    def _dish_matches(dish: dict[str, Any]) -> bool:
+        text = " ".join(
+            [str(dish.get("name", "")), str(dish.get("description", ""))]
+            + [str(i) for i in dish.get("ingredients", [])]
+        ).lower()
+        return any(keyword in text for keyword in keywords)
+
+    matches = [dish for dish in pool if _dish_matches(dish)]
+    return matches or pool
+
+
 def _format_preferences(preferences: Any) -> str:
-    cuisine = _preference_value(preferences, "cuisine") or "Any"
     likes = _clean_list(
         _preference_value(
             preferences,
@@ -227,7 +280,6 @@ def _format_preferences(preferences: Any) -> str:
     )
     return (
         "User preferences:\n"
-        f"- Cuisine: {cuisine}\n"
         f"- Likes: {', '.join(likes) if likes else 'None'}\n"
         f"- Excludes: {', '.join(excludes) if excludes else 'None'}\n\n"
         "Recommend a single dish matching these preferences."
@@ -257,14 +309,12 @@ def filter_fallback_pool_by_preferences(
     pool: list[dict[str, Any]],
     preferences: Any,
 ) -> list[dict[str, Any]]:
-    """Filter the stub pool by excludes, then cuisine when possible.
+    """Filter the stub pool by excludes.
 
     Excludes (allergies and dislikes) are a hard safety constraint: if every
     dish contains an excluded ingredient, the result is an empty list — we
     never fall back to recommending an excluded dish just to have *something*
-    to show. Cuisine is a soft preference: if nothing matches, cuisine
-    filtering is skipped and the pre-cuisine candidate set (already free of
-    excluded ingredients) is kept, since missing a cuisine match isn't unsafe.
+    to show.
     """
     candidates = list(pool)
     excludes = [item.lower() for item in _clean_list(_preference_value(preferences, "exclude_ingredients"))]
@@ -280,18 +330,6 @@ def filter_fallback_pool_by_preferences(
         ]
         if not candidates:
             return []
-
-    cuisine = str(_preference_value(preferences, "cuisine", "") or "").strip().lower()
-    if cuisine:
-        cuisine_matches = [
-            dish
-            for dish in candidates
-            if cuisine in str(dish.get("cuisine", "")).lower()
-            or cuisine in str(dish.get("description", "")).lower()
-            or cuisine in str(dish.get("name", "")).lower()
-        ]
-        if cuisine_matches:
-            candidates = cuisine_matches
 
     return candidates
 
@@ -337,8 +375,10 @@ _OPENAI_SYSTEM_PROMPT = (
     'mood for something (e.g. "I don\'t want steak", "no seafood"), treat '
     "that exactly like an excluded ingredient in the preferences below — "
     "never recommend a dish containing it, even if nothing else matches as "
-    "well. Excluded ingredients always take priority over liked ingredients "
-    "and cuisine preference. "
+    "well. Excluded ingredients always take priority over liked ingredients. "
+    "If the user's request names a meal type (breakfast, brunch, lunch, "
+    "dinner, supper), prefer a dish that fits that meal type when the menu "
+    "offers one. "
     "Always reply with exactly ONE JSON object, no prose, no markdown, "
     "matching this schema: "
     '{"name": str, "price": number, "description": str, '

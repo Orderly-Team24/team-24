@@ -44,7 +44,6 @@ def test_openai_compatible_prompt_includes_preferences(monkeypatch):
     ai_service._openai_compatible(
         "Recommend dinner",
         {
-            "cuisine": "Italian",
             "favorite_ingredients": ["tomato", "basil"],
             "exclude_ingredients": ["nuts", "shellfish"],
         },
@@ -55,7 +54,6 @@ def test_openai_compatible_prompt_includes_preferences(monkeypatch):
 
     user_prompt = captured["messages"][1]["content"]
     assert "User preferences:" in user_prompt
-    assert "- Cuisine: Italian" in user_prompt
     assert "- Likes: tomato, basil" in user_prompt
     assert "- Excludes: nuts, shellfish" in user_prompt
     assert "Recommend a single dish matching these preferences." in user_prompt
@@ -157,28 +155,6 @@ def test_stub_filters_by_exclude_ingredients():
     assert "salmon" not in [item.lower() for item in pick["ingredients"]]
 
 
-def test_stub_filters_by_cuisine_when_possible():
-    pick = ai_service._stub(
-        "",
-        {"cuisine": "Italian"},
-    )
-    assert pick["cuisine"] == "Italian"
-
-
-def test_stub_falls_back_to_cuisine_ignored_pool_when_no_cuisine_matches():
-    """Cuisine is a soft preference: if nothing matches, we keep the
-    (excludes-filtered) candidates instead of returning nothing."""
-    pick = ai_service._stub(
-        "",
-        {
-            "cuisine": "Martian",
-            "exclude_ingredients": ["salmon"],
-        },
-    )
-    assert pick is not None
-    assert "salmon" not in [item.lower() for item in pick["ingredients"]]
-
-
 def test_stub_returns_none_when_every_dish_is_excluded():
     """Safety property: if excludes (allergens) remove every candidate dish,
     the stub must return no recommendation at all — never fall back to an
@@ -226,14 +202,13 @@ def test_endpoint_honors_preferences_in_stub_mode():
         json={
             "message": "",
             "preferences": {
-                "cuisine": "Italian",
                 "exclude_ingredients": ["tomato"],
             },
         },
     )
     assert resp.status_code == 200
     dish = resp.json()["recommendations"][0]
-    assert dish["name"] == "Mushroom risotto"
+    assert dish["name"] == "Grilled salmon with lemon-dill sauce"
     assert "tomato" not in [item.lower() for item in dish["ingredients"]]
 
 
@@ -424,3 +399,57 @@ def test_endpoint_merges_llm_negation_extraction_into_excludes(monkeypatch):
     recs = resp.json()["recommendations"]
     assert recs
     assert recs[0]["name"] == "Grilled chicken"
+
+
+# --- meal type (breakfast/lunch/dinner) recognition -----------------------
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("Something for breakfast please", "breakfast"),
+        ("I want brunch", "brunch"),
+        ("What's good for lunch today?", "lunch"),
+        ("Looking for dinner", "dinner"),
+        ("Surprise me!", None),
+        ("", None),
+    ],
+)
+def test_extract_meal_type(message, expected):
+    assert ai_service.extract_meal_type(message) == expected
+
+
+def test_filter_by_meal_type_narrows_to_breakfast_dishes():
+    pool = [
+        {"name": "Ribeye steak", "description": "Grilled to order", "ingredients": ["steak"]},
+        {"name": "Fluffy pancakes", "description": "With maple syrup", "ingredients": ["flour", "egg", "milk"]},
+    ]
+    result = ai_service.filter_by_meal_type(pool, "breakfast")
+    assert result == [pool[1]]
+
+
+def test_filter_by_meal_type_keeps_pool_unchanged_when_nothing_matches():
+    pool = [{"name": "Ribeye steak", "description": "", "ingredients": ["steak"]}]
+    assert ai_service.filter_by_meal_type(pool, "breakfast") == pool
+
+
+def test_filter_by_meal_type_no_op_without_a_meal_type():
+    pool = [{"name": "Ribeye steak", "description": "", "ingredients": ["steak"]}]
+    assert ai_service.filter_by_meal_type(pool, None) == pool
+
+
+def test_endpoint_prefers_breakfast_dish_when_breakfast_is_requested():
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "Something for breakfast",
+            "menu": [
+                {"name": "Ribeye steak", "price": 24, "ingredients": ["steak", "butter"]},
+                {"name": "Fluffy pancakes", "price": 9, "ingredients": ["flour", "egg", "milk"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert recs[0]["name"] == "Fluffy pancakes"

@@ -67,7 +67,6 @@ function ProfilePage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          cuisine: null,
           likes: parseList(likes),
           dislikes: parseList(dislikes),
           allergies: parseList(allergies),
