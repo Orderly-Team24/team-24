@@ -138,6 +138,43 @@ def extract_negated_terms(message: str) -> list[str]:
     return terms
 
 
+_BEVERAGE_KEYWORDS = [
+    "water", "sparkling water", "mineral water", "soda", "cola", "coke",
+    "pepsi", "sprite", "fanta", "lemonade", "juice", "coffee", "espresso",
+    "cappuccino", "latte", "mocha", "tea", "chai", "wine", "beer",
+    "cocktail", "milkshake", "shake", "soft drink", "iced tea", "kombucha",
+    "lassi", "cider",
+]
+
+_BEVERAGE_PATTERN = re.compile(
+    r"\b(?:" + "|".join(re.escape(k) for k in _BEVERAGE_KEYWORDS) + r")\b",
+    re.IGNORECASE,
+)
+
+
+def is_beverage(dish: dict[str, Any]) -> bool:
+    """Best-effort detection of a drink-only menu item (e.g. "Water",
+    "Orange juice", "Coca-Cola") by name, so it's never picked as *the*
+    recommended dish — a drink on its own isn't a meal.
+
+    Only the dish name is checked (not ingredients/description): a pancake
+    dish that lists "milk" as an ingredient must not get excluded just
+    because "milk" happens to also be a drink. Keyword matches use word
+    boundaries so e.g. "tea" doesn't false-positive-match inside "steak".
+    """
+    name = str(dish.get("name", ""))
+    return bool(_BEVERAGE_PATTERN.search(name))
+
+
+def filter_out_beverages(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Remove drink-only items from the candidate pool.
+
+    Unlike meal type, this is a hard constraint, not a soft preference:
+    recommending "Water" as someone's breakfast is never correct, so if
+    literally everything left is a beverage, the result is an empty list
+    rather than falling back to a drink.
+    """
+    return [dish for dish in pool if not is_beverage(dish)]
 _NEGATION_EXTRACTION_SYSTEM_PROMPT = (
     "Extract any foods or ingredients the user explicitly says they do NOT "
     'want, dislike, or want to avoid. Reply with ONLY a JSON object: '
@@ -376,6 +413,9 @@ _OPENAI_SYSTEM_PROMPT = (
     "that exactly like an excluded ingredient in the preferences below — "
     "never recommend a dish containing it, even if nothing else matches as "
     "well. Excluded ingredients always take priority over liked ingredients. "
+    "Never recommend a beverage/drink on its own (e.g. water, soda, coffee, "
+    "juice, tea) as the dish — the recommendation must be an actual meal, "
+    "not a drink. "
     "If the user's request names a meal type (breakfast, brunch, lunch, "
     "dinner, supper), prefer a dish that fits that meal type when the menu "
     "offers one. "
