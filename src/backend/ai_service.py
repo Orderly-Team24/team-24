@@ -175,6 +175,14 @@ def filter_out_beverages(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rather than falling back to a drink.
     """
     return [dish for dish in pool if not is_beverage(dish)]
+
+
+_NEGATION_CUE_PATTERN = re.compile(
+    r"\b(?:don'?t|do not|doesn'?t|does not|didn'?t|won'?t|can'?t|cannot|"
+    r"never|no|not|without|avoid|allerg\w*|hate|dislike|away from)\b",
+    re.IGNORECASE,
+)
+
 _NEGATION_EXTRACTION_SYSTEM_PROMPT = (
     "Extract any foods or ingredients the user explicitly says they do NOT "
     'want, dislike, or want to avoid. Reply with ONLY a JSON object: '
@@ -200,10 +208,18 @@ def extract_negated_terms_via_llm(message: str) -> list[str]:
     Costs one extra LLM call per request when enabled — set
     NEGATION_LLM_EXTRACTION=false to disable if that latency/cost isn't
     worth it for a given deployment.
+
+    Guarded by `_NEGATION_CUE_PATTERN`: if the message contains no negation
+    word at all (don't, not, no, without, avoid, ...), the LLM is never
+    called — a purely positive message like "I want fish" has nothing to
+    extract, and asking the model anyway risks it hallucinating an
+    exclusion for something the user actually asked for.
     """
     if not message:
         return []
     if os.getenv("NEGATION_LLM_EXTRACTION", "true").strip().lower() in ("0", "false", "no"):
+        return []
+    if not _NEGATION_CUE_PATTERN.search(message):
         return []
 
     backend_name = os.getenv("AI_BACKEND", "stub").strip().lower()

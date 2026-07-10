@@ -384,6 +384,50 @@ def test_llm_negation_extraction_is_a_noop_in_stub_mode(monkeypatch):
     assert ai_service.extract_negated_terms_via_llm("keep it away from shellfish") == []
 
 
+def test_llm_negation_extraction_never_calls_llm_without_a_negation_cue(monkeypatch):
+    """Reported bug: "I want fish" was coming back as an excluded ingredient.
+    Root cause was the LLM hallucinating an exclusion for a purely positive
+    message. Guard: skip the LLM call entirely (and never even construct a
+    client) when the message has no negation word at all."""
+    def _boom(*args, **kwargs):
+        raise AssertionError("should never construct an OpenAI client for a purely positive message")
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=_boom))
+    monkeypatch.setenv("AI_BACKEND", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+
+    for message in ["I want fish", "I'd like some pasta please", "Something with chicken"]:
+        assert ai_service.extract_negated_terms_via_llm(message) == []
+
+
+def test_endpoint_does_not_exclude_a_food_the_user_says_they_want(monkeypatch):
+    """End-to-end guard for the same reported bug at the API layer."""
+    def _boom(*args, **kwargs):
+        raise AssertionError("should never call the LLM for a purely positive message")
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=_boom))
+    monkeypatch.setenv("AI_BACKEND", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    monkeypatch.setattr(ai_service, "_resolve_backend", lambda: ("stub", ai_service._stub))
+
+    # Only fish dishes on the menu: if "I want fish" were wrongly treated
+    # as an exclusion, every candidate would be filtered out and
+    # recommendations would come back empty.
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "I want fish",
+            "menu": [
+                {"name": "Grilled salmon", "price": 18, "ingredients": ["fish", "lemon"]},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert recs[0]["name"] == "Grilled salmon"
+
+
 def test_llm_negation_extraction_disabled_via_env_var(monkeypatch):
     monkeypatch.setenv("AI_BACKEND", "openai")
     monkeypatch.setenv("OPENAI_API_KEY", "test")
