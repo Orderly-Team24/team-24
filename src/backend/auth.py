@@ -18,7 +18,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 class PreferencesRequest(BaseModel):
-    cuisine: str | None = None
     allergies: list[str] = []
     likes: list[str] = []
     dislikes: list[str] = []

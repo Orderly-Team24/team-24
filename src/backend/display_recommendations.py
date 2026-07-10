@@ -31,7 +31,6 @@ class Preferences(BaseModel):
     which keeps backward compatibility with the original `message`-only API.
     """
 
-    cuisine: str | None = None
     exclude_ingredients: list[str] | None = None
     favorite_ingredients: list[str] | None = None
     max_budget: float | None = Field(default=None, ge=0)
@@ -110,8 +109,8 @@ def display_recommendations(
                 return {"recommendations": []}
               
     # Meal type (breakfast/lunch/dinner) named in the mood/craving message is
-    # a soft preference like cuisine, not a safety constraint — narrow to
-    # matching dishes when we can, otherwise keep the current candidates.
+    # a soft preference, not a safety constraint — narrow to matching
+    # dishes when we can, otherwise keep the current candidates.
     candidates = filter_by_meal_type(candidates, extract_meal_type(data.message))
 
     # --- Don't repeat a dish already shown in this "Another option"
