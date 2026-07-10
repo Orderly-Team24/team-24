@@ -369,6 +369,13 @@ def test_endpoint_returns_empty_when_menu_is_drinks_only():
             "menu": [
                 {"name": "Water", "price": 0, "ingredients": []},
                 {"name": "Orange juice", "price": 3, "ingredients": []},
+            ],
+        },
+    )
+    assert resp.status_code == 200
+    assert resp.json()["recommendations"] == []
+
+
 # --- LLM-backed negation extraction (supplement to the regex heuristic) ---
 
 
@@ -461,7 +468,6 @@ def test_endpoint_merges_llm_negation_extraction_into_excludes(monkeypatch):
         },
     )
     assert resp.status_code == 200
-    assert resp.json()["recommendations"] == []
     recs = resp.json()["recommendations"]
     assert recs
     assert recs[0]["name"] == "Grilled chicken"
