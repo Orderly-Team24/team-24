@@ -2,8 +2,10 @@ import io
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from parser import parse_menu
+from ocr_layout import reconstruct_text
 from PIL import Image
 import pytesseract
+from pytesseract import Output
 import os
 
 tesseract_path = os.environ.get("TESSERACT_PATH")
@@ -71,9 +73,13 @@ async def upload_menu(photo: UploadFile = File(...)):
             detail=f"Could not decode image: {exc}",
         )
 
-    # Run OCR
+    # Run OCR. We use image_to_data (word-level bounding boxes) instead of
+    # plain image_to_string, so reconstruct_text() can detect and correctly
+    # handle 2-column menu layouts instead of interleaving both columns'
+    # words into garbled single lines.
     try:
-        extracted_text = pytesseract.image_to_string(image, lang='rus+eng')
+        ocr_data = pytesseract.image_to_data(image, lang='rus+eng', output_type=Output.DICT)
+        extracted_text = reconstruct_text(ocr_data, image.width)
     except Exception as exc:
         raise HTTPException(
             status_code=500,
