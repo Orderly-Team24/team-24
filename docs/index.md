@@ -11,6 +11,9 @@ Hosted, browsable version of the maintained project documentation. Source lives 
 
 ## Process
 
+- [Contributing](https://github.com/Orderly-Team24/team-24/blob/main/CONTRIBUTING.md) — how to set up, branch, test, and submit a change
+- [AGENTS.md](https://github.com/Orderly-Team24/team-24/blob/main/AGENTS.md) — guidance for AI coding agents working in this repo
+- [Customer handover](customer-handover.md) — current transition/handover state, access, known limitations
 - [Development process](development-process.md) — git workflow, PR process, CI pipeline, configuration management
 - [Roadmap](roadmap.md)
 - [Definition of Done](definition-of-done.md)

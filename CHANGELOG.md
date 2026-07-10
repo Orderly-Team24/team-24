@@ -1,15 +1,37 @@
 ## [Unreleased]
 
+### Added
+- Order history and dislikes (US-015): dislike storage + endpoints, filtering future recommendations by disliked dishes, and a frontend History page with a "Dislike" button per order.
+- AI recommender now recognizes meal type (breakfast/lunch/dinner/brunch/supper) named in the free-text mood/craving field and prefers a matching dish when the menu has one.
+- AI recommender never recommends a beverage (water, soda, coffee, juice, etc.) on its own as "the dish" — a drink is not a meal.
+- LLM-backed supplement for parsing plain-language exclusions ("keep it away from shellfish") that the regex-based extractor misses, for deployments using a real LLM backend.
+- "Another option" no-repeat guarantee: a dish already shown in the current session is never shown again until every candidate has been shown once.
+- 3 new user acceptance test scenarios (UAT-08, UAT-09, UAT-10) covering order history/dislike, AI exclusion safety, and meal-type/beverage handling.
+- `CONTRIBUTING.md`, `AGENTS.md`, and `docs/customer-handover.md` — Assignment 6 maintained assets.
+- OCR: column-aware layout reconstruction, currency-symbol handling, and menu section detection, improving parsing of menus that don't fit the single-column layout the parser previously assumed.
+
+### Changed
+- Excluded ingredients (allergies, dislikes, and plain-language exclusions like "I don't want steak") are now a hard, code-enforced guarantee on every AI backend, including `openai`/`lmstudio` — previously this only worked reliably in stub mode and could silently fall back to recommending an excluded dish when every candidate matched.
+- Removed the `cuisine` preference entirely. It was accepted end-to-end (UI → API → LLM prompt) but never actually persisted or collected from any real user input — every caller always sent `null`.
+
 ### Fixed
 - README: fresh-clone backend setup crashed with `RuntimeError: DATABASE_URL is not set` — the Postgres migration (ADR-002) has required it since 0.3.0, but the README never mentioned it. Added the env var (SQLite connection string for local dev) and the missing `alembic upgrade head` step; verified end-to-end on a clean clone.
 - README: linked the Week 5 report, which existed but wasn't linked from anywhere.
 - CI: fixed lychee (link-checker) failures on open PRs — a release link left dangling by the `0.3.0` → `v0.3.0` tag rename, and a GitHub Pages link that 404s on PR branches since Pages only ever builds from `main` (excluded from the check for now).
+- Menu OCR parser mixed up a dish's name with its description on multi-line scans (real menus put the name on its own line, description + price on the next), which read as "the second menu photo didn't work" in customer UAT.
+- Registration gave no loading feedback, letting a slow connection cause a double submit and a false "email already in use" error.
+- Allergen/excluded-ingredient filtering silently fell back to an unfiltered candidate pool when every dish matched the exclusion, instead of returning no recommendation — the one scenario where the safety guarantee mattered most.
+- The "Another option" button dropped the user's mood/craving text on every click after the first, replacing it with a bare placeholder string — so a stated exclusion ("I don't want steak") stopped applying after the first re-roll.
+- LLM-backed negation extraction could hallucinate an exclusion for a purely positive message (e.g. "I want fish" being read as excluding fish); it now only runs when the message actually contains a negation word.
+- An expired or invalid access token locked users out of both `/login` and `/register` (each page redirected the other way) instead of clearing the stale token and letting them log in again; the Profile page also now redirects to login on a 401 instead of showing a stuck error.
+- Order history/dislikes appeared empty (or, worse, pooled across different users) because the frontend saved orders under a hardcoded/mismatched user identity instead of the logged-in user's real id. Root-caused to `/auth/login` not returning `user_id` at all, and to the post-registration auto-login flow independently having the same gap; fixed both, plus added the first backend test coverage for `/auth/register` and `/auth/login`.
+- The History page rendered a blank screen — `App.js` never registered a route for `/history`, even though the page and its nav link both existed.
 
 ### Notes for next-sprint owner
 - JWT signing secret is hardcoded in `src/backend/jwt_handler.py` rather than sourced from an environment variable — externalize before relying on this for anything beyond a course project.
-- `cuisine` is accepted by `POST /auth/register` and the preferences endpoints but not persisted — the `preferences` table has no `cuisine` column yet.
 - Order history (`/history/orders*`) is still an in-memory store, not PostgreSQL — data is lost on every restart/redeploy.
 - Two Render services (`team-24`, `team-24-1`) and two frontend hosts have drifted in the past (different `API_URL` values hardcoded per page) — worth auditing before the next release.
+- OCR menu parsing is tuned for one common layout (name on its own line, description + price after); two-column menus and non-Latin currency symbols aren't handled reliably yet.
 
 ---
 

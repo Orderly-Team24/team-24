@@ -74,3 +74,27 @@
 	- [Fix: add OPENAI_API_KEY to Render environment - Issue #217](https://github.com/Orderly-Team24/team-24/issues/217)
 	- [Fix: preferences ignored when max_budget is set in display_recommendations.py - Issue #218](https://github.com/Orderly-Team24/team-24/issues/218)
 	- [Fix: OCR broken in both backend services - Issue #219](https://github.com/Orderly-Team24/team-24/issues/219)
+
+
+## Sprint 4
+- **Milestone:** [Milestone - Sprint 4](https://github.com/Orderly-Team24/team-24/milestone/4)
+- **Issues:** [Issues - Sprint 4](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20milestone%3A%22Sprint%204%22)
+- **Dates:** 06-07-2026 – 12-07-2026
+- **Goal:** Implement order history management (view history, dislike a dish), polish existing AI recommendation quality, and fix bugs found during customer UAT.
+- **Focus or expected outcome statement:**
+	- Store dislikes and let the user view/manage order history from the frontend
+	- Filter future recommendations by disliked dishes
+	- Harden AI recommendation safety: never recommend an allergen/excluded ingredient even when the LLM backend is used, correctly parse plain-language exclusions ("I don't want steak") and meal-type intent (breakfast/lunch/dinner), never recommend a beverage on its own as "the dish"
+	- Fix authentication/session bugs discovered during UAT (expired-token lockout, order history using a mismatched user identity, a missing frontend route)
+	- Add Assignment 6 maintained assets: `CONTRIBUTING.md`, `AGENTS.md`, `docs/customer-handover.md`
+- **Planned items:**
+	- [US-015: Managing history of orders - Issue #149](https://github.com/Orderly-Team24/team-24/issues/149)
+	- [US-015-1: Backend — dislike storage + endpoints - Issue #285](https://github.com/Orderly-Team24/team-24/issues/285)
+	- [US-015-2: Backend — filter recommendations by dislikes - Issue #286](https://github.com/Orderly-Team24/team-24/issues/286)
+	- [US-015-3: Frontend — History page + Dislike button - Issue #287](https://github.com/Orderly-Team24/team-24/issues/287)
+	- [US-015-4: E2E + docs for dislike feature - Issue #288](https://github.com/Orderly-Team24/team-24/issues/288)
+	- [BUG: Second menu photo upload/recommendation didn't work in customer UAT - Issue #283](https://github.com/Orderly-Team24/team-24/issues/283)
+	- [BUG: Register gives no loading feedback, causing double-submit and false "email already in use" - Issue #282](https://github.com/Orderly-Team24/team-24/issues/282)
+	- [BUG: Allergen/excluded ingredients can still be recommended when every candidate dish matches an exclude - Issue #298](https://github.com/Orderly-Team24/team-24/issues/298)
+	- [BUG: Expired/invalid access token locks user out of login and register pages - Issue #295](https://github.com/Orderly-Team24/team-24/issues/295)
+	- [BUG: Order history is always empty after saving recommended dishes - Issue #311](https://github.com/Orderly-Team24/team-24/issues/311)

@@ -91,6 +91,9 @@ pytest tests/ -v --cov=. --cov-report=term-missing
 
 ## Documentation
 
+- [Contributing](CONTRIBUTING.md) — how to set up, branch, test, and submit a change
+- [AGENTS.md](AGENTS.md) — guidance for AI coding agents working in this repo
+- [Customer handover](docs/customer-handover.md) — current transition/handover state, access, known limitations
 - [User stories](docs/user-stories.md)
 - [Architecture documentation](docs/architecture/README.md) — component, sequence, and deployment views, plus ADRs
 - [Development process](docs/development-process.md) — git workflow, PR process, CI pipeline, configuration management
@@ -106,6 +109,7 @@ pytest tests/ -v --cov=. --cov-report=term-missing
 - [Week 3 report](reports/week3/README.md)
 - [Week 4 report](reports/week4/README.md)
 - [Week 5 report](reports/week5/README.md)
+- [Week 6 report](reports/week6/README.md)
 
 Hosted (browsable) version of the docs above: https://orderly-team24.github.io/team-24/
 
