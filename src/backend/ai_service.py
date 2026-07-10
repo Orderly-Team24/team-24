@@ -175,6 +175,70 @@ def filter_out_beverages(pool: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rather than falling back to a drink.
     """
     return [dish for dish in pool if not is_beverage(dish)]
+_NEGATION_EXTRACTION_SYSTEM_PROMPT = (
+    "Extract any foods or ingredients the user explicitly says they do NOT "
+    'want, dislike, or want to avoid. Reply with ONLY a JSON object: '
+    '{"excluded": [str, ...]}. If the message names nothing to avoid, '
+    'reply {"excluded": []}. Do not include foods the user says they DO '
+    "want or like."
+)
+
+
+def extract_negated_terms_via_llm(message: str) -> list[str]:
+    """LLM-backed supplement to `extract_negated_terms` for phrasings the
+    regex heuristic misses (e.g. "keep it away from shellfish", non-English
+    text, indirect negation).
+
+    Only runs when a real LLM backend is configured (AI_BACKEND=openai or
+    lmstudio) — the stub backend has no language understanding, so this
+    silently returns [] there and the regex extractor remains the only
+    signal. Also silently returns [] on any failure (missing API key, bad
+    JSON, network error, etc.) or if disabled via
+    NEGATION_LLM_EXTRACTION=false — this is a best-effort supplement, never
+    a required step, so it must never block a recommendation.
+
+    Costs one extra LLM call per request when enabled — set
+    NEGATION_LLM_EXTRACTION=false to disable if that latency/cost isn't
+    worth it for a given deployment.
+    """
+    if not message:
+        return []
+    if os.getenv("NEGATION_LLM_EXTRACTION", "true").strip().lower() in ("0", "false", "no"):
+        return []
+
+    backend_name = os.getenv("AI_BACKEND", "stub").strip().lower()
+    if backend_name not in ("openai", "lmstudio"):
+        return []
+
+    try:
+        if backend_name == "openai":
+            api_key = os.getenv("OPENAI_API_KEY")
+            if not api_key:
+                return []
+            base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+            model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        else:
+            api_key = os.getenv("LMSTUDIO_API_KEY", "lm-studio")
+            base_url = os.getenv("LMSTUDIO_BASE_URL", "http://localhost:1234/v1")
+            model = os.getenv("LMSTUDIO_MODEL", "qwen/qwen3.5-9b")
+
+        from openai import OpenAI
+
+        client = OpenAI(base_url=base_url, api_key=api_key)
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                {"role": "system", "content": _NEGATION_EXTRACTION_SYSTEM_PROMPT},
+                {"role": "user", "content": message},
+            ],
+            temperature=0,
+        )
+        content = response.choices[0].message.content or ""
+        parsed = _extract_json_object(content)
+        return _clean_list(parsed.get("excluded"))
+    except Exception as exc:
+        logging.warning("LLM-based negation extraction failed: %s", exc)
+        return []
 
 
 _MEAL_TYPE_PATTERN = re.compile(r"\b(breakfast|brunch|lunch|dinner|supper)\b", re.IGNORECASE)

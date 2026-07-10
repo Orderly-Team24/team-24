@@ -369,11 +369,102 @@ def test_endpoint_returns_empty_when_menu_is_drinks_only():
             "menu": [
                 {"name": "Water", "price": 0, "ingredients": []},
                 {"name": "Orange juice", "price": 3, "ingredients": []},
+# --- LLM-backed negation extraction (supplement to the regex heuristic) ---
+
+
+def test_llm_negation_extraction_is_a_noop_in_stub_mode(monkeypatch):
+    monkeypatch.delenv("AI_BACKEND", raising=False)
+    assert ai_service.extract_negated_terms_via_llm("keep it away from shellfish") == []
+
+
+def test_llm_negation_extraction_disabled_via_env_var(monkeypatch):
+    monkeypatch.setenv("AI_BACKEND", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+    monkeypatch.setenv("NEGATION_LLM_EXTRACTION", "false")
+    assert ai_service.extract_negated_terms_via_llm("keep it away from shellfish") == []
+
+
+def test_llm_negation_extraction_parses_excluded_foods(monkeypatch):
+    class FakeChatCompletions:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(content='{"excluded": ["shellfish", "peanuts"]}')
+                    )
+                ]
+            )
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = SimpleNamespace(completions=FakeChatCompletions())
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("AI_BACKEND", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+
+    assert ai_service.extract_negated_terms_via_llm("keep it away from shellfish and peanuts") == [
+        "shellfish",
+        "peanuts",
+    ]
+
+
+def test_llm_negation_extraction_fails_silently(monkeypatch):
+    class FakeChatCompletions:
+        def create(self, **kwargs):
+            raise RuntimeError("network error")
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = SimpleNamespace(completions=FakeChatCompletions())
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("AI_BACKEND", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+
+    assert ai_service.extract_negated_terms_via_llm("anything") == []
+
+
+def test_endpoint_merges_llm_negation_extraction_into_excludes(monkeypatch):
+    """End-to-end: a phrasing the regex extractor misses ("keep it away
+    from") still excludes the dish, when the LLM-backed extractor catches
+    it."""
+    class FakeChatCompletions:
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(message=SimpleNamespace(content='{"excluded": ["shellfish"]}'))
+                ]
+            )
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = SimpleNamespace(completions=FakeChatCompletions())
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+    monkeypatch.setenv("NEGATION_LLM_EXTRACTION", "true")
+    # AI_BACKEND stays "stub" (default in tests) for the actual recommendation
+    # call, so the pick itself is deterministic — only the extraction helper
+    # needs a configured LLM backend to run.
+    monkeypatch.setattr(ai_service, "_resolve_backend", lambda: ("stub", ai_service._stub))
+    monkeypatch.setenv("AI_BACKEND", "openai")
+    monkeypatch.setenv("OPENAI_API_KEY", "test")
+
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "Keep it away from shellfish",
+            "menu": [
+                {"name": "Shrimp scampi", "price": 20, "ingredients": ["shellfish", "garlic"]},
+                {"name": "Grilled chicken", "price": 15, "ingredients": ["chicken", "herbs"]},
             ],
         },
     )
     assert resp.status_code == 200
     assert resp.json()["recommendations"] == []
+    recs = resp.json()["recommendations"]
+    assert recs
+    assert recs[0]["name"] == "Grilled chicken"
 
 
 # --- meal type (breakfast/lunch/dinner) recognition -----------------------

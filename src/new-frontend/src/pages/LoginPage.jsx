@@ -53,8 +53,10 @@ function LoginPage() {
       }
 
       const data = await response.json();
+      
       localStorage.setItem('orderly_access_token', data.access_token);
       localStorage.setItem('orderly_refresh_token', data.refresh_token);
+      localStorage.setItem("userId", data.user_id);
 
       // Existing accounts already have preferences saved from signup/profile —
       // pull them into the cache FoodRecommenderPage reads from, so we can
