@@ -36,7 +36,4 @@ curl https://team-24.onrender.com/history/dislikes \
 ---
 
 ## Screenshot
-
-History page showing **"Disliked ✓"** state.
-
-> *(Insert screenshot here.)*
+![History page showing "Disliked" state.](images/history.jpg)
