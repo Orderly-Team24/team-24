@@ -28,7 +28,7 @@ How to actually use Orderly, step by step:
 
 **Things Orderly guarantees:** it will never recommend a dish containing something you've listed as an allergy or explicitly said you don't want (even in free text, e.g. "I don't want steak") — this is enforced in code, not just requested from the AI. It also never recommends a plain drink (water, soda, coffee, etc.) as "the dish."
 
-**Things Orderly does its best on, but doesn't guarantee:** open-ended mood requests ("something warm and comforting") and menu-photo scanning for unusual layouts (two columns, handwritten specials). See [docs/customer-handover.md](docs/customer-handover.md) for the current, up-to-date list of known limitations.
+**Things Orderly does its best on, but doesn't guarantee:** open-ended mood requests ("something warm and comforting") and menu-photo scanning for layouts beyond a standard single- or two-column menu (e.g. 3+ columns, uneven column widths, or handwritten specials boards). See [docs/customer-handover.md](docs/customer-handover.md) for the current, up-to-date list of known limitations.
 
 ## Project structure
 
