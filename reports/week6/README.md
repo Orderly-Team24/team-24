@@ -78,12 +78,12 @@ Customer found README and CONTRIBUTING clear and accepted customer-handover.md i
 - **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/v0.4.0)
 
 ## Presentation & Media
-- 
+- [Presentation](https://docs.google.com/presentation/d/1N1RLtb1yz0QZtY9MLQtDzW76faMHR6mP/edit?slide=id.p1#slide=id.p1)
 
 ## UAT Results Summary
-- UAT-08 (View Order History and Dislike a Dish) – passed (US-015 – Managing history of orders)
-- UAT-09 (AI Never Recommends an Excluded or Allergen Food) – passed (US-005 – No allergen suggestions)
-- UAT-10 (AI Recognizes Meal Type and Never Recommends a Drink as the Dish) – passed (US-018 – Specify today's meal intent alongside budget)
+- **UAT-08 (View Order History and Dislike a Dish)** – passed (US-015 – Managing history of orders). The feature works end-to-end, though minor UI polish may be applied in Week 7.
+- **UAT-09 (AI Never Recommends an Excluded or Allergen Food)** – passed (US-005 – No allergen suggestions). The safety guarantees are enforced, but occasional edge cases in natural language parsing will be addressed in Week 7.
+- **UAT-10 (AI Recognizes Meal Type and Never Recommends a Drink as the Dish)** – passed (US-018 – Specify today's meal intent alongside budget). Meal type recognition works but is not fully stable; fixing this is scheduled for Week 7.
 
 ## Sprint Reports & Retrospectives
 - **Sprint review transcript:** [sprint-review-transcript.md](sprint-review-transcript.md)
