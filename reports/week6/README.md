@@ -86,7 +86,7 @@ Customer found README and CONTRIBUTING clear and accepted customer-handover.md i
 - UAT-10 (AI Recognizes Meal Type and Never Recommends a Drink as the Dish) – passed (US-018 – Specify today's meal intent alongside budget)
 
 ## Sprint Reports & Retrospectives
-- **Sprint review transcript / notes:** [sprint-review-transcript.md](sprint-review-transcript.md)
+- **Sprint review transcript:** [sprint-review-transcript.md](sprint-review-transcript.md)
 - **Customer Review Summary:** [sprint-review-summary.md](sprint-review-summary.md)
 - **Sprint Reflection:** [reflection.md](reflection.md)
 - **Retrospective:** [retrospective.md](retrospective.md)
@@ -111,5 +111,6 @@ Customer found README and CONTRIBUTING clear and accepted customer-handover.md i
 ![Sprint Milestone](images/sprint-milestone.png)
 ### SemVer Release
 ![SemVer Release](images/SemVer-release.png)
+
 ### Example Reviewed Issue-linked PR/MR
 ![PR Review Example](images/example-reviewed-issue-linked-PR.png)
