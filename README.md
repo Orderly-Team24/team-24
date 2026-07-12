@@ -12,6 +12,24 @@ A web app that recommends dishes based on your preferences, budget, allergies, a
 
 > Free-tier services on Render may take 5–15 s to wake up after inactivity.
 
+## User guide
+
+How to actually use Orderly, step by step:
+
+1. **Create an account.** Go to [`/register`](https://team-24-navy.vercel.app/register), enter an email, username, and password. You're logged in automatically right after.
+2. **Set your food preferences.** On first login you'll be asked for allergies, dislikes, and likes (all optional, plain comma-separated text — e.g. "peanuts, shellfish"). You can change these any time from **Profile**.
+3. **Set a budget and (optionally) a menu photo.** On the next step, enter your budget and either upload a photo of a real restaurant menu or skip it to use a sample menu. You can also type what you're in the mood for (e.g. "something for breakfast", "I don't want steak") — the AI takes this into account alongside your saved preferences.
+4. **Get a recommendation.** The app shows one recommended dish that fits your budget, respects your allergies/exclusions, and (if you gave one) matches your mood.
+   - **"I'll order it"** saves the dish to your order history.
+   - **"Another option"** asks for a different dish — it won't repeat one you've already seen in this session.
+   - **"End session"** clears the current menu/budget/mood so you can start fresh (you stay logged in).
+5. **Check your order history.** Click **History** in the navigation bar to see everything you've ordered. Click **Dislike** on any dish you didn't like — disliked dishes are never recommended again.
+6. **Manage your account.** The **Profile** page lets you update preferences or permanently delete your account.
+
+**Things Orderly guarantees:** it will never recommend a dish containing something you've listed as an allergy or explicitly said you don't want (even in free text, e.g. "I don't want steak") — this is enforced in code, not just requested from the AI. It also never recommends a plain drink (water, soda, coffee, etc.) as "the dish."
+
+**Things Orderly does its best on, but doesn't guarantee:** open-ended mood requests ("something warm and comforting") and menu-photo scanning for layouts beyond a standard single- or two-column menu (e.g. 3+ columns, uneven column widths, or handwritten specials boards). See [docs/customer-handover.md](docs/customer-handover.md) for the current, up-to-date list of known limitations.
+
 ## Project structure
 
 ```
