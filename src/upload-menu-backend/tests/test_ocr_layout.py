@@ -1,11 +1,7 @@
 """Unit tests for ocr_layout.reconstruct_text — pure logic, no real
-Tesseract or image needed. We build synthetic `image_to_data`-shaped dicts
-directly to control word positions and block numbering precisely.
-
-Note on `block_num`: verified against a real menu photo, Tesseract assigns
-one `block_num` per dish entry (name line + description line(s) together)
-— NOT one block per physical line. Test fixtures below follow that: each
-dish gets its own block_num, and a dish's own multiple lines share it.
+Tesseract or image needed. We build synthetic ``image_to_data``-shaped dicts
+with word positions; the layout module clusters by Y coordinate and
+detects columns from horizontal position, not Tesseract block_num.
 """
 from __future__ import annotations
 
@@ -127,6 +123,31 @@ def test_words_near_midline_prevent_false_column_split():
     assert text == "The quick brown fox jumps"
 
 
+def test_single_text_column_with_right_aligned_prices():
+    """Regression: text column + decorative right half (no right-column text).
+
+    Tesseract can assign every item to one block_num; row clustering must
+    still recover one dish per line.
+    """
+    words = [
+        ("MAIN", 80, 100, 0, 0), ("COURSE", 200, 100, 0, 0),
+        ("Steak", 80, 150, 0, 0), ("$3.90", 480, 150, 0, 0),
+        ("Tofu", 80, 200, 0, 0), ("$3.90", 480, 200, 0, 0),
+        ("DRINKS", 80, 300, 0, 0),
+        ("Lemonade", 80, 350, 0, 0), ("$4.90", 480, 350, 0, 0),
+    ]
+    data = _make_data(words)
+    text = reconstruct_text(data, image_width=1200)
+    from parser import parse_menu
+
+    dishes = parse_menu(text)
+    names = [d["name"] for d in dishes]
+    assert "Steak" in names
+    assert "Tofu" in names
+    assert "Lemonade" in names
+    assert len([d for d in dishes if d["price"] is not None]) == 3
+
+
 def test_column_split_feeds_cleanly_into_parse_menu():
     """End-to-end sanity check: column-reconstructed text should parse
     into distinct, correctly-named dishes via the existing parser."""
@@ -140,6 +161,7 @@ def test_column_split_feeds_cleanly_into_parse_menu():
     ]
     right_words = [
         ("Tiramisu", 800, 10, 2, 0), ("$6.50", 900, 10, 2, 0),
+        ("Cannoli", 800, 80, 3, 0), ("$4.00", 900, 80, 3, 0),
     ]
     data = _make_data(left_words + right_words)
     text = reconstruct_text(data, image_width=1000)
@@ -149,6 +171,7 @@ def test_column_split_feeds_cleanly_into_parse_menu():
     assert "Margherita Pizza" in names
     assert "Caesar Salad" in names
     assert "Tiramisu" in names
+    assert "Cannoli" in names
     # None of the names should contain garbled cross-column text.
     for d in dishes:
         assert "$" not in d["name"]

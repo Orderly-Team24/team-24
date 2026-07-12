@@ -1,62 +1,54 @@
-"""Turns Tesseract's word-level OCR data into ordered menu text, handling
-the common 2-column menu layout.
+"""Turn Tesseract word-level OCR data into ordered menu text.
 
-Plain `pytesseract.image_to_string` reads left-to-right across the full
-image width. On a 2-column menu that means words from the left and right
-columns can end up interleaved on the same output "line", so `parser.py`
-sees garbled text instead of two clean columns of dishes — this is the
-"random symbols" symptom reported for multi-column menus.
+Plain ``pytesseract.image_to_string`` reads left-to-right across the full
+image width. On a 2-column menu that interleaves words from both columns on
+the same output line, so ``parser.py`` sees garbled text.
 
-`image_to_data` gives us each word's bounding box AND Tesseract's own
-`block_num`/`line_num` segmentation, which (verified against a real menu
-photo) already groups each dish's name + description into a single block.
-So instead of inventing pixel-gap heuristics to detect where one dish ends
-and another begins, we lean on Tesseract's own block boundaries directly,
-and only add a layer on top to figure out which *column* each block
-belongs to (by its horizontal position) and re-order blocks column-first
-instead of Tesseract's raw top-to-bottom-across-the-whole-page order.
+``image_to_data`` gives bounding boxes per word. We detect true two-column
+layouts from word positions, assign each word to a column *before* row
+clustering (so same-Y rows from different columns do not merge), cluster
+words into horizontal rows by Y coordinate, then group rows into blocks that
+``parse_menu()`` understands.
 
-Scope note: this handles the common 2-column case (roughly left half /
-right half of the page). 3+ columns, or columns that aren't roughly even
-left/right splits, aren't handled by this heuristic and would need real
-column clustering (e.g. k-means on block left-edges) — tracked as separate
-follow-up work.
+Known limitation: if two rows from different columns share the exact same Y
+coordinate, they are merged into one row before column splitting and may get
+interleaved. Real menu photos usually have a few pixels of vertical offset.
 """
 from __future__ import annotations
 
-# How close a block's left edge needs to be to the page midline before we
-# stop trusting a left/right split (as a fraction of image width).
-_MIDLINE_MARGIN_FRACTION = 0.06
+import re
 
-# Fraction of blocks allowed to sit right on the midline before we conclude
-# there's no real column gap there (i.e. it's actually single-column text).
-_MIDLINE_DENSITY_THRESHOLD = 0.08
+# Fraction of image width: words/rows starting left of this are "left column".
+_LEFT_COLUMN_MAX_FRACTION = 0.35
+# Words/rows starting right of this are "right column".
+_RIGHT_COLUMN_MIN_FRACTION = 0.45
+
+# Minimum rows required on each side before we treat the page as two columns.
+_MIN_ROWS_PER_COLUMN = 2
+
+# Vertical gap between rows (× median line height) that starts a new block
+# when price-based heuristics do not apply.
+_LARGE_ROW_GAP_FACTOR = 1.8
+
+_PRICE_RE = re.compile(r'[$€£₽]\s*\d|^\d+(?:[.,]\d{1,2})?\s*[$€£₽]')
 
 
 def reconstruct_text(data: dict, image_width: int) -> str:
-    """Rebuild menu text from Tesseract `image_to_data` output.
-
-    `data` is the dict `pytesseract.image_to_data(..., output_type=Output.DICT)`
-    returns: parallel lists keyed by 'text', 'left', 'top', 'width',
-    'height', 'block_num', 'par_num', 'line_num', and optionally 'conf'.
-    """
+    """Rebuild menu text from Tesseract ``image_to_data`` output."""
     words = _extract_words(data)
     if not words:
         return ""
 
-    blocks = _group_into_blocks(words)
+    split_x = _detect_column_split(words, image_width)
+    if split_x is None:
+        rows = _cluster_rows(words)
+        return _column_rows_to_text(rows)
 
-    if not _looks_two_column(blocks, image_width):
-        ordered = sorted(blocks, key=lambda b: b["top"])
-        return _blocks_to_text(ordered)
+    left_words = [w for w in words if (w["left"] + w["width"] / 2) < split_x]
+    right_words = [w for w in words if w not in left_words]
 
-    midpoint = image_width / 2
-    left_blocks = sorted((b for b in blocks if b["left"] < midpoint), key=lambda b: b["top"])
-    right_blocks = sorted((b for b in blocks if b["left"] >= midpoint), key=lambda b: b["top"])
-
-    left_text = _blocks_to_text(left_blocks)
-    right_text = _blocks_to_text(right_blocks)
-
+    left_text = _column_rows_to_text(_cluster_rows(left_words))
+    right_text = _column_rows_to_text(_cluster_rows(right_words))
     parts = [t for t in (left_text, right_text) if t]
     return "\n\n".join(parts)
 
@@ -66,16 +58,13 @@ def _extract_words(data: dict) -> list[dict]:
     n = len(texts)
     confs = data.get("conf", [None] * n)
     heights = data.get("height", [20] * n)
-    block_nums = data.get("block_num", [0] * n)
-    par_nums = data.get("par_num", [0] * n)
-    line_nums = data.get("line_num", [0] * n)
+    widths = data.get("width", [0] * n)
 
     words = []
     for i in range(n):
         text = (texts[i] or "").strip()
         if not text:
             continue
-        # Skip explicit low-confidence noise; don't require a conf field.
         conf = confs[i] if i < len(confs) else None
         try:
             if conf is not None and 0 <= float(conf) < 10:
@@ -87,72 +76,140 @@ def _extract_words(data: dict) -> list[dict]:
                 "text": text,
                 "left": data["left"][i],
                 "top": data["top"][i],
+                "width": widths[i] if i < len(widths) else 0,
                 "height": heights[i] if i < len(heights) else 20,
-                "block": block_nums[i] if i < len(block_nums) else 0,
-                "par": par_nums[i] if i < len(par_nums) else 0,
-                "line": line_nums[i] if i < len(line_nums) else 0,
             }
         )
     return words
 
 
-def _group_into_blocks(words: list[dict]) -> list[dict]:
-    """Group words by Tesseract's own block_num, and within each block by
-    line_num — Tesseract already segments the page into paragraph-like
-    blocks, which (per real-menu testing) line up with individual dish
-    entries (name line + description line(s) sharing one block_num).
+def _cluster_rows(words: list[dict]) -> list[list[dict]]:
+    """Group words that share roughly the same baseline into one row."""
+    if not words:
+        return []
 
-    Returns a list of {"left": ..., "top": ..., "lines": [[word, ...], ...]}
-    — one entry per block, `lines` ordered top-to-bottom.
-    """
-    raw: dict[int, dict[int, list[dict]]] = {}
-    for w in words:
-        raw.setdefault(w["block"], {}).setdefault(w["line"], []).append(w)
+    heights = sorted(w["height"] for w in words)
+    median_h = heights[len(heights) // 2]
+    tolerance = max(int(median_h * 0.6), 8)
 
-    blocks = []
-    for block_num, lines_by_num in raw.items():
-        ordered_lines = [lines_by_num[ln] for ln in sorted(lines_by_num.keys())]
-        all_words_in_block = [w for line in ordered_lines for w in line]
-        blocks.append(
-            {
-                "left": min(w["left"] for w in all_words_in_block),
-                "top": min(w["top"] for w in all_words_in_block),
-                "lines": ordered_lines,
-            }
+    sorted_words = sorted(words, key=lambda w: (w["top"], w["left"]))
+    rows: list[list[dict]] = []
+    current = [sorted_words[0]]
+    anchor_y = sorted_words[0]["top"]
+
+    for word in sorted_words[1:]:
+        if abs(word["top"] - anchor_y) <= tolerance:
+            current.append(word)
+        else:
+            rows.append(current)
+            current = [word]
+            anchor_y = word["top"]
+    rows.append(current)
+    return rows
+
+
+def _detect_column_split(words: list[dict], image_width: int) -> float | None:
+    """Return an X coordinate to split left/right columns, or None."""
+    if image_width <= 0 or not words:
+        return None
+
+    left_thresh = image_width * _LEFT_COLUMN_MAX_FRACTION
+    right_thresh = image_width * _RIGHT_COLUMN_MIN_FRACTION
+
+    left_count = sum(1 for w in words if w["left"] < left_thresh)
+    right_count = sum(1 for w in words if w["left"] > right_thresh)
+    if left_count < _MIN_ROWS_PER_COLUMN or right_count < _MIN_ROWS_PER_COLUMN:
+        return None
+
+    split_x = image_width / 2
+    left_words = [w for w in words if (w["left"] + w["width"] / 2) < split_x]
+    right_words = [w for w in words if w not in left_words]
+    if not left_words or not right_words:
+        return None
+
+    # Both columns must span multiple horizontal rows — a single full-width
+    # sentence that happens to have a couple of words past the midpoint is
+    # not a two-column menu.
+    if len(_cluster_rows(left_words)) < _MIN_ROWS_PER_COLUMN:
+        return None
+    if len(_cluster_rows(right_words)) < _MIN_ROWS_PER_COLUMN:
+        return None
+
+    return split_x
+
+
+def _row_to_text(row: list[dict]) -> str:
+    ordered = sorted(row, key=lambda w: w["left"])
+    return " ".join(w["text"] for w in ordered)
+
+
+def _row_top_and_height(row: list[dict]) -> tuple[int, int]:
+    top = min(w["top"] for w in row)
+    height = max(w["height"] for w in row)
+    return top, height
+
+
+def _line_has_price(line: str) -> bool:
+    return bool(_PRICE_RE.search(line))
+
+
+def _looks_like_section_header(line: str) -> bool:
+    letters = [c for c in line if c.isalpha()]
+    return bool(letters) and all(c.isupper() for c in letters) and not _line_has_price(line)
+
+
+def _should_start_new_block(
+    current_block: list[str],
+    new_line: str,
+    *,
+    large_vertical_gap: bool,
+) -> bool:
+    if not current_block:
+        return False
+    if large_vertical_gap:
+        return True
+    if _looks_like_section_header(new_line):
+        return True
+    if _line_has_price(new_line):
+        if len(current_block) == 1 and _looks_like_section_header(current_block[0]):
+            return True
+        if any(_line_has_price(line) for line in current_block):
+            return True
+    if _line_has_price(current_block[-1]):
+        return True
+    return False
+
+
+def _rows_to_blocks(rows: list[list[dict]]) -> list[list[str]]:
+    blocks: list[list[str]] = []
+    current: list[str] = []
+    prev_bottom: int | None = None
+    median_h = 20
+    if rows:
+        all_heights = sorted(w["height"] for row in rows for w in row)
+        median_h = all_heights[len(all_heights) // 2]
+
+    for row in rows:
+        line = _row_to_text(row)
+        top, height = _row_top_and_height(row)
+        large_gap = (
+            prev_bottom is not None
+            and (top - prev_bottom) > median_h * _LARGE_ROW_GAP_FACTOR
         )
+
+        if _should_start_new_block(current, line, large_vertical_gap=large_gap):
+            blocks.append(current)
+            current = [line]
+        else:
+            current.append(line)
+
+        prev_bottom = top + height
+
+    if current:
+        blocks.append(current)
     return blocks
 
 
-def _looks_two_column(blocks: list[dict], image_width: int) -> bool:
-    """Only split into columns if there's a real visual gap around the
-    page's horizontal midline AND blocks actually appear on both sides —
-    otherwise a single-column menu would get needlessly (and incorrectly)
-    chopped in half down the middle of its text.
-    """
-    if image_width <= 0 or not blocks:
-        return False
-
-    midpoint = image_width / 2
-    has_left = any(b["left"] < midpoint for b in blocks)
-    has_right = any(b["left"] >= midpoint for b in blocks)
-    if not (has_left and has_right):
-        return False
-
-    margin = image_width * _MIDLINE_MARGIN_FRACTION
-    near_midline = [b for b in blocks if abs(b["left"] - midpoint) < margin]
-    return (len(near_midline) / len(blocks)) < _MIDLINE_DENSITY_THRESHOLD
-
-
-def _blocks_to_text(blocks: list[dict]) -> str:
-    """Render ordered blocks to text: lines within a block joined by a
-    single newline, blocks separated by a blank line (the boundary
-    parse_menu()'s block splitter expects).
-    """
-    rendered_blocks = []
-    for block in blocks:
-        line_texts = []
-        for line_words in block["lines"]:
-            ordered = sorted(line_words, key=lambda w: w["left"])
-            line_texts.append(" ".join(w["text"] for w in ordered))
-        rendered_blocks.append("\n".join(line_texts))
-    return "\n\n".join(rendered_blocks)
+def _column_rows_to_text(rows: list[list[dict]]) -> str:
+    blocks = _rows_to_blocks(rows)
+    return "\n\n".join("\n".join(block) for block in blocks)

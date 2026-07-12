@@ -26,8 +26,29 @@ app.add_middleware(
 # Maximum allowed image size: 8 MB
 MAX_IMAGE_SIZE = 8 * 1024 * 1024
 
+# Below this width, Tesseract reliably fails to read menu text — verified:
+# a 349px-wide photo returned only a decorative title, 0 dish/price words;
+# upscaling 3x recovered 59 real words. Scale small photos up before OCR
+# instead of letting recognition silently fail.
+MIN_OCR_WIDTH = 1200
+
 # Supported image content types for OCR
 SUPPORTED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+def _upscale_if_small(image: Image.Image) -> Image.Image:
+    """Scale up low-resolution photos before OCR.
+
+    Tesseract's accuracy drops sharply once individual characters get too
+    small in absolute pixels, which happens with small source photos even
+    if the menu text is perfectly legible to a human. LANCZOS resampling
+    keeps upscaled text edges reasonably crisp for OCR purposes.
+    """
+    if image.width >= MIN_OCR_WIDTH:
+        return image
+    scale = MIN_OCR_WIDTH / image.width
+    new_size = (MIN_OCR_WIDTH, round(image.height * scale))
+    return image.resize(new_size, Image.LANCZOS)
 
 
 @app.post("/upload-menu")
@@ -78,8 +99,9 @@ async def upload_menu(photo: UploadFile = File(...)):
     # handle 2-column menu layouts instead of interleaving both columns'
     # words into garbled single lines.
     try:
-        ocr_data = pytesseract.image_to_data(image, lang='rus+eng', output_type=Output.DICT)
-        extracted_text = reconstruct_text(ocr_data, image.width)
+        ocr_image = _upscale_if_small(image)
+        ocr_data = pytesseract.image_to_data(ocr_image, lang='rus+eng', output_type=Output.DICT)
+        extracted_text = reconstruct_text(ocr_data, ocr_image.width)
     except Exception as exc:
         raise HTTPException(
             status_code=500,

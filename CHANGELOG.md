@@ -31,7 +31,8 @@
 - JWT signing secret is hardcoded in `src/backend/jwt_handler.py` rather than sourced from an environment variable — externalize before relying on this for anything beyond a course project.
 - Order history (`/history/orders*`) is still an in-memory store, not PostgreSQL — data is lost on every restart/redeploy.
 - Two Render services (`team-24`, `team-24-1`) and two frontend hosts have drifted in the past (different `API_URL` values hardcoded per page) — worth auditing before the next release.
-- OCR menu parsing is tuned for one common layout (name on its own line, description + price after); two-column menus and non-Latin currency symbols aren't handled reliably yet.
+- OCR menu parsing is tuned for one common layout (name on its own line, description + price after); non-Latin currency symbols aren't handled reliably yet.
+- OCR two-column layout reconstruction now clusters words by Y coordinate instead of trusting Tesseract block_num, which could merge unrelated dishes on dense menus (e.g. text column + photo column layouts).
 
 ---
 

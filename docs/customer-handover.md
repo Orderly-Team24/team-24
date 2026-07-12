@@ -55,17 +55,19 @@ These were raised as open questions at the Week 6 review — see `reports/week6/
 
 **Team's own view going in:** we think README.md + this page are enough for someone technical to understand and run the product independently. We do **not** think it's enough yet for someone to take over *hosting/operating* it themselves — that's a separate step nobody has done yet (see "What's not decided yet" above).
 
-**Customer's view:** [ to be filled in with what you actually tell us — this replaces this line once you do ]
+**Customer's view (Week 6 review, 10.07.2026):** README.md and CONTRIBUTING.md were reviewed live. Feedback: this document and the README were missing a clear, non-technical user guide for using the product independently — noted as the main documentation gap. That gap has since been addressed (see the new "User guide" section in [README.md](../README.md) and the plain-language rewrite of this page) as a direct action item from that meeting.
 
 ## Where things stand on handover
 
 We're using three straightforward labels to track this, so it's always clear where things stand — no reading between the lines required.
 
-- **How far along is the handover?** — one of: *Ready for you to use independently* / *You're already using it independently* / *You're already running/operating it yourself*.
-  → Current answer: **[ not yet set — will be filled in after this is discussed with you directly ]**
-- **Have you confirmed you're happy with where things stand?** — one of: *Yes* / *Yes, but with some follow-up items* / *Not yet*.
-  → Current answer: **[ not yet set ]**
-- **If not fully there yet:** what's missing, and whose task is it (team's, yours, something external)?
-  → **[ to be filled in ]**
+- **How far along is the handover?** → **Ready for you to use independently.** The product is live and usable end-to-end; you have not yet taken over hosting/operating it yourself (see "Who owns what" above) — that remains a separate, not-yet-started step if you want it.
+- **Have you confirmed you're happy with where things stand?** → **Yes, with follow-up items.** At the Week 6 review (10.07.2026) you approved the delivered features (order history, dislikes, AI safety fixes) and accepted this handover document as an accurate reflection of the current state, "noting that while dependencies aren't ideal, the handover is acceptable for now."
+- **Follow-up items from that review** (owned by the team, due before Week 7 wraps):
+  - Add a clear, non-technical user guide — **done** this same day (README.md § User guide, and this page's plain-language rewrite).
+  - Meal-type recommendation filtering (breakfast/lunch/dinner) felt unstable in places beyond the specific scenario tested — scheduled for Sprint 5.
+  - Remove a stray/confusing "Recommendations" nav button — scheduled for Sprint 5.
+  - Add a free-text dietary-preference field (vegan, halal, etc.) — scheduled for Sprint 5.
+  - Whether you want your own hosting instead of continuing to depend on the team's — still an open question, not yet raised for a decision (see "What's not decided yet" above).
 
-*(These three lines are meant to be short and unambiguous — if you're reading this and any of the bracketed placeholders are still there, it means we haven't sat down and confirmed it with you yet, not that we forgot to write it.)*
+Full meeting record: [reports/week6/sprint-review-summary.md](../reports/week6/sprint-review-summary.md), [reports/week6/sprint-review-transcript.md](../reports/week6/sprint-review-transcript.md).
