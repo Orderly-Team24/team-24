@@ -111,6 +111,7 @@ Customer found README and CONTRIBUTING clear and accepted customer-handover.md i
 ![Sprint Milestone](images/sprint-milestone.png)
 ### SemVer Release
 ![SemVer Release](images/SemVer-release.png)
-
 ### Example Reviewed Issue-linked PR/MR
 ![PR Review Example](images/example-reviewed-issue-linked-PR.png)
+### Deployment
+![Deployment](images/deployment.png)
