@@ -35,14 +35,15 @@ Full details: [CHANGELOG.md](../../CHANGELOG.md) `[Unreleased]` section.
 
 ## Customer Feedback & Response
 
-<!-- TODO after the Week 6 transition-readiness / Sprint Review meeting: fill in the actual feedback points raised and the PBI/issue each resulted in. -->
-
 | Feedback Point | Resulting PBI / Issue |
 | :--- | :--- |
-| <!-- e.g. "second menu photo upload didn't work" --> | [#283](https://github.com/Orderly-Team24/team-24/issues/283) |
+| Documentation lacks a clear, non-technical user guide for independent use | Addressed same day: README.md "User guide" section + plain-language rewrite of `docs/customer-handover.md` |
+| Meal-type filtering (breakfast/lunch/dinner/drinks) feels unstable beyond the demoed scenario | Sprint 5 action item (due 17.07.26) |
+| Erroneous/confusing "Recommendations" nav button | Sprint 5 action item, assigned to Viktoriia Iakovleva & Vilena Zulkarnaeva (due 17.07.26) |
+| Add a free-text dietary-preference field (vegan, halal, etc.) | Sprint 5 action item, assigned to Viktoriia Iakovleva & Vilena Zulkarnaeva (due 17.07.26) |
 
 ### Feedback Not Addressed
-<!-- TODO: fill in after the meeting. -->
+None raised as unaddressed — all feedback points above have either been resolved same-day or converted into a scheduled Sprint 5 action item (see [sprint-review-summary.md](sprint-review-summary.md) Action Points).
 
 ## Documentation
 - **Contributing:** [CONTRIBUTING.md](../../CONTRIBUTING.md)
@@ -59,10 +60,10 @@ Full details: [CHANGELOG.md](../../CHANGELOG.md) `[Unreleased]` section.
 - **Hosted Documentation Site:** [Orderly Docs](https://orderly-team24.github.io/team-24/)
 
 ### Doc Review Results
-<!-- TODO after Week 6 meeting: per Assignment 6 Part 3, record what the customer found clear / unclear / missing across README.md, docs/customer-handover.md, access/usage instructions, deployment/installation instructions, troubleshooting/support notes, known limitations. -->
+Reviewed live with the customer on 10.07.2026: README.md and CONTRIBUTING.md. **Clear:** feature set, setup/run instructions. **Missing:** a plain, non-technical walkthrough of how to actually use the product — addressed same day (README.md § User guide). `docs/customer-handover.md` was reviewed and **accepted as an accurate reflection of the current transfer state**, "noting that while dependencies aren't ideal, the handover is acceptable for now."
 
 ### Transition-Readiness Summary
-<!-- TODO after Week 6 meeting: what's ready vs needs changes; is the customer using the product independently; is it deployed/operated customer-side; what must happen in Week 7 to complete transition. See docs/customer-handover.md for the team's own current self-assessment ahead of this meeting. -->
+**Ready:** order history/dislikes, AI safety guarantees (allergens/exclusions), deployment access instructions, customer-handover.md (accepted). **Needs changes before Week 7 close:** meal-type filtering stability, an erroneous nav button, a dietary-preference field (all scheduled, due 17.07.26). **Not yet decided:** whether the customer wants their own hosting (Vercel/Render/OpenAI accounts) or continues depending on the team's — not yet raised as a decision point. Customer is not yet using/operating the product independently of the team's hosting; handover level is "Ready for independent use" (see `docs/customer-handover.md`).
 
 ### Test Links
 - **Unit Tests (backend):** `test_ai_service.py`, `test_auth.py` (new), `test_no_repeat_session.py` (new), `test_preferences.py`, `test_dislike_filter.py`, `test_history_router.py`, `test_budget_filter.py`, `test_user_route.py`, `test_users.py`

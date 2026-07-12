@@ -204,7 +204,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 **Status history:**
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 4 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 4 | 10.07.2026 | Customer | **PASSED** | Verified ordering a dish, disliking it from History with a non-reloading "Saving…" → "Disliked ✓" transition and greyed-out card, then confirmed via "Another option" that the disliked dish never reappears. |
 
 ---
 
@@ -229,7 +229,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 **Status history:**
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 4 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 4 | 10.07.2026 | Customer | **PASSED** | Verified recommendations exclude both formal (Profile) allergies and mood-field exclusions, and that the app shows no recommendation when every candidate dish is forbidden. |
 
 ---
 
@@ -251,4 +251,4 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 **Status history:**
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 4 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 4 | 10.07.2026 | Customer | **PASSED** | Confirmed "something for breakfast" prioritized breakfast dishes over dinner options, and a beverage-only item was never returned as the recommendation. Customer separately flagged meal-type filtering as feeling unstable more broadly beyond this specific script — tracked as a Sprint 5 follow-up action item, not a failure of this scenario. |
