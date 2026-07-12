@@ -25,12 +25,13 @@ async function loadRecommendations() {
     try {
         const msgEl = document.getElementById('user-message');
         const message = msgEl && msgEl.value ? msgEl.value.trim() : "";
+        const menu = readStoredMenu();
 
         const url = API_RECOMMENDER + '/display/recommendations';
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: message || "Recommend a dish" }),
+            body: JSON.stringify({ message: message || "Recommend a dish", menu }),
         });
 
         if (!response.ok) {
@@ -58,6 +59,19 @@ async function loadRecommendations() {
         spinner.style.display = 'none';
         error.style.display = 'block';
         if (errorText) errorText.textContent = err.message || String(err);
+    }
+}
+
+// Menu uploaded via the photo-upload page (photo_from_gallery/script.js),
+// stashed in localStorage since that's a separate page load. Falls back to
+// [] (backend's FALLBACK_POOL) if no menu was ever uploaded this session.
+function readStoredMenu() {
+    try {
+        const raw = localStorage.getItem('orderly_menu');
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+        return [];
     }
 }
 
