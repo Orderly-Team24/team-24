@@ -604,6 +604,22 @@ def get_recommendation_struct(
     if not pick:
         return None
 
+    # Defense in depth for LLM backends: the candidate list passed to the
+    # prompt is the only valid universe of dishes, but nothing stops a model
+    # from ignoring the "pick only from this list" instruction and inventing
+    # a dish that isn't actually on the menu. Never let a hallucinated dish
+    # reach the user when a menu was supplied.
+    if menu:
+        valid_names = {
+            str(item.get("name", "")).strip().lower()
+            for item in menu
+            if not item.get("flagged")
+        }
+        if valid_names and str(pick.get("name", "")).strip().lower() not in valid_names:
+            raise AIServiceUnavailableError(
+                "AI recommendation is not one of the candidate menu dishes"
+            )
+
     # Defense in depth for LLM backends: the candidate pool passed to the
     # prompt is already excludes-free, but nothing stops a model from
     # ignoring the "pick only from this list" instruction. Never let an
