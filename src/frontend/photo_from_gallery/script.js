@@ -67,6 +67,11 @@ function initPhotoUpload() {
 
         try {
             const result = await uploadToServer(file);
+            // Hand the OCR'd menu off to the recommendations page (separate
+            // page load, so localStorage is the only channel between them).
+            if (Array.isArray(result.menu) && result.menu.length > 0) {
+                localStorage.setItem('orderly_menu', JSON.stringify(result.menu));
+            }
             successDiv.textContent =
                 '✅ Menu uploaded! Filename: ' + result.filename + '. Forwarded to OCR service.';
             successDiv.style.display = 'block';
