@@ -20,8 +20,8 @@
 Marks a dish as disliked.
 
 ```bash
-curl -X POST https://team-24.onrender.com/history/orders/123/dislike \
-  -H "X-User-Id: user_123"
+curl -X POST "http://localhost:8000/history/orders/1/dislike" \
+  -H "X-User-Id: 1"
 ```
 
 ### GET /history/dislikes
@@ -29,8 +29,8 @@ curl -X POST https://team-24.onrender.com/history/orders/123/dislike \
 Returns the user's disliked dish IDs.
 
 ```bash
-curl https://team-24.onrender.com/history/dislikes \
-  -H "X-User-Id: user_123"
+curl -X GET "http://localhost:8000/history/dislikes" \
+  -H "X-User-Id: 1"
 ```
 
 ---
