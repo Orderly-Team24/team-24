@@ -25,9 +25,13 @@ Order history + dislikes (US-015), AI safety hardening, meal-type recognition, n
 ## Customer Feedback & Response
 | Feedback Point | Resulting PBI / Issue |
 | :--- | :--- |
-| <!-- e.g. "second menu photo upload didn't work" --> | [#283](https://github.com/Orderly-Team24/team-24/issues/283) |
+| Meal type filtering (breakfast/dinner/drinks) is unstable | [#328](https://github.com/Orderly-Team24/team-24/issues/328) |
+| Remove extra "Recommendations" button from UI | [#329](https://github.com/Orderly-Team24/team-24/issues/329) |
+| Add user guide or clearer instructions for independent use | [#330](https://github.com/Orderly-Team24/team-24/issues/330) |
+| Implement text field for dietary preferences | [#331](https://github.com/Orderly-Team24/team-24/issues/331) |
 
 ### Feedback Not Addressed
+All feedback points from the customer meeting have been converted into PBIs/issues and scheduled for Week 7.
 
 ## Documentation
 - **Contributing:** [CONTRIBUTING.md](../../CONTRIBUTING.md)
@@ -44,10 +48,11 @@ Order history + dislikes (US-015), AI safety hardening, meal-type recognition, n
 - **Hosted Documentation Site:** [Orderly Docs](https://orderly-team24.github.io/team-24/)
 
 ### Doc Review Results
-
+Customer found README and CONTRIBUTING clear and accepted customer-handover.md in its current state, but requested a user guide for independent use and found the handover terminology confusing.
 
 ### Transition-Readiness Summary
-
+- Customer accepted the current handover state and approved the product as "acceptable". Missing user guide will be added Week 7; handover terminology needs clarification.
+- Week 7: finalize AI/OCR fixes, add user guide, and prepare complete handover package.
 
 ### Test Links
 - **Unit Tests (backend):** `test_ai_service.py`, `test_auth.py` (new), `test_no_repeat_session.py` (new), `test_preferences.py`, `test_dislike_filter.py`, `test_history_router.py`, `test_budget_filter.py`, `test_user_route.py`, `test_users.py`
@@ -70,13 +75,15 @@ Order history + dislikes (US-015), AI safety hardening, meal-type recognition, n
 
 ## Release & Changelog
 - **CHANGELOG.md:** [CHANGELOG.md](../../CHANGELOG.md) 
-- **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/v0.3.0)
+- **SemVer Release:** [SemVer](https://github.com/Orderly-Team24/team-24/releases/tag/v0.4.0)
 
 ## Presentation & Media
 - 
 
 ## UAT Results Summary
-
+- UAT-08 (View Order History and Dislike a Dish) – passed (US-015 – Managing history of orders)
+- UAT-09 (AI Never Recommends an Excluded or Allergen Food) – passed (US-005 – No allergen suggestions)
+- UAT-10 (AI Recognizes Meal Type and Never Recommends a Drink as the Dish) – passed (US-018 – Specify today's meal intent alongside budget)
 
 ## Sprint Reports & Retrospectives
 - **Sprint review transcript / notes:** [sprint-review-transcript.md](sprint-review-transcript.md)
@@ -87,18 +94,17 @@ Order history + dislikes (US-015), AI safety hardening, meal-type recognition, n
 
 ## Current Status & Next Steps
 - **Current Product Status:** Order history and dislikes are implemented end-to-end; AI recommendation safety (allergens/exclusions) and quality (meal type, no beverage-as-dish, no-repeat) have been substantially hardened this sprint; a cluster of authentication/session bugs found during UAT has been fixed.
-- **Next Steps (expected Week 7 scope, pending Week 6 customer feedback):** Address any follow-up items from the Week 6 transition-readiness meeting; move order history from in-memory storage to PostgreSQL; continue OCR robustness work; prepare final MVP v3 transition/handover.
-
+- **Next Steps (expected Week 7 scope, pending Week 6 customer feedback):** Fix unstable meal type filtering; remove UI button; add user guide for independent use; implement text field for dietary preferences (vegan, halal, etc.); final polish of AI service and OCR (support more menu types).
 ## Contribution Traceability
 
-| Team Member | Issues | PRs/MRs | Review Activity | Testing | Quality/Automation | Documentation |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Daria Gorshkova (dayeon761) | - | - | - | - | - | - |
-| Viktoriia Iakovleva (rxxtzz) | - | - | - | - | - | - | 
-| Polina Kharlova (Kharlova) | - | - | - | - | - | - |
-| Vilena Zulkarnaeva (vianevi) | - | - | - | - | - | - |
-| Omar Nader (Ramy678) | - | - | - | - | - | - |
-| Adelina Khafizova (adelinamikki) | - | - | - | - | - | - |
+| Team Member | Issues | PRs/MRs | Review Activity | Documentation |
+| :--- | :--- | :--- | :--- | :--- |
+| Daria Gorshkova (dayeon761) | [#285](https://github.com/Orderly-Team24/team-24/issues/285) | [#322](https://github.com/Orderly-Team24/team-24/pull/322), [#319](https://github.com/Orderly-Team24/team-24/pull/319), [#318](https://github.com/Orderly-Team24/team-24/pull/318), [#317](https://github.com/Orderly-Team24/team-24/pull/317), [#316](https://github.com/Orderly-Team24/team-24/pull/316), [#314](https://github.com/Orderly-Team24/team-24/pull/314), [#313](https://github.com/Orderly-Team24/team-24/pull/313), [#312](https://github.com/Orderly-Team24/team-24/pull/312), [#308](https://github.com/Orderly-Team24/team-24/pull/308), [#307](https://github.com/Orderly-Team24/team-24/pull/307), [#306](https://github.com/Orderly-Team24/team-24/pull/306), [#305](https://github.com/Orderly-Team24/team-24/pull/305), [#302](https://github.com/Orderly-Team24/team-24/pull/302), [#300](https://github.com/Orderly-Team24/team-24/pull/300), [#299](https://github.com/Orderly-Team24/team-24/pull/299), [#297](https://github.com/Orderly-Team24/team-24/pull/297), [#294](https://github.com/Orderly-Team24/team-24/pull/294) | [#315](https://github.com/Orderly-Team24/team-24/pull/315), [#310](https://github.com/Orderly-Team24/team-24/pull/310), [#301](https://github.com/Orderly-Team24/team-24/pull/301), [#293](https://github.com/Orderly-Team24/team-24/pull/293), [#292](https://github.com/Orderly-Team24/team-24/pull/292), [#291](https://github.com/Orderly-Team24/team-24/pull/291), [#276](https://github.com/Orderly-Team24/team-24/pull/276) | [README.md](../../README.md), [CHANGELOG.md](../../CHANGELOG.md), [docs/user-acceptance-tests.md](../../docs/user-acceptance-tests.md) |
+| Viktoriia Iakovleva (rxxtzz) | [#282](https://github.com/Orderly-Team24/team-24/issues/282) | [#320](https://github.com/Orderly-Team24/team-24/pull/320), [#292](https://github.com/Orderly-Team24/team-24/pull/292) | [#323](https://github.com/Orderly-Team24/team-24/pull/323), [#321](https://github.com/Orderly-Team24/team-24/pull/321), [#319](https://github.com/Orderly-Team24/team-24/pull/319), [#318](https://github.com/Orderly-Team24/team-24/pull/318), [#314](https://github.com/Orderly-Team24/team-24/pull/314), [#313](https://github.com/Orderly-Team24/team-24/pull/313), [#312](https://github.com/Orderly-Team24/team-24/pull/312), [#307](https://github.com/Orderly-Team24/team-24/pull/307), [#306](https://github.com/Orderly-Team24/team-24/pull/306) | [docs/roadmap.md](../../docs/roadmap.md) |
+| Polina Kharlova (Kharlova) | [#288](https://github.com/Orderly-Team24/team-24/issues/288), [#311](https://github.com/Orderly-Team24/team-24/issues/311), [#295](https://github.com/Orderly-Team24/team-24/issues/295) | [#310](https://github.com/Orderly-Team24/team-24/pull/310), [#309](https://github.com/Orderly-Team24/team-24/pull/309), [#326](https://github.com/Orderly-Team24/team-24/pull/326) | [#327](https://github.com/Orderly-Team24/team-24/pull/327), [#325](https://github.com/Orderly-Team24/team-24/pull/325), [#322](https://github.com/Orderly-Team24/team-24/pull/322), [#308](https://github.com/Orderly-Team24/team-24/pull/308), [#304](https://github.com/Orderly-Team24/team-24/pull/304), [#302](https://github.com/Orderly-Team24/team-24/pull/302), [#300](https://github.com/Orderly-Team24/team-24/pull/300), [#299](https://github.com/Orderly-Team24/team-24/pull/299), [#297](https://github.com/Orderly-Team24/team-24/pull/297) | [reports/week6/README.md](README.md) | 
+| Vilena Zulkarnaeva (vianevi) | [#287](https://github.com/Orderly-Team24/team-24/issues/287) | [#327](https://github.com/Orderly-Team24/team-24/pull/327), [#323](https://github.com/Orderly-Team24/team-24/pull/323), [#321](https://github.com/Orderly-Team24/team-24/pull/321), [#301](https://github.com/Orderly-Team24/team-24/pull/301), [#293](https://github.com/Orderly-Team24/team-24/pull/293), [#276](https://github.com/Orderly-Team24/team-24/pull/276) | [#320](https://github.com/Orderly-Team24/team-24/pull/320), [#305](https://github.com/Orderly-Team24/team-24/pull/305), [#294](https://github.com/Orderly-Team24/team-24/pull/294) | [reports/week6/sprint-review-summary.md](sprint-review-summary.md), [reports/week6/sprint-review-transcript.md](sprint-review-transcript.md), [reports/week6/reflection.md](reflection.md), [reports/week6/retrospective.md](retrospective.md) |
+| Omar Nader (Ramy678) | [#286](https://github.com/Orderly-Team24/team-24/issues/286) | [#325](https://github.com/Orderly-Team24/team-24/pull/325) | - | [reports/week6/llm-report.md](llm-report.md) |
+| Adelina Khafizova (adelinamikki) | [#283](https://github.com/Orderly-Team24/team-24/issues/283) | [#315](https://github.com/Orderly-Team24/team-24/pull/315), [#291](https://github.com/Orderly-Team24/team-24/pull/291) | [#317](https://github.com/Orderly-Team24/team-24/pull/317), [#316](https://github.com/Orderly-Team24/team-24/pull/316) | [CONTRIBUTING.md](../../CONTRIBUTING.md), [AGENTS.md](../../AGENTS.md), [docs/customer-handover.md](../../docs/customer-handover.md) |
 
 ## Visual Evidence
 ### Sprint Milestone
