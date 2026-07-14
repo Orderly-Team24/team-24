@@ -627,3 +627,165 @@ body {
   color: #718096;
   margin: 4px 0 0 0;
 }
+
+
+
+.history-page {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.history-page h1 {
+  font-size: 1.8rem;
+  margin-bottom: 24px;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.history-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.history-card.disliked {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.history-card-info h3 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+
+.history-card-info p {
+  margin: 0;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.ordered-at {
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+.dislike-button {
+  background: #fff;
+  border: 2px solid #e53e3e;
+  color: #e53e3e;
+  border-radius: 8px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.dislike-button:hover:not(:disabled) {
+  background: #e53e3e;
+  color: #fff;
+}
+
+.dislike-button:disabled {
+  border-color: #a0aec0;
+  color: #a0aec0;
+  cursor: default;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 24px;
+  color: #4a9d6f;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.error-message.small {
+  font-size: 0.8rem;
+  color: #e53e3e;
+  margin: 4px 0 0;
+}
+
+@media (max-width: 480px) {
+  .history-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dislike-button {
+    width: 100%;
+  }
+}
+
+
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    text-align: center;
+  }
+
+  .navigation ul {
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .main-content {
+    padding: 12px;
+  }
+
+  .upload-container {
+    padding: 0 12px;
+  }
+
+  .upload-container h2 {
+    font-size: 24px;
+  }
+
+  .upload-container .subtitle {
+    font-size: 15px;
+  }
+
+  .upload-box {
+    padding: 20px 16px;
+  }
+
+  .preferences-form {
+    padding: 0;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .submit-btn,
+  .form-actions .remove-btn {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .history-page {
+    margin: 20px auto;
+  }
+
+  .footer-content {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-section h1 {
+    font-size: 1.8rem;
+  }
+}
