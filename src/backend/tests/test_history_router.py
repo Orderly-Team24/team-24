@@ -6,30 +6,25 @@ Covers:
 - AC 3: The dish id is stable across calls (same name → same id).
 - AC 4: Re-clicking the button re-records the dish (no dedup).
 - AC 5: GET /history/orders/check tells the frontend whether to flip the label.
-- AC 6: Missing X-User-Id → 400.
+- AC 6: Missing/non-numeric X-User-Id → 400.
 - AC 7: /display/recommendations now returns a real id (not the placeholder `1`).
+
+`X-User-Id` is the real numeric DB user id (see `history_router.py`), so
+fixtures below use plain numeric strings rather than free-form names. Each
+test starts from an empty DB via `conftest.py`'s autouse `_fresh_db` fixture
+(create_all/drop_all around every test) — no extra wipe needed here.
 """
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from order_history import reset_for_tests
 
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def _wipe():
-    """Make every test start from an empty store."""
-    reset_for_tests()
-    yield
-    reset_for_tests()
-
-
-HEADERS = {"X-User-Id": "dasha"}
+HEADERS = {"X-User-Id": "101"}
 
 
 def _dish(name: str = "Margherita pizza", price: float = 13.0):
@@ -58,6 +53,13 @@ def test_post_order_requires_user_id():
 def test_post_order_blank_user_id_rejected():
     resp = client.post("/history/orders", json=_dish(), headers={"X-User-Id": "   "})
     assert resp.status_code == 400
+
+
+def test_post_order_non_numeric_user_id_rejected():
+    """X-User-Id must be the real numeric DB user id, not an arbitrary name."""
+    resp = client.post("/history/orders", json=_dish(), headers={"X-User-Id": "dasha"})
+    assert resp.status_code == 400
+    assert "numeric" in resp.json()["detail"]
 
 
 def test_post_order_assigns_id_if_missing():
@@ -89,24 +91,22 @@ def test_post_order_rejects_missing_name():
     assert resp.status_code == 422
 
 
-def test_serialize_handles_nan_price():
+def test_sanitize_price_handles_nan_and_inf():
     """NaN/inf in `price` must not produce JSON-invalid output."""
-    from order_history import _serialize
-    import json
-    out = _serialize({"id": 1, "name": "X", "price": float("nan")})
-    # Must be JSON-serializable (NaN would raise).
-    json.dumps(out)
-    assert out["price"] == 0.0
-    out2 = _serialize({"id": 1, "name": "X", "price": float("inf")})
-    json.dumps(out2)
-    assert out2["price"] == 0.0
+    from order_history import _sanitize_price
+
+    assert _sanitize_price(float("nan")) == 0.0
+    assert _sanitize_price(float("inf")) == 0.0
+    assert _sanitize_price(float("-inf")) == 0.0
+    assert _sanitize_price("13.5") == 13.5
+    assert _sanitize_price("not-a-number") == 0.0
 
 
 # --- GET /history/orders -----------------------------------------------
 
 
 def test_get_history_empty_for_new_user():
-    resp = client.get("/history/orders", headers={"X-User-Id": "fresh-user"})
+    resp = client.get("/history/orders", headers={"X-User-Id": "104"})
     assert resp.status_code == 200
     body = resp.json()
     assert body["count"] == 0
@@ -135,8 +135,8 @@ def test_get_history_requires_user_id():
 
 
 def test_history_is_per_user():
-    client.post("/history/orders", json=_dish("Pizza"), headers={"X-User-Id": "alice"})
-    resp = client.get("/history/orders", headers={"X-User-Id": "bob"})
+    client.post("/history/orders", json=_dish("Pizza"), headers={"X-User-Id": "102"})
+    resp = client.get("/history/orders", headers={"X-User-Id": "103"})
     assert resp.status_code == 200
     assert resp.json()["count"] == 0
 
@@ -147,7 +147,7 @@ def test_history_is_per_user():
 def test_check_false_for_unknown_dish():
     resp = client.get("/history/orders/check", params={"dish_id": 99999}, headers=HEADERS)
     assert resp.status_code == 200
-    assert resp.json() == {"user_id": "dasha", "dish_id": 99999, "already_ordered": False}
+    assert resp.json() == {"user_id": "101", "dish_id": 99999, "already_ordered": False}
 
 
 def test_check_true_after_posting():
@@ -254,12 +254,12 @@ def test_get_dislikes_requires_user_id():
 
 
 def test_dislikes_are_per_user():
-    client.post("/history/orders/42/dislike", headers={"X-User-Id": "alice"})
-    resp = client.get("/history/dislikes", headers={"X-User-Id": "bob"})
+    client.post("/history/orders/42/dislike", headers={"X-User-Id": "102"})
+    resp = client.get("/history/dislikes", headers={"X-User-Id": "103"})
     assert resp.json()["dislikes"] == []
 
 
 def test_get_dislikes_empty_for_new_user():
-    resp = client.get("/history/dislikes", headers={"X-User-Id": "fresh-user"})
+    resp = client.get("/history/dislikes", headers={"X-User-Id": "104"})
     assert resp.status_code == 200
-    assert resp.json() == {"user_id": "fresh-user", "dislikes": []}
+    assert resp.json() == {"user_id": "104", "dislikes": []}
