@@ -15,6 +15,7 @@
 - Removed the `cuisine` preference entirely. It was accepted end-to-end (UI → API → LLM prompt) but never actually persisted or collected from any real user input — every caller always sent `null`.
 
 ### Fixed
+- OCR layout reconstruction now detects an arbitrary number of columns (3+) and uneven splits via gap-based left-edge clustering, instead of only splitting at the image midline into at most two halves.
 - README: fresh-clone backend setup crashed with `RuntimeError: DATABASE_URL is not set` — the Postgres migration (ADR-002) has required it since 0.3.0, but the README never mentioned it. Added the env var (SQLite connection string for local dev) and the missing `alembic upgrade head` step; verified end-to-end on a clean clone.
 - README: linked the Week 5 report, which existed but wasn't linked from anywhere.
 - CI: fixed lychee (link-checker) failures on open PRs — a release link left dangling by the `0.3.0` → `v0.3.0` tag rename, and a GitHub Pages link that 404s on PR branches since Pages only ever builds from `main` (excluded from the check for now).
@@ -31,8 +32,8 @@
 - JWT signing secret is hardcoded in `src/backend/jwt_handler.py` rather than sourced from an environment variable — externalize before relying on this for anything beyond a course project.
 - Order history (`/history/orders*`) is still an in-memory store, not PostgreSQL — data is lost on every restart/redeploy.
 - Two Render services (`team-24`, `team-24-1`) and two frontend hosts have drifted in the past (different `API_URL` values hardcoded per page) — worth auditing before the next release.
+- OCR multi-column layout reconstruction clusters non-price word left-edges across horizontal gutters (any number of columns, including uneven widths) instead of assuming a single midline split; handwritten specials boards are still out of scope.
 - OCR menu parsing is tuned for one common layout (name on its own line, description + price after); non-Latin currency symbols aren't handled reliably yet.
-- OCR two-column layout reconstruction now clusters words by Y coordinate instead of trusting Tesseract block_num, which could merge unrelated dishes on dense menus (e.g. text column + photo column layouts).
 
 ---
 

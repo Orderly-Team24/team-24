@@ -175,3 +175,56 @@ def test_column_split_feeds_cleanly_into_parse_menu():
     # None of the names should contain garbled cross-column text.
     for d in dishes:
         assert "$" not in d["name"]
+
+
+def test_three_column_layout_is_read_column_first():
+    # Three side-by-side columns; without gap clustering these would be
+    # forced into a single midline split and interleaved incorrectly.
+    col1 = [
+        ("Soup", 20, 10, 0, 0),
+        ("Bread", 20, 50, 1, 0),
+    ]
+    col2 = [
+        ("Steak", 360, 10, 2, 0),
+        ("Pasta", 360, 50, 3, 0),
+    ]
+    col3 = [
+        ("Cake", 700, 10, 4, 0),
+        ("Pie", 700, 50, 5, 0),
+    ]
+    data = _make_data(col1 + col2 + col3)
+    text = reconstruct_text(data, image_width=1000)
+
+    assert (
+        text.index("Soup")
+        < text.index("Bread")
+        < text.index("Steak")
+        < text.index("Pasta")
+        < text.index("Cake")
+        < text.index("Pie")
+    )
+
+
+def test_uneven_two_column_sidebar_and_main():
+    # Narrow left sidebar (~15% width) + wide main column starting well
+    # left of the image midline — the old midpoint heuristic often missed
+    # this and fell back to single-column reading order.
+    sidebar = [
+        ("Wines", 30, 10, 0, 0),
+        ("Beers", 30, 50, 1, 0),
+    ]
+    main = [
+        ("Margherita", 280, 10, 2, 0),
+        ("Pizza", 400, 10, 2, 0),
+        ("Caesar", 280, 50, 3, 0),
+        ("Salad", 380, 50, 3, 0),
+    ]
+    data = _make_data(sidebar + main)
+    text = reconstruct_text(data, image_width=1000)
+
+    assert (
+        text.index("Wines")
+        < text.index("Beers")
+        < text.index("Margherita Pizza")
+        < text.index("Caesar Salad")
+    )
