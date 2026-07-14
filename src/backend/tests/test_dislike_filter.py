@@ -4,29 +4,34 @@ Covers:
 - AC 1: A disliked dish is excluded from recommendations for the same user.
 - AC 2: Without X-User-Id, behavior is unchanged (no filtering applied).
 - AC 3: If all candidates are disliked, returns 200 with empty recommendations.
+
+`X-User-Id` is the real numeric DB user id (see `history_router.py`), so
+fixtures below use plain numeric strings. Dislikes are seeded directly via
+`order_history.add_dislike` against a throwaway session from `conftest.py`'s
+shared test engine; each test starts from an empty DB via the autouse
+`_fresh_db` fixture there.
 """
 
 from __future__ import annotations
 
-import pytest
 from fastapi.testclient import TestClient
 
 from main import app
-from order_history import (
-    add_dislike,
-    make_dish_id,
-    reset_for_tests,
-)
+from order_history import make_dish_id
+
+from .conftest import TestingSessionLocal
 
 client = TestClient(app)
 
 
-@pytest.fixture(autouse=True)
-def _wipe():
-    """Make every test start from an empty store."""
-    reset_for_tests()
-    yield
-    reset_for_tests()
+def _seed_dislike(user_id: int, dish_id: int) -> None:
+    from order_history import add_dislike
+
+    db = TestingSessionLocal()
+    try:
+        add_dislike(db, user_id, dish_id)
+    finally:
+        db.close()
 
 
 # --- AC 1: Disliked dish is excluded -----------------------------------
@@ -41,13 +46,13 @@ def test_disliked_dish_excluded_for_user():
     dish_id = dish["id"]
 
     # Dislike that dish.
-    add_dislike("dasha", dish_id)
+    _seed_dislike(101, dish_id)
 
     # Get recommendations again — the disliked dish should be excluded.
     resp2 = client.post(
         "/display/recommendations",
         json={"message": ""},
-        headers={"X-User-Id": "dasha"},
+        headers={"X-User-Id": "101"},
     )
     assert resp2.status_code == 200
     result = resp2.json()["recommendations"]
@@ -63,13 +68,13 @@ def test_disliked_dish_still_returned_for_other_user():
     dish_id = dish["id"]
 
     # User A dislikes it.
-    add_dislike("alice", dish_id)
+    _seed_dislike(102, dish_id)
 
     # User B should still see it.
     resp2 = client.post(
         "/display/recommendations",
         json={"message": ""},
-        headers={"X-User-Id": "bob"},
+        headers={"X-User-Id": "103"},
     )
     assert resp2.status_code == 200
     result = resp2.json()["recommendations"]
@@ -88,7 +93,7 @@ def test_no_user_id_no_filtering():
     dish_id = dish["id"]
 
     # Dislike the dish (simulates some other path having added it).
-    add_dislike("dasha", dish_id)
+    _seed_dislike(101, dish_id)
 
     # No header → no filtering, so the disliked dish can still appear.
     resp2 = client.post("/display/recommendations", json={"message": ""})
@@ -100,6 +105,22 @@ def test_no_user_id_no_filtering():
     assert result[0]["id"] > 0
 
 
+def test_non_numeric_user_id_no_filtering():
+    """A non-numeric X-User-Id can't map to a real user, so no filtering."""
+    resp = client.post("/display/recommendations", json={"message": ""})
+    dish = resp.json()["recommendations"][0]
+    dish_id = dish["id"]
+    _seed_dislike(101, dish_id)
+
+    resp2 = client.post(
+        "/display/recommendations",
+        json={"message": ""},
+        headers={"X-User-Id": "not-a-number"},
+    )
+    assert resp2.status_code == 200
+    assert len(resp2.json()["recommendations"]) == 1
+
+
 # --- AC 3: All candidates disliked → empty result ----------------------
 
 
@@ -109,12 +130,12 @@ def test_all_candidates_disliked_returns_empty():
 
     # Dislike every dish in the fallback pool.
     for dish in FALLBACK_POOL:
-        add_dislike("dasha", make_dish_id(dish))
+        _seed_dislike(101, make_dish_id(dish))
 
     resp = client.post(
         "/display/recommendations",
         json={"message": ""},
-        headers={"X-User-Id": "dasha"},
+        headers={"X-User-Id": "101"},
     )
     assert resp.status_code == 200
     assert resp.json() == {"recommendations": []}
@@ -128,7 +149,7 @@ def test_empty_dislikes_no_effect():
     resp = client.post(
         "/display/recommendations",
         json={"message": ""},
-        headers={"X-User-Id": "fresh-user"},
+        headers={"X-User-Id": "105"},
     )
     assert resp.status_code == 200
     result = resp.json()["recommendations"]
@@ -142,7 +163,7 @@ def test_dislike_filter_works_with_budget_filter():
 
     # Dislike the cheapest dish.
     cheapest = min(FALLBACK_POOL, key=lambda d: d["price"])
-    add_dislike("dasha", make_dish_id(cheapest))
+    _seed_dislike(101, make_dish_id(cheapest))
 
     # Set a budget that only the cheapest dish would fit.
     resp = client.post(
@@ -151,7 +172,7 @@ def test_dislike_filter_works_with_budget_filter():
             "message": "",
             "preferences": {"max_budget": cheapest["price"]},
         },
-        headers={"X-User-Id": "dasha"},
+        headers={"X-User-Id": "101"},
     )
     # The cheapest is disliked, so nothing should remain.
     assert resp.status_code == 200

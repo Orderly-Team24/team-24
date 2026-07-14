@@ -37,3 +37,18 @@ Use PostgreSQL as the relational database, SQLAlchemy 2.0 as the ORM, and Alembi
 - **QR-001 – Functional Correctness:** persistent storage ensures user data is not silently lost between sessions.
 - **QR-003 – Maintainability:** migration history and ORM models make the schema easy to evolve and review.
 - **QR-004 – Security:** credentials are stored as environment variables; the database is on an internal network.
+
+## Update (2026-07-14) — order history and dislikes now wired up
+
+The `order_history` and `dislikes` tables described above existed in the schema since this
+ADR, but the order-history/dislike feature (US-015, Sprint 4) was initially implemented
+against a separate in-memory store (`src/backend/order_history.py`) instead of these tables,
+so data didn't actually survive restarts — tracked as Sprint 5 follow-up work (issue #338).
+
+That gap is now closed: `order_history.py` reads/writes `OrderHistory`/`Dislikes` rows through
+a SQLAlchemy `Session` (the same `get_db` dependency pattern as `auth.py`/`users.py`), and
+`history_router.py`/`display_recommendations.py` inject that session instead of touching
+module-level state. A follow-up migration (`31d0cd7df2bc`) added `description`, `ingredients`,
+and `reason` columns to `order_history` so the full dish shape the frontend renders can round-trip
+through the database. Order history and dislikes now persist across restarts/redeploys, same as
+`users`, `preferences`, and `refresh_tokens`.

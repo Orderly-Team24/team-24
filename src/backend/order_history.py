@@ -1,8 +1,9 @@
-"""Order history (stub).
+"""Order history and dislikes, persisted via SQLAlchemy.
 
-Stores dishes a user has marked with "I'll order it again". No real DB yet
-— we keep everything in process memory. When a real DB lands, only the
-``_store`` helpers here need to change; the HTTP contract stays the same.
+Backed by the `order_history` and `dislikes` tables (see `src/db/models.py`,
+migrated in ADR-002). Same pattern as `auth.py`/`users.py`: callers pass in a
+`Session` (via the `get_db` FastAPI dependency); there's no module-level
+state, so the database is the single source of truth and survives restarts.
 
 Per-dish shape (matches what the frontend already renders):
 
@@ -14,15 +15,20 @@ Per-dish shape (matches what the frontend already renders):
         "ingredients": list[str],
         "reason":      str,
     }
-
-Per-user history is a list of those dicts, ordered most-recent first.
 """
 
 from __future__ import annotations
 
 import logging
-import threading
+import os
+import sys
 from typing import Any
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'db'))
+
+from sqlalchemy.orm import Session
+
+from models import Dislikes, OrderHistory
 
 log = logging.getLogger("order_history")
 
@@ -42,38 +48,30 @@ def make_dish_id(dish: dict[str, Any]) -> int:
     return h or 1
 
 
-# --- in-memory store ----------------------------------------------------
-#
-# user_id -> list[dish] (most recent first)
-#
-# Guarded by a lock so concurrent FastAPI workers can't lose writes.
-
-_lock = threading.RLock()
-_store: dict[str, list[dict[str, Any]]] = {}
-_dislikes: dict[str, set[int]] = {}
-
-
-def _serialize(dish: dict[str, Any]) -> dict[str, Any]:
-    """Return a JSON-safe copy of the dish with the canonical schema."""
-    price_raw = dish.get("price", 0)
-    # Reject NaN/inf: they survive float() but break json.dumps downstream.
+def _sanitize_price(price_raw: Any) -> float:
+    """Reject NaN/inf: they survive float() but break json.dumps downstream."""
     try:
         price = float(price_raw)
     except (TypeError, ValueError):
-        price = 0.0
+        return 0.0
     if price != price or price in (float("inf"), float("-inf")):  # NaN check
-        price = 0.0
+        return 0.0
+    return price
+
+
+def _serialize(row: OrderHistory) -> dict[str, Any]:
+    """Return a JSON-safe dict with the canonical schema for one history row."""
     return {
-        "id":          int(dish["id"]),
-        "name":        str(dish.get("name", "")),
-        "price":       price,
-        "description": str(dish.get("description", "")),
-        "ingredients": list(dish.get("ingredients", []) or []),
-        "reason":      str(dish.get("reason", "")),
+        "id":          int(row.dish_id),
+        "name":        row.dish_name or "",
+        "price":       row.price or 0.0,
+        "description": row.description or "",
+        "ingredients": row.ingredients or [],
+        "reason":      row.reason or "",
     }
 
 
-def add_order(user_id: str, dish: dict[str, Any]) -> dict[str, Any]:
+def add_order(db: Session, user_id: int, dish: dict[str, Any]) -> dict[str, Any]:
     """Append a dish to the user's history.
 
     Same dish (by id) is allowed to appear multiple times — that's how
@@ -81,49 +79,72 @@ def add_order(user_id: str, dish: dict[str, Any]) -> dict[str, Any]:
     """
     if not user_id:
         raise ValueError("user_id is required")
-    serialized = _serialize(dish)
-    with _lock:
-        history = _store.setdefault(user_id, [])
-        history.insert(0, serialized)  # most recent first
-    log.info("Added dish id=%s name=%r for user=%s", serialized["id"], serialized["name"], user_id)
-    return serialized
+    row = OrderHistory(
+        user_id=user_id,
+        dish_id=int(dish["id"]),
+        dish_name=str(dish.get("name", "")),
+        price=_sanitize_price(dish.get("price", 0)),
+        description=str(dish.get("description", "")),
+        ingredients=list(dish.get("ingredients", []) or []),
+        reason=str(dish.get("reason", "")),
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    log.info("Added dish id=%s name=%r for user=%s", row.dish_id, row.dish_name, user_id)
+    return _serialize(row)
 
 
-def get_history(user_id: str) -> list[dict[str, Any]]:
+def get_history(db: Session, user_id: int) -> list[dict[str, Any]]:
     """Return the user's history, most recent first."""
-    with _lock:
-        return list(_store.get(user_id, []))
+    rows = (
+        db.query(OrderHistory)
+        .filter(OrderHistory.user_id == user_id)
+        .order_by(OrderHistory.ordered_at.desc(), OrderHistory.id.desc())
+        .all()
+    )
+    return [_serialize(r) for r in rows]
 
 
-def has_ordered(user_id: str, dish_id: int) -> bool:
+def has_ordered(db: Session, user_id: int, dish_id: int) -> bool:
     """True if ``dish_id`` is already in the user's history."""
-    with _lock:
-        return any(d["id"] == dish_id for d in _store.get(user_id, []))
+    return (
+        db.query(OrderHistory)
+        .filter(OrderHistory.user_id == user_id, OrderHistory.dish_id == dish_id)
+        .first()
+        is not None
+    )
 
 
-def clear_history(user_id: str) -> None:
+def clear_history(db: Session, user_id: int) -> None:
     """Wipe a single user's history. Mostly useful for tests."""
-    with _lock:
-        _store.pop(user_id, None)
+    db.query(OrderHistory).filter(OrderHistory.user_id == user_id).delete()
+    db.commit()
 
 
-def add_dislike(user_id: str, dish_id: int) -> None:
-    """Mark a dish as disliked for the user. Idempotent — a set dedups."""
+def add_dislike(db: Session, user_id: int, dish_id: int) -> None:
+    """Mark a dish as disliked for the user. Idempotent — checked before insert."""
     if not user_id:
         raise ValueError("user_id is required")
-    with _lock:
-        _dislikes.setdefault(user_id, set()).add(dish_id)
+    exists = (
+        db.query(Dislikes)
+        .filter(Dislikes.user_id == user_id, Dislikes.dish_id == dish_id)
+        .first()
+    )
+    if exists is None:
+        db.add(Dislikes(user_id=user_id, dish_id=dish_id))
+        db.commit()
     log.info("Disliked dish id=%s for user=%s", dish_id, user_id)
 
 
-def get_dislikes(user_id: str) -> list[int]:
+def get_dislikes(db: Session, user_id: int) -> list[int]:
     """Return the user's disliked dish ids."""
-    with _lock:
-        return list(_dislikes.get(user_id, set()))
+    rows = db.query(Dislikes.dish_id).filter(Dislikes.user_id == user_id).all()
+    return [r[0] for r in rows]
 
 
-def reset_for_tests() -> None:
-    """Wipe the whole in-memory store. For tests only."""
-    with _lock:
-        _store.clear()
-        _dislikes.clear()
+def reset_for_tests(db: Session) -> None:
+    """Wipe both tables. For tests only."""
+    db.query(OrderHistory).delete()
+    db.query(Dislikes).delete()
+    db.commit()
