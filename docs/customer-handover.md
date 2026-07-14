@@ -42,7 +42,7 @@ These were raised as open questions at the Week 6 review — see `reports/week6/
 - **User accounts/passwords are on a hardcoded secret key**, not one only the team controls securely. In plain terms: the code that verifies login sessions uses a fixed value written directly into the source code instead of a private setting. This is fine for a course project but should be fixed (moved to a private setting, changed) before this is used as a real product with real users' data.
 - **Order history and "disliked" dishes are not permanently saved yet** — they live in the server's short-term memory and disappear every time the service restarts (which happens periodically, even without anyone doing anything). Don't rely on order history sticking around long-term yet.
 - **The AI won't always perfectly understand free-text requests** typed into the "what are you in the mood for" field. Allergies and things you've explicitly excluded are strictly enforced — those are never violated. But open-ended phrasing ("something light and warm") is best-effort, not a strict guarantee.
-- **Scanning menu photos handles single-column and standard two-column layouts**, including $/€/£/₽ prices and both "12.50" and European "12,50" formats. It does not yet handle 3+ columns, unevenly split columns, or handwritten specials boards.
+- **Scanning menu photos handles single-column and multi-column layouts** (including uneven column widths), with $/€/£/₽ prices and both "12.50" and European "12,50" formats. It does not yet handle handwritten specials boards.
 
 ## If something breaks or needs to be recreated
 
