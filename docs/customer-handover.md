@@ -64,7 +64,7 @@ We're using three straightforward labels to track this, so it's always clear whe
 - **How far along is the handover?** → **Ready for you to use independently.** The product is live and usable end-to-end; you have not yet taken over hosting/operating it yourself (see "Who owns what" above) — that remains a separate, not-yet-started step if you want it.
 - **Have you confirmed you're happy with where things stand?** → **Yes, with follow-up items.** At the Week 6 review (10.07.2026) you approved the delivered features (order history, dislikes, AI safety fixes) and accepted this handover document as an accurate reflection of the current state, "noting that while dependencies aren't ideal, the handover is acceptable for now."
 - **Follow-up items from that review** (owned by the team, due before Week 7 wraps):
-  - Add a clear, non-technical user guide — **done** this same day (README.md § User guide, and this page's plain-language rewrite).
+  - Add a clear, non-technical user guide — **done** this same day (README.md § User guide, and this page's plain-language rewrite); polished further in Sprint 5 (issue #330) with an explicit login step for returning users and a Troubleshooting subsection.
   - Meal-type recommendation filtering (breakfast/lunch/dinner) felt unstable in places beyond the specific scenario tested — scheduled for Sprint 5.
   - Remove a stray/confusing "Recommendations" nav button — scheduled for Sprint 5.
   - Add a free-text dietary-preference field (vegan, halal, etc.) — scheduled for Sprint 5.

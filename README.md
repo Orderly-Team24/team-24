@@ -17,6 +17,7 @@ A web app that recommends dishes based on your preferences, budget, allergies, a
 How to actually use Orderly, step by step:
 
 1. **Create an account.** Go to [`/register`](https://team-24-navy.vercel.app/register), enter an email, username, and password. You're logged in automatically right after.
+   - **Already have an account?** Go to [`/login`](https://team-24-navy.vercel.app/login) instead and sign in with your email and password.
 2. **Set your food preferences.** On first login you'll be asked for allergies, dislikes, and likes (all optional, plain comma-separated text — e.g. "peanuts, shellfish"). You can change these any time from **Profile**.
 3. **Set a budget and (optionally) a menu photo.** On the next step, enter your budget and either upload a photo of a real restaurant menu or skip it to use a sample menu. You can also type what you're in the mood for (e.g. "something for breakfast", "I don't want steak") — the AI takes this into account alongside your saved preferences.
 4. **Get a recommendation.** The app shows one recommended dish that fits your budget, respects your allergies/exclusions, and (if you gave one) matches your mood.
@@ -27,6 +28,12 @@ How to actually use Orderly, step by step:
 6. **Manage your account.** The **Profile** page lets you update preferences or permanently delete your account.
 
 **Things Orderly guarantees:** it will never recommend a dish containing something you've listed as an allergy or explicitly said you don't want (even in free text, e.g. "I don't want steak") — this is enforced in code, not just requested from the AI. It also never recommends a plain drink (water, soda, coffee, etc.) as "the dish."
+
+### Troubleshooting
+
+- **The site seems stuck loading, or the first request times out.** The backend services are on Render's free tier and spin down after inactivity — the first request after a while can take 5–15 s to wake them up. Reload once and try again.
+- **The menu photo didn't scan correctly.** Scanning handles single- and multi-column printed menus in several currencies, but not handwritten specials boards or unusual layouts — see [docs/customer-handover.md](docs/customer-handover.md) for the current, up-to-date list of known limitations.
+- **Something else looks broken.** Check [docs/customer-handover.md](docs/customer-handover.md) first — most known gaps are already documented there. If it's not listed, open a GitHub issue.
 
 **Things Orderly does its best on, but doesn't guarantee:** open-ended mood requests ("something warm and comforting") and menu-photo scanning for layouts beyond a standard single- or two-column menu (e.g. 3+ columns, uneven column widths, or handwritten specials boards). See [docs/customer-handover.md](docs/customer-handover.md) for the current, up-to-date list of known limitations.
 
