@@ -15,6 +15,7 @@
 - Removed the `cuisine` preference entirely. It was accepted end-to-end (UI → API → LLM prompt) but never actually persisted or collected from any real user input — every caller always sent `null`.
 
 ### Fixed
+- Removed the dead `/display/another-option` endpoint: it hardcoded every dish to `id=1`, never called the AI backend (so `reason` was always blank), didn't return a `session_id`, and had zero frontend callers — the real "Another option" button always went through `/display/recommendations`, which has its own correct no-repeat logic. Also removed an abandoned LangChain/Chroma RAG experiment (`retriever.py`, `create_database.py`, `food_database/`) that was never wired into any live endpoint and wasn't even listed in `requirements.txt`.
 - OCR layout reconstruction now detects an arbitrary number of columns (3+) and uneven splits via gap-based left-edge clustering, instead of only splitting at the image midline into at most two halves.
 - README: fresh-clone backend setup crashed with `RuntimeError: DATABASE_URL is not set` — the Postgres migration (ADR-002) has required it since 0.3.0, but the README never mentioned it. Added the env var (SQLite connection string for local dev) and the missing `alembic upgrade head` step; verified end-to-end on a clean clone.
 - README: linked the Week 5 report, which existed but wasn't linked from anywhere.
