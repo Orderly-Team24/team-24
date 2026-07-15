@@ -42,6 +42,7 @@ class Preferences(BaseModel):
 
     exclude_ingredients: list[str] | None = None
     favorite_ingredients: list[str] | None = None
+    dietary_preferences: str | None = None
     max_budget: float | None = Field(default=None, ge=0)
 
 

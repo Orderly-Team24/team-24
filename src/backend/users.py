@@ -19,6 +19,7 @@ class PreferencesUpdate(BaseModel):
     allergies: list[str] | None = None
     likes: list[str] | None = None
     dislikes: list[str] | None = None
+    dietary_preferences: str | None = None
 
 
 def get_current_user(
@@ -46,6 +47,7 @@ def get_preferences(
         "allergies": prefs.allergies or [],
         "likes": prefs.likes or [],
         "dislikes": prefs.dislikes or [],
+        "dietary_preferences": prefs.dietary_preferences,
     }
 
 
@@ -65,6 +67,8 @@ def update_preferences(
         prefs.likes = data.likes
     if data.dislikes is not None:
         prefs.dislikes = data.dislikes
+    if data.dietary_preferences is not None:
+        prefs.dietary_preferences = data.dietary_preferences
 
     db.commit()
     db.refresh(prefs)
@@ -73,4 +77,5 @@ def update_preferences(
         "allergies": prefs.allergies,
         "likes": prefs.likes,
         "dislikes": prefs.dislikes,
+        "dietary_preferences": prefs.dietary_preferences,
     }
