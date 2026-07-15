@@ -15,13 +15,14 @@ def _create_user(user_id=1, email="test@example.com", username="testuser"):
     db.close()
 
 
-def _create_preferences(user_id=1, allergies=None, likes=None, dislikes=None):
+def _create_preferences(user_id=1, allergies=None, likes=None, dislikes=None, dietary_preferences= None):
     db = TestingSessionLocal()
     db.add(Preferences(
         user_id=user_id,
         allergies=allergies or [],
         likes=likes or [],
         dislikes=dislikes or [],
+        dietary_preferences=dietary_preferences or [],
     ))
     db.commit()
     db.close()
@@ -38,11 +39,11 @@ def test_get_preferences_without_token_returns_401():
 
 def test_get_preferences_returns_saved_data():
     _create_user(user_id=1)
-    _create_preferences(user_id=1, allergies=["nuts"], likes=["tomato"], dislikes=["onion"])
+    _create_preferences(user_id=1, allergies=["nuts"], likes=["tomato"], dislikes=["onion"], dietary_preferences=["vegan"],)
 
     resp = client.get("/users/me/preferences", headers=_auth_header(user_id=1))
     assert resp.status_code == 200
-    assert resp.json() == {"allergies": ["nuts"], "likes": ["tomato"], "dislikes": ["onion"]}
+    assert resp.json() == {"allergies": ["nuts"], "likes": ["tomato"], "dislikes": ["onion"], "dietary_preferences": ["vegan"]}
 
 
 def test_get_preferences_is_scoped_to_the_requesting_user():
@@ -67,18 +68,18 @@ def test_patch_preferences_updates_saved_data():
     resp = client.patch(
         "/users/me/preferences",
         headers=_auth_header(user_id=1),
-        json={"allergies": ["gluten"], "likes": ["pasta"], "dislikes": ["mushroom"]},
+        json={"allergies": ["gluten"], "likes": ["pasta"], "dislikes": ["mushroom"], "dietary_preferences": ["halal"]},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"allergies": ["gluten"], "likes": ["pasta"], "dislikes": ["mushroom"]}
+    assert resp.json() == {"allergies": ["gluten"], "likes": ["pasta"], "dislikes": ["mushroom"], "dietary_preferences": ["halal"]}
 
     resp = client.get("/users/me/preferences", headers=_auth_header(user_id=1))
-    assert resp.json() == {"allergies": ["gluten"], "likes": ["pasta"], "dislikes": ["mushroom"]}
+    assert resp.json() == {"allergies": ["gluten"], "likes": ["pasta"], "dislikes": ["mushroom"], "dietary_preferences": ["halal"]}
 
 
 def test_patch_preferences_partial_body_only_updates_named_fields():
     _create_user(user_id=1)
-    _create_preferences(user_id=1, allergies=["nuts"], likes=["tomato"], dislikes=["onion"])
+    _create_preferences(user_id=1, allergies=["nuts"], likes=["tomato"], dislikes=["onion"], dietary_preferences=["vegan"])
 
     resp = client.patch(
         "/users/me/preferences",
@@ -86,4 +87,4 @@ def test_patch_preferences_partial_body_only_updates_named_fields():
         json={"likes": ["pasta"]},
     )
     assert resp.status_code == 200
-    assert resp.json() == {"allergies": ["nuts"], "likes": ["pasta"], "dislikes": ["onion"]}
+    assert resp.json() == {"allergies": ["nuts"], "likes": ["pasta"], "dislikes": ["onion"], "dietary_preferences": ["vegan"]}

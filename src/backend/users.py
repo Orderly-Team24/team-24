@@ -47,7 +47,7 @@ def get_preferences(
         "allergies": prefs.allergies or [],
         "likes": prefs.likes or [],
         "dislikes": prefs.dislikes or [],
-        "dietary_preferences": prefs.dietary_preferences,
+        "dietary_preferences": prefs.dietary_preferences or [],
     }
 
 
