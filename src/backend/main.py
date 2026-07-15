@@ -1,6 +1,8 @@
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Force Docker rebuild after cache issue
 from ai_service import get_recommendation
 from display_recommendations import router as display_router
 from history_router import router as history_router
