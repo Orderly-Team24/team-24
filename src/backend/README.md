@@ -158,9 +158,13 @@ curl -X POST http://127.0.0.1:8003/display/recommendations \
   Linux and required the model to run on the same host:
   - `ai_service.py` no longer touches LM Studio by default. Set
     `AI_BACKEND=lmstudio` to bring it back locally.
-  - `retriever.py` (LangChain + Chroma) is unused by the live endpoints but
-    kept in the repo for the offline scripts in `test_*.py`.
-
-If you want to put RAG back into the live service, the seam is
-`ai_service._lmstudio_backend` — extend it to call the retriever before
-hitting the model.
+- `retriever.py`/`create_database.py` (LangChain + Chroma over a hardcoded
+  `data/menu.json`) — an abandoned RAG experiment, never imported by
+  `main.py`/`ai_service.py` and not even in `requirements.txt`. Removed
+  along with the `food_database/` Chroma artifacts and `data/`.
+- `another_option.py` (`POST /display/another-option`) — a second,
+  divergent implementation of "give the next unseen dish for this
+  session" that no frontend ever called; the real "Another option" button
+  re-calls `/display/recommendations` with the same `session_id`, which
+  has its own no-repeat-dish logic. Removed together with its router
+  registration in `main.py`.

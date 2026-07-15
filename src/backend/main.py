@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from ai_service import get_recommendation
 from display_recommendations import router as display_router
 from history_router import router as history_router
-from another_option import router as another_option_router
 from user_route import router as user_router
 from auth import router as auth_router
 from users import router as users_router
@@ -19,7 +18,6 @@ app.add_middleware(
 )
 app.include_router(display_router)
 app.include_router(history_router)
-app.include_router(another_option_router)
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(users_router)
