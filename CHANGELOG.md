@@ -16,6 +16,7 @@
 
 ### Fixed
 - Removed the dead `/display/another-option` endpoint: it hardcoded every dish to `id=1`, never called the AI backend (so `reason` was always blank), didn't return a `session_id`, and had zero frontend callers — the real "Another option" button always went through `/display/recommendations`, which has its own correct no-repeat logic. Also removed an abandoned LangChain/Chroma RAG experiment (`retriever.py`, `create_database.py`, `food_database/`) that was never wired into any live endpoint and wasn't even listed in `requirements.txt`.
+- Order history and disliked dishes are now persisted in PostgreSQL (the existing `order_history`/`dislikes` tables from ADR-002) instead of an in-memory store — they survive service restarts/redeploys like accounts and preferences already did. Removed the `/history/_reset` dev endpoint along with it: it was a test convenience that became a real live-data-wiping risk once the store held real persisted data.
 - OCR layout reconstruction now detects an arbitrary number of columns (3+) and uneven splits via gap-based left-edge clustering, instead of only splitting at the image midline into at most two halves.
 - README: fresh-clone backend setup crashed with `RuntimeError: DATABASE_URL is not set` — the Postgres migration (ADR-002) has required it since 0.3.0, but the README never mentioned it. Added the env var (SQLite connection string for local dev) and the missing `alembic upgrade head` step; verified end-to-end on a clean clone.
 - README: linked the Week 5 report, which existed but wasn't linked from anywhere.
@@ -31,7 +32,6 @@
 
 ### Notes for next-sprint owner
 - JWT signing secret is hardcoded in `src/backend/jwt_handler.py` rather than sourced from an environment variable — externalize before relying on this for anything beyond a course project.
-- Order history (`/history/orders*`) is still an in-memory store, not PostgreSQL — data is lost on every restart/redeploy.
 - Two Render services (`team-24`, `team-24-1`) and two frontend hosts have drifted in the past (different `API_URL` values hardcoded per page) — worth auditing before the next release.
 - OCR multi-column layout reconstruction clusters non-price word left-edges across horizontal gutters (any number of columns, including uneven widths) instead of assuming a single midline split; handwritten specials boards are still out of scope.
 - OCR menu parsing is tuned for one common layout (name on its own line, description + price after); non-Latin currency symbols aren't handled reliably yet.

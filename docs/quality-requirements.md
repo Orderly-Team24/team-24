@@ -63,7 +63,7 @@ the API must reject the request with HTTP 422 or HTTP 400
 and must not persist or process the invalid data.
 
 **Rationale:**
-Invalid inputs can corrupt the in-memory order history (e.g. all unnamed dishes colliding on the same ID)
+Invalid inputs can corrupt the persisted order history (e.g. all unnamed dishes colliding on the same ID)
 or produce nonsensical recommendations (e.g. negative budget).
 This was already observed during development: blank names caused ID collisions on `id=1`.
 
