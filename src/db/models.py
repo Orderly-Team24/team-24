@@ -43,6 +43,9 @@ class OrderHistory(Base):
     dish_id: Mapped[int] = mapped_column(Integer)
     dish_name: Mapped[str] = mapped_column(String)
     price: Mapped[float] = mapped_column(Float)
+    description: Mapped[str | None] = mapped_column(String, nullable=True)
+    ingredients: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    reason: Mapped[str | None] = mapped_column(String, nullable=True)
     ordered_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 class Dislikes(Base):

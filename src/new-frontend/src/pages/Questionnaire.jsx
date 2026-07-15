@@ -9,6 +9,7 @@ function Questionnaire() {
   const [likes, setLikes] = useState('');
   const [dislikes, setDislikes] = useState('');
   const [allergies, setAllergies] = useState('');
+  const [dietary, setDietary] = useState('');
   const [error, setError] = useState('');
 
   const parseList = (value) =>
@@ -20,6 +21,7 @@ function Questionnaire() {
       likes: parseList(likes),
       dislikes: parseList(dislikes),
       allergies: parseList(allergies),
+      dietary: parseList(dietary),
     };
     localStorage.setItem('orderly_preferences', JSON.stringify(preferences));
 
@@ -55,6 +57,7 @@ function Questionnaire() {
     setLikes('');
     setDislikes('');
     setAllergies('');
+    setDietary('');
     setError('');
   };
 
@@ -74,6 +77,18 @@ function Questionnaire() {
               placeholder="e.g. Nuts, Gluten, Shellfish"
               value={allergies}
               onChange={(e) => setAllergies(e.target.value)}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Dietary Preferences <span className="optional">(optional)</span></label>
+            <p className="hint">Enter dietary restrictions or preferences, separated by commas</p>
+            <input
+              type="text"
+              className="form-select"
+              placeholder="e.g. Vegan, Halal, Kosher, Gluten-Free"
+              value={dietary}
+              onChange={(e) => setDietary(e.target.value)}
             />
           </div>
 

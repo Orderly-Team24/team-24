@@ -40,7 +40,7 @@ These were raised as open questions at the Week 6 review — see `reports/week6/
 ## Things you should know before relying on this beyond the course
 
 - **User accounts/passwords are on a hardcoded secret key**, not one only the team controls securely. In plain terms: the code that verifies login sessions uses a fixed value written directly into the source code instead of a private setting. This is fine for a course project but should be fixed (moved to a private setting, changed) before this is used as a real product with real users' data.
-- **Order history and "disliked" dishes are not permanently saved yet** — they live in the server's short-term memory and disappear every time the service restarts (which happens periodically, even without anyone doing anything). Don't rely on order history sticking around long-term yet.
+- **Order history and "disliked" dishes are now permanently saved** — as of Sprint 5, both are stored in the same PostgreSQL database as accounts and preferences, so they survive service restarts/redeploys (previously they lived in short-term server memory and were wiped periodically; see [ADR-002](architecture/adr/ADR-002-postgresql-sqlalchemy.md#update-2026-07-14--order-history-and-dislikes-now-wired-up)).
 - **The AI won't always perfectly understand free-text requests** typed into the "what are you in the mood for" field. Allergies and things you've explicitly excluded are strictly enforced — those are never violated. But open-ended phrasing ("something light and warm") is best-effort, not a strict guarantee.
 - **Scanning menu photos handles single-column and multi-column layouts** (including uneven column widths), with $/€/£/₽ prices and both "12.50" and European "12,50" formats. It does not yet handle handwritten specials boards.
 
@@ -64,7 +64,8 @@ We're using three straightforward labels to track this, so it's always clear whe
 - **How far along is the handover?** → **Ready for you to use independently.** The product is live and usable end-to-end; you have not yet taken over hosting/operating it yourself (see "Who owns what" above) — that remains a separate, not-yet-started step if you want it.
 - **Have you confirmed you're happy with where things stand?** → **Yes, with follow-up items.** At the Week 6 review (10.07.2026) you approved the delivered features (order history, dislikes, AI safety fixes) and accepted this handover document as an accurate reflection of the current state, "noting that while dependencies aren't ideal, the handover is acceptable for now."
 - **Follow-up items from that review** (owned by the team, due before Week 7 wraps):
-  - Add a clear, non-technical user guide — **done** this same day (README.md § User guide, and this page's plain-language rewrite); polished further in Sprint 5 (issue #330) with an explicit login step for returning users and a Troubleshooting subsection.
+  - Add a clear, non-technical user guide — **done** this same day (README.md § User guide, and this page's plain-language rewrite).
+  - Order history and dislikes not surviving a restart — **done** in Sprint 5 (issue #338): both now persist in the same PostgreSQL database as accounts and preferences.
   - Meal-type recommendation filtering (breakfast/lunch/dinner) felt unstable in places beyond the specific scenario tested — scheduled for Sprint 5.
   - Remove a stray/confusing "Recommendations" nav button — scheduled for Sprint 5.
   - Add a free-text dietary-preference field (vegan, halal, etc.) — scheduled for Sprint 5.

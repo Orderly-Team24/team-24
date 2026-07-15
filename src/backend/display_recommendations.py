@@ -1,5 +1,11 @@
-from fastapi import APIRouter, Header, HTTPException
+import os
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'db'))
+
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 from recommendation_session import (
     create_session,
     get_remaining,
@@ -21,6 +27,7 @@ from ai_service import (
     pick_from_pool,
 )
 from budget_filter import filter_by_budget
+from database import get_db
 from order_history import get_dislikes, make_dish_id
 
 router = APIRouter(prefix="/display", tags=["display"])
@@ -48,6 +55,7 @@ class RecommendationRequest(BaseModel):
 def display_recommendations(
     data: RecommendationRequest,
     x_user_id: str | None = Header(default=None, alias="X-User-Id"),
+    db: Session = Depends(get_db),
 ):
     """
     Return a single recommendation formatted for the frontend card UI.
@@ -115,7 +123,11 @@ def display_recommendations(
 
     # --- Filter out disliked dishes (US-015-2) ---------------------------
     if x_user_id:
-        disliked_ids = set(get_dislikes(x_user_id))
+        try:
+            user_id = int(x_user_id)
+        except ValueError:
+            user_id = None
+        disliked_ids = set(get_dislikes(db, user_id)) if user_id is not None else set()
         if disliked_ids:
             candidates = [
                 dish

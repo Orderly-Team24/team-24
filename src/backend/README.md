@@ -10,35 +10,48 @@ recommendation endpoint backed by a swappable AI module.
 | GET    | `/`                        | Healthcheck (used by Render).                                        |
 | POST   | `/recommend`               | Legacy. Returns `{recommendation: "free-form text"}`.                 |
 | POST   | `/display/recommendations` | Frontend-facing. Returns structured card data.                       |
-| POST   | `/history/orders`          | Save a dish into a user's order history (in-memory stub).            |
+| POST   | `/history/orders`          | Save a dish into a user's order history (persisted, see below).      |
 | GET    | `/history/orders`          | Read a user's order history, most-recent first.                      |
 | GET    | `/history/orders/check`    | Whether a given dish is already in a user's history.                 |
+| POST   | `/history/orders/{dish_id}/dislike` | Mark a dish as disliked (persisted, see below).              |
+| GET    | `/history/dislikes`        | List a user's disliked dish ids.                                     |
 
 Interactive docs at `/docs`.
 
-### Order history (stub)
+### Order history and dislikes
 
-The `/history/orders*` endpoints back the **"I'll order it again"** button
-on the recommendation card. No real database yet — everything lives in a
-thread-safe in-memory `dict`, so data is lost on restart. When a real DB
-lands, only `order_history.py` needs to change; the HTTP shape stays.
+The `/history/orders*` and `/history/dislikes` endpoints back the
+**"I'll order it again"** button and the dislike button on the History
+page. Both are persisted in PostgreSQL — the `order_history` and
+`dislikes` tables from `src/db/models.py` (ADR-002) — via `order_history.py`,
+which takes a SQLAlchemy `Session` the same way `auth.py`/`users.py` do.
+Data survives service restarts/redeploys.
+
+`X-User-Id` must be the real numeric DB user id (the frontend sets this
+from `/auth/login`/`/auth/register`'s `user_id` — see AGENTS.md); a
+non-numeric value gets a `400`.
 
 Each dish gets a stable id derived from its name (32-bit hash). The
 frontend passes the dish from `/display/recommendations` straight to
-`POST /history/orders` with the `X-User-Id` header.
+`POST /history/orders` with the `X-User-Id` header. Disliked dish ids are
+excluded from future `/display/recommendations` results for that user.
 
 ```bash
 # Save a dish
 curl -X POST http://127.0.0.1:8003/history/orders \
   -H 'Content-Type: application/json' \
-  -H 'X-User-Id: dasha' \
+  -H 'X-User-Id: 1' \
   -d '{"name":"Margherita pizza","price":13,"description":"...","ingredients":["flour","tomato"],"reason":"classic"}'
 
 # Read history
-curl http://127.0.0.1:8003/history/orders -H 'X-User-Id: dasha'
+curl http://127.0.0.1:8003/history/orders -H 'X-User-Id: 1'
 
 # Check whether a dish is already in history (used by the button label)
-curl 'http://127.0.0.1:8003/history/orders/check?dish_id=42' -H 'X-User-Id: dasha'
+curl 'http://127.0.0.1:8003/history/orders/check?dish_id=42' -H 'X-User-Id: 1'
+
+# Dislike a dish, then list dislikes
+curl -X POST http://127.0.0.1:8003/history/orders/42/dislike -H 'X-User-Id: 1'
+curl http://127.0.0.1:8003/history/dislikes -H 'X-User-Id: 1'
 ```
 
 ## AI backends
