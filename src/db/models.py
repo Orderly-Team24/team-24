@@ -24,7 +24,7 @@ class Preferences(Base):
     allergies: Mapped[list | None] = mapped_column(JSON, nullable=True)
     likes: Mapped[list | None] = mapped_column(JSON, nullable=True)
     dislikes: Mapped[list | None] = mapped_column(JSON, nullable=True)
-    dietary_preferences: Mapped[str | None] = mapped_column(String, nullable=True)
+    dietary_preferences: Mapped[list | None] = mapped_column(JSON, nullable=True)
 
 
 class RefreshTokens(Base):
