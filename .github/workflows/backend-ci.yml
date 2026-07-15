@@ -57,7 +57,7 @@ jobs:
         run: pip install bandit
 
       - name: Run Bandit security scan (medium + high severity)
-        run: bandit -r src/backend src/upload-menu-backend -ll
+        run: bandit -r src/backend src/upload-menu-backend -ll --exclude ".venv/,__pycache__/"
 
       # ── Upload coverage artifacts ──────────────────────────────────────
       - name: Upload coverage reports

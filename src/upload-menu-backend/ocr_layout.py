@@ -163,20 +163,36 @@ def _column_anchor_lefts(words: list[dict], image_width: int) -> list[float]:
 
 
 def _find_column_boundaries(anchors: list[float], image_width: int) -> list[float]:
-    """Return gutter X positions between columns, left-to-right."""
+    """Return gutter X positions between columns, left-to-right.
+    
+    Gutters are gaps in the left-edge distribution of column segments.
+    When two anchors are far apart (>= gap_threshold), they represent
+    different columns, and we place the boundary at 2/3 of the way between
+    them to account for word widths and ensure that right-aligned prices
+    in one column don't bleed into the next.
+    """
     if len(anchors) < 2:
         return []
 
-    sorted_anchors = sorted(anchors)
+    sorted_anchors = sorted(set(anchors))  # Remove duplicates and sort
+    if len(sorted_anchors) < 2:
+        return []
+    
     gap_threshold = _gap_threshold(image_width)
-
     boundaries: list[float] = []
+    
     for i in range(len(sorted_anchors) - 1):
         left_a = sorted_anchors[i]
         left_b = sorted_anchors[i + 1]
-        if left_b - left_a >= gap_threshold:
-            boundaries.append((left_a + left_b) / 2)
-
+        gap = left_b - left_a
+        
+        # Only place a boundary if there's a significant gap (gutter) between columns
+        if gap >= gap_threshold:
+            # Place boundary at 2/3 point to account for words that extend rightward
+            # This ensures right-aligned prices don't cross into the next column
+            boundary = left_a + (left_b - left_a) * 0.67
+            boundaries.append(boundary)
+    
     return boundaries
 
 
@@ -200,6 +216,13 @@ def _detect_columns(words: list[dict], image_width: int) -> list[list[dict]] | N
     Detects gutters from per-row non-price segment starts so right-aligned
     prices and intra-line word spacing are not mistaken for extra columns.
     Falls back to single-column when a candidate column lacks enough rows.
+    
+    The key insight: gutters are regions of space WITHOUT words that separate
+    columns. We identify these by:
+    1. Clustering non-price words into horizontal segments per row (separated by gaps)
+    2. Collecting the left-edges of these segments across all rows
+    3. Finding gaps in the distribution of left-edges (which correspond to gutters)
+    4. Assigning ALL words (including prices) based on these gutter positions
     """
     if image_width <= 0 or not words:
         return None
@@ -208,11 +231,16 @@ def _detect_columns(words: list[dict], image_width: int) -> list[list[dict]] | N
     if len(anchors) < _MIN_ROWS_PER_COLUMN * 2:
         return None
 
+    # Find column boundaries by looking for gaps in the anchor distribution
     boundaries = _find_column_boundaries(anchors, image_width)
     if not boundaries:
         return None
 
+    # Assign all words to columns based on the detected boundaries
     columns = _assign_words_to_columns(words, boundaries)
+    
+    # Verify that each column has enough rows of content
+    # (prevents false positives from stray words)
     if any(len(_cluster_rows(col)) < _MIN_ROWS_PER_COLUMN for col in columns):
         return None
     if any(not col for col in columns):

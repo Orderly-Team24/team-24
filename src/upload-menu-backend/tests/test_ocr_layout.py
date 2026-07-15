@@ -228,3 +228,83 @@ def test_uneven_two_column_sidebar_and_main():
         < text.index("Margherita Pizza")
         < text.index("Caesar Salad")
     )
+
+
+def test_three_column_menu_with_section_headers():
+    """Three-column menu where each column has a section header and dishes.
+    
+    This tests the real-world scenario where a menu has STARTERS | MAINS | DESSERTS
+    as separate columns, and ensures that dishes are correctly assigned to their
+    section and that section headers from different columns don't interfere.
+    """
+    from parser import parse_menu
+
+    # Column 1: STARTERS
+    col1 = [
+        ("STARTERS", 30, 20, 0, 0),
+        ("Margherita", 30, 80, 1, 0),
+        ("Pizza", 80, 80, 1, 0),
+        ("$14", 160, 80, 1, 0),
+        ("Caesar", 30, 140, 2, 0),
+        ("Salad", 80, 140, 2, 0),
+        ("$8", 160, 140, 2, 0),
+    ]
+    
+    # Column 2: MAINS
+    col2 = [
+        ("MAINS", 330, 20, 3, 0),
+        ("Grilled", 330, 80, 4, 0),
+        ("Salmon", 380, 80, 4, 0),
+        ("$26", 460, 80, 4, 0),
+        ("Ribeye", 330, 140, 5, 0),
+        ("Steak", 380, 140, 5, 0),
+        ("$32", 460, 140, 5, 0),
+    ]
+    
+    # Column 3: DESSERTS
+    col3 = [
+        ("DESSERTS", 600, 20, 6, 0),
+        ("Tiramisu", 600, 80, 7, 0),
+        ("$10", 720, 80, 7, 0),
+        ("Cheesecake", 600, 140, 8, 0),
+        ("$9", 720, 140, 8, 0),
+    ]
+    
+    data = _make_data(col1 + col2 + col3)
+    text = reconstruct_text(data, image_width=1000)
+
+    # Verify that columns are read in the correct order (left to right, then down within each column)
+    assert (
+        text.index("STARTERS")
+        < text.index("Margherita Pizza")
+        < text.index("Caesar Salad")
+        < text.index("MAINS")
+        < text.index("Grilled Salmon")
+        < text.index("Ribeye Steak")
+        < text.index("DESSERTS")
+        < text.index("Tiramisu")
+        < text.index("Cheesecake")
+    )
+
+    # Verify section assignment via the parser
+    dishes = parse_menu(text)
+    
+    # Find dishes by name
+    margherita = next((d for d in dishes if "Margherita" in d["name"]), None)
+    ribeye = next((d for d in dishes if "Ribeye" in d["name"]), None)
+    tiramisu = next((d for d in dishes if "Tiramisu" in d["name"]), None)
+    
+    assert margherita is not None, "Margherita not found"
+    assert ribeye is not None, "Ribeye not found"
+    assert tiramisu is not None, "Tiramisu not found"
+    
+    # Verify sections
+    assert margherita["section"] == "STARTERS", f"Margherita section is {margherita['section']}, expected STARTERS"
+    assert ribeye["section"] == "MAINS", f"Ribeye section is {ribeye['section']}, expected MAINS"
+    assert tiramisu["section"] == "DESSERTS", f"Tiramisu section is {tiramisu['section']}, expected DESSERTS"
+    
+    # Verify prices
+    assert margherita["price"] == 14.0
+    assert ribeye["price"] == 32.0
+    assert tiramisu["price"] == 10.0
+
