@@ -267,10 +267,12 @@ _MEAL_TYPE_KEYWORDS: dict[str, list[str]] = {
         "breakfast", "brunch", "pancake", "waffle", "omelet", "omelette",
         "egg", "toast", "cereal", "oatmeal", "porridge", "granola",
         "bacon", "croissant", "bagel", "yogurt", "yoghurt", "smoothie",
-        "muffin", "hash brown",
+        "muffin", "hash brown", "french toast", "crepe", "quiche",
+        "breakfast burrito", "breakfast sandwich", "pastry", "danish",
+        "scone", "biscuit", "grits", "home fries", "breakfast bowl",
     ],
-    "lunch": ["lunch", "sandwich", "wrap", "panini", "salad", "burger"],
-    "dinner": ["dinner", "supper", "steak", "roast", "risotto", "curry", "stew"],
+    "lunch": ["lunch", "sandwich", "wrap", "panini", "salad", "burger", "soup"],
+    "dinner": ["dinner", "supper", "steak", "roast", "risotto", "curry", "stew", "pasta"],
 }
 _MEAL_TYPE_KEYWORDS["brunch"] = _MEAL_TYPE_KEYWORDS["breakfast"]
 _MEAL_TYPE_KEYWORDS["supper"] = _MEAL_TYPE_KEYWORDS["dinner"]
@@ -432,9 +434,14 @@ _OPENAI_SYSTEM_PROMPT = (
     "Never recommend a beverage/drink on its own (e.g. water, soda, coffee, "
     "juice, tea) as the dish — the recommendation must be an actual meal, "
     "not a drink. "
-    "If the user's request names a meal type (breakfast, brunch, lunch, "
-    "dinner, supper), prefer a dish that fits that meal type when the menu "
-    "offers one. "
+    "MEAL TYPE — CRITICAL RULE: If the user's request names a specific meal "
+    "type (breakfast, brunch, lunch, dinner, supper), you MUST recommend a "
+    "dish that fits that meal type. A dinner dish (e.g. steak, risotto, "
+    "stew, curry) is NEVER acceptable for a breakfast request, and vice "
+    "versa. A beverage/drink is NEVER acceptable as a main dish for any "
+    "meal type. If the menu provided below is empty, you may pick a "
+    "suitable dish from general knowledge that fits the requested meal type. "
+    "This rule takes priority over all other preferences. "
     "Always reply with exactly ONE JSON object, no prose, no markdown, "
     "matching this schema: "
     '{"name": str, "price": number, "description": str, '
@@ -443,6 +450,7 @@ _OPENAI_SYSTEM_PROMPT = (
 
 _OPENAI_USER_TEMPLATE = """User request: {message}
 
+{meal_type_instruction}
 {menu}
 {preferences}
 
@@ -485,6 +493,19 @@ def _openai_compatible(
     """Call any OpenAI-compatible Chat Completions endpoint."""
     from openai import OpenAI
 
+    # Build a meal-type instruction for the user template so the constraint
+    # appears both in the system prompt (authoritative) and right next to
+    # the user's request text (redundant reinforcement).
+    meal_type = extract_meal_type(user_message or "")
+    if meal_type:
+        meal_type_instruction = (
+            f"IMPORTANT: The user requested a {meal_type} dish. "
+            f"You MUST recommend a dish that is appropriate for {meal_type}. "
+            f"Do NOT recommend a dinner dish for breakfast, or vice versa."
+        )
+    else:
+        meal_type_instruction = ""
+
     client = OpenAI(base_url=base_url, api_key=api_key)
     response = client.chat.completions.create(
         model=model,
@@ -494,6 +515,7 @@ def _openai_compatible(
                 "role": "user",
                 "content": _OPENAI_USER_TEMPLATE.format(
                     message=user_message or "",
+                    meal_type_instruction=meal_type_instruction,
                     menu=_format_menu(menu),
                     preferences=_format_preferences(preferences),
                 ),
@@ -587,6 +609,48 @@ def get_recommendation(user_message: str) -> str:
     return f"{pick['name']} — ${float(pick['price']):.2f}. {pick['reason']}"
 
 
+def _payload_meal_type_violation(
+    pick: dict[str, Any],
+    meal_type: str | None,
+) -> bool:
+    """Check if the AI's pick violates the requested meal type.
+
+    Returns True when the recommended dish name/description/ingredients
+    contain strong dinner keywords (steak, risotto, curry, stew, roast)
+    but the user asked for breakfast (or vice versa). Uses the same
+    keyword lookup as `filter_by_meal_type` for consistency.
+    """
+    if not meal_type:
+        return False
+    # Only validate when the user explicitly named a meal type.
+    keywords = _MEAL_TYPE_KEYWORDS.get(meal_type.lower(), [])
+    if not keywords:
+        return False
+
+    pick_text = " ".join(
+        [str(pick.get("name", "")), str(pick.get("description", ""))]
+        + [str(i) for i in pick.get("ingredients", [])]
+    ).lower()
+
+    # Check if the pick matches the requested meal type
+    matches_requested = any(keyword in pick_text for keyword in keywords)
+
+    # Check if the pick matches a *different* meal type (strong mismatch)
+    for other_type, other_keywords in _MEAL_TYPE_KEYWORDS.items():
+        if other_type == meal_type.lower():
+            continue
+        # Only count strong, uniquely identifying keywords to avoid false positives
+        strong_keywords = _MEAL_TYPE_KEYWORDS.get(other_type, [])
+        if any(kw in pick_text for kw in strong_keywords):
+            # The pick contains keywords from a different meal type
+            # If it also matches the requested meal type, it's ambiguous — allow
+            if matches_requested:
+                return False
+            return True  # strong mismatch
+
+    return False
+
+
 def get_recommendation_struct(
     user_message: str,
     preferences: Any = None,
@@ -616,6 +680,22 @@ def get_recommendation_struct(
             raise AIServiceUnavailableError(
                 "AI recommendation contained an excluded ingredient"
             )
+
+    # Post-hoc meal type validation: if the user asked for breakfast but the
+    # AI recommended a dinner dish, reject it.
+    meal_type = extract_meal_type(user_message or "")
+    if _payload_meal_type_violation(pick, meal_type):
+        raise AIServiceUnavailableError(
+            f"AI recommendation mismatched requested meal type ({meal_type})"
+        )
+
+    # Also ensure no beverage was recommended as the main dish
+    # (defense-in-depth — the candidate pool should already be filtered,
+    # but the LLM may hallucinate a drink not in the menu).
+    if is_beverage(pick):
+        raise AIServiceUnavailableError(
+            "AI recommended a beverage as the main dish"
+        )
 
     return {
         "name":        str(pick.get("name", "Chef's special")),
