@@ -21,6 +21,7 @@ class PreferencesRequest(BaseModel):
     allergies: list[str] = []
     likes: list[str] = []
     dislikes: list[str] = []
+    dietary_preferences: str | None = None
 
 
 class RegisterRequest(BaseModel):
@@ -56,6 +57,7 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         allergies=data.preferences.allergies,
         likes=data.preferences.likes,
         dislikes=data.preferences.dislikes,
+        dietary_preferences=data.preferences.dietary_preferences,
     )
     db.add(prefs)
     db.commit()

@@ -333,10 +333,18 @@ def _format_preferences(preferences: Any) -> str:
             _preference_value(preferences, "excludes", []),
         )
     )
+    dietary = _clean_list(
+        _preference_value(
+            preferences,
+            "dietary_preferences",
+            _preference_value(preferences, "dietary", []),
+        )
+    )
     return (
         "User preferences:\n"
         f"- Likes: {', '.join(likes) if likes else 'None'}\n"
         f"- Excludes: {', '.join(excludes) if excludes else 'None'}\n\n"
+        f"- Dietary preferences: {', '.join(dietary) if dietary else 'None'}\n"
         "Recommend a single dish matching these preferences."
     )
 
@@ -385,7 +393,6 @@ def filter_fallback_pool_by_preferences(
         ]
         if not candidates:
             return []
-
     return candidates
 
 
@@ -431,6 +438,11 @@ _OPENAI_SYSTEM_PROMPT = (
     "that exactly like an excluded ingredient in the preferences below — "
     "never recommend a dish containing it, even if nothing else matches as "
     "well. Excluded ingredients always take priority over liked ingredients. "
+     "Dietary preferences (vegan, halal, kosher, gluten-free, etc.) are "
+    "hard constraints — never recommend a dish that violates them. "
+    "For example, if the user specifies vegan, do not recommend any dish "
+    "with meat, dairy, eggs, or honey. If gluten-free, avoid wheat, barley, rye. "
+    "If halal, avoid pork and alcohol. If kosher, avoid mixing meat and dairy. "
     "Never recommend a beverage/drink on its own (e.g. water, soda, coffee, "
     "juice, tea) as the dish — the recommendation must be an actual meal, "
     "not a drink. "
