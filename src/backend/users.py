@@ -19,7 +19,7 @@ class PreferencesUpdate(BaseModel):
     allergies: list[str] | None = None
     likes: list[str] | None = None
     dislikes: list[str] | None = None
-    dietary_preferences: str | None = None
+    dietary_preferences: list[str] | None = None
 
 
 def get_current_user(
