@@ -1,0 +1,18 @@
+[bandit]
+# Exclude virtual environments and common dependencies
+exclude_dirs = [
+    '.venv',
+    'venv',
+    '.env',
+    'node_modules',
+    '__pycache__',
+]
+
+# Skip test files for now (they often have less strict security requirements)
+tests = []
+
+# Confidence level - report high and medium confidence issues
+confidence_level = medium
+
+# Severity level - report high and medium severity issues
+severity_level = medium
