@@ -68,6 +68,7 @@ def _serialize(row: OrderHistory) -> dict[str, Any]:
         "description": row.description or "",
         "ingredients": row.ingredients or [],
         "reason":      row.reason or "",
+        "ordered_at": row.ordered_at.isoformat() if row.ordered_at else None,
     }
 
 
