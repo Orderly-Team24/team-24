@@ -308,3 +308,47 @@ def test_three_column_menu_with_section_headers():
     assert ribeye["price"] == 32.0
     assert tiramisu["price"] == 10.0
 
+
+def test_orphan_price_row_merges_with_dish_above():
+    """Right-aligned prices OCR'd on their own row must join the dish name."""
+    words = [
+        ("TIRAMISU", 600, 80, 7, 0),
+        ("$10", 720, 110, 7, 1),
+        ("CHEESECAKE", 600, 140, 8, 0),
+        ("$9", 720, 170, 8, 1),
+    ]
+    data = _make_data(words)
+    text = reconstruct_text(data, image_width=1000)
+
+    from parser import parse_menu
+
+    dishes = parse_menu(text)
+    tiramisu = next((d for d in dishes if "TIRAMISU" in d["name"]), None)
+    cheesecake = next((d for d in dishes if "CHEESECAKE" in d["name"]), None)
+    assert tiramisu is not None
+    assert cheesecake is not None
+    assert tiramisu["price"] == 10.0
+    assert cheesecake["price"] == 9.0
+
+
+def test_price_fragment_column_merges_into_previous():
+    """A pseudo-column of only prices must fold back into the dish column."""
+    from parser import parse_menu
+
+    names = [
+        ("DESSERTS", 600, 20, 0, 0),
+        ("TIRAMISU", 600, 80, 1, 0),
+        ("CHEESECAKE", 600, 140, 2, 0),
+    ]
+    prices = [
+        ("$10", 1050, 80, 3, 0),
+        ("$9", 1050, 140, 4, 0),
+    ]
+    data = _make_data(names + prices)
+    text = reconstruct_text(data, image_width=1200)
+    dishes = parse_menu(text)
+    desserts = [d for d in dishes if d.get("section") == "DESSERTS" and d.get("price")]
+    assert len(desserts) >= 2
+    assert any("TIRAMISU" in d["name"] for d in desserts)
+    assert any("CHEESECAKE" in d["name"] for d in desserts)
+
