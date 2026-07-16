@@ -68,7 +68,7 @@ We're using three straightforward labels to track this, so it's always clear whe
   - Order history and dislikes not surviving a restart — **done** in Sprint 5 (issue #338): both now persist in the same PostgreSQL database as accounts and preferences.
   - Meal-type recommendation filtering (breakfast/lunch/dinner) felt unstable in places beyond the specific scenario tested — scheduled for Sprint 5.
   - Remove a stray/confusing "Recommendations" nav button — scheduled for Sprint 5.
-  - Add a free-text dietary-preference field (vegan, halal, etc.) — scheduled for Sprint 5.
+  - Add a free-text dietary-preference field (vegan, halal, etc.) — **done** (recommendation API + LLM prompt; Questionnaire text field).
   - Whether you want your own hosting instead of continuing to depend on the team's — still an open question, not yet raised for a decision (see "What's not decided yet" above).
 
 Full meeting record: [reports/week6/sprint-review-summary.md](../reports/week6/sprint-review-summary.md), [reports/week6/sprint-review-transcript.md](../reports/week6/sprint-review-transcript.md).

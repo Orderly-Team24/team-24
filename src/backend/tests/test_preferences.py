@@ -57,6 +57,74 @@ def test_openai_compatible_prompt_includes_preferences(monkeypatch):
     assert "- Likes: tomato, basil" in user_prompt
     assert "- Excludes: nuts, shellfish" in user_prompt
     assert "Recommend a single dish matching these preferences." in user_prompt
+    # Empty/missing dietary_preferences must not change the prompt shape.
+    assert "Dietary preferences:" not in user_prompt
+
+
+def test_openai_compatible_prompt_includes_dietary_preferences(monkeypatch):
+    captured = {}
+
+    class FakeChatCompletions:
+        def create(self, **kwargs):
+            captured["messages"] = kwargs["messages"]
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content=(
+                                '{"name":"Falafel bowl","price":12,'
+                                '"description":"Chickpea falafel",'
+                                '"ingredients":["chickpea","tahini"],'
+                                '"reason":"Matches vegan preference"}'
+                            )
+                        )
+                    )
+                ]
+            )
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = SimpleNamespace(completions=FakeChatCompletions())
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI))
+
+    ai_service._openai_compatible(
+        "Recommend dinner",
+        {
+            "favorite_ingredients": ["chickpea"],
+            "exclude_ingredients": [],
+            "dietary_preferences": "vegan, gluten-free",
+        },
+        base_url="http://example.test/v1",
+        api_key="test",
+        model="qwen-test",
+    )
+
+    user_prompt = captured["messages"][1]["content"]
+    assert "- Dietary preferences: vegan, gluten-free" in user_prompt
+    system_prompt = captured["messages"][0]["content"]
+    assert "Dietary preferences" in system_prompt
+
+
+def test_format_preferences_omits_empty_dietary_preferences():
+    text = ai_service._format_preferences(
+        {"favorite_ingredients": ["tomato"], "exclude_ingredients": ["nuts"]}
+    )
+    assert "Dietary preferences:" not in text
+    assert text == (
+        "User preferences:\n"
+        "- Likes: tomato\n"
+        "- Excludes: nuts\n\n"
+        "Recommend a single dish matching these preferences."
+    )
+
+
+def test_format_preferences_accepts_dietary_list_shape():
+    """Users/profile API stores dietary_preferences as a list — still promptable."""
+    text = ai_service._format_preferences(
+        {"dietary_preferences": ["halal", "kosher"]}
+    )
+    assert "- Dietary preferences: halal, kosher" in text
 
 
 def test_openai_compatible_prompt_includes_uploaded_menu(monkeypatch):

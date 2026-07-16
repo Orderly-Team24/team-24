@@ -318,6 +318,27 @@ def filter_by_meal_type(
     return matches or pool
 
 
+def _format_dietary_preferences(preferences: Any) -> str | None:
+    """Return a non-empty dietary-preferences string for the LLM prompt, or None.
+
+    Accepts `dietary_preferences` as a free-text string (recommendation API)
+    or a list (users/profile API / localStorage). Empty / missing → None so
+    the prompt stays identical to the pre-dietary-preferences behavior.
+    """
+    value = _preference_value(
+        preferences,
+        "dietary_preferences",
+        _preference_value(preferences, "dietary"),
+    )
+    if value is None:
+        return None
+    if isinstance(value, str):
+        text = value.strip()
+        return text or None
+    items = _clean_list(value)
+    return ", ".join(items) if items else None
+
+
 def _format_preferences(preferences: Any) -> str:
     likes = _clean_list(
         _preference_value(
@@ -333,20 +354,17 @@ def _format_preferences(preferences: Any) -> str:
             _preference_value(preferences, "excludes", []),
         )
     )
-    dietary = _clean_list(
-        _preference_value(
-            preferences,
-            "dietary_preferences",
-            _preference_value(preferences, "dietary", []),
-        )
-    )
-    return (
-        "User preferences:\n"
-        f"- Likes: {', '.join(likes) if likes else 'None'}\n"
-        f"- Excludes: {', '.join(excludes) if excludes else 'None'}\n\n"
-        f"- Dietary preferences: {', '.join(dietary) if dietary else 'None'}\n"
-        "Recommend a single dish matching these preferences."
-    )
+    lines = [
+        "User preferences:",
+        f"- Likes: {', '.join(likes) if likes else 'None'}",
+        f"- Excludes: {', '.join(excludes) if excludes else 'None'}",
+    ]
+    dietary = _format_dietary_preferences(preferences)
+    if dietary:
+        lines.append(f"- Dietary preferences: {dietary}")
+    lines.append("")
+    lines.append("Recommend a single dish matching these preferences.")
+    return "\n".join(lines)
 
 
 def _format_menu(menu: list[dict] | None) -> str:
@@ -438,7 +456,7 @@ _OPENAI_SYSTEM_PROMPT = (
     "that exactly like an excluded ingredient in the preferences below — "
     "never recommend a dish containing it, even if nothing else matches as "
     "well. Excluded ingredients always take priority over liked ingredients. "
-     "Dietary preferences (vegan, halal, kosher, gluten-free, etc.) are "
+    "Dietary preferences (vegan, halal, kosher, gluten-free, etc.) are "
     "hard constraints — never recommend a dish that violates them. "
     "For example, if the user specifies vegan, do not recommend any dish "
     "with meat, dairy, eggs, or honey. If gluten-free, avoid wheat, barley, rye. "

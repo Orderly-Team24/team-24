@@ -8,13 +8,22 @@ function buildPreferences() {
   const raw = JSON.parse(localStorage.getItem('orderly_preferences') || 'null');
   const budget = localStorage.getItem('orderly_budget');
   if (!raw && !budget) return null;
-  return {exclude_ingredients: [
+
+  // Recommendation API expects a free-text string. Questionnaire may store a
+  // list under dietary_preferences (or legacy "dietary"); join if needed.
+  const dietaryRaw = raw?.dietary_preferences ?? raw?.dietary;
+  const dietary_preferences = Array.isArray(dietaryRaw)
+    ? dietaryRaw.filter(Boolean).join(', ')
+    : (typeof dietaryRaw === 'string' ? dietaryRaw.trim() : '') || null;
+
+  return {
+    exclude_ingredients: [
       ...(raw?.allergies || []),
       ...(raw?.dislikes || []),
     ],
     favorite_ingredients: raw?.likes || [],
     max_budget: budget ? parseFloat(budget) : null,
-    restrictions: raw?.restrictions || [],
+    dietary_preferences,
   };
 }
 
