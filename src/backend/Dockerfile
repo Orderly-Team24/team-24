@@ -14,7 +14,6 @@ COPY src/backend/display_recommendations.py ./
 COPY src/backend/budget_filter.py ./
 COPY src/backend/order_history.py ./
 COPY src/backend/history_router.py ./
-COPY src/backend/another_option.py ./
 COPY src/backend/recommendation_session.py ./
 COPY src/backend/parser.py ./
 COPY src/backend/user_route.py ./
