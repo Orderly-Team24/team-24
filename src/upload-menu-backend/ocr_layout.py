@@ -30,6 +30,11 @@ _MIN_COLUMN_GAP_PX = 40
 # Approx. px per character when Tesseract width is missing (unit tests).
 _FALLBACK_CHAR_WIDTH = 7
 
+# Where to place a gutter between two column-start peaks (0 = midpoint,
+# 1 = at the right peak). Prices sit between the name peak and the next
+# column's name peak, so the split must be past the price column.
+_COLUMN_BOUNDARY_FRACTION = 0.78
+
 # Minimum rows required in each column before we treat the page as multi-column.
 _MIN_ROWS_PER_COLUMN = 2
 
@@ -162,37 +167,61 @@ def _column_anchor_lefts(words: list[dict], image_width: int) -> list[float]:
     return anchors
 
 
-def _find_column_boundaries(anchors: list[float], image_width: int) -> list[float]:
-    """Return gutter X positions between columns, left-to-right.
-    
-    Gutters are gaps in the left-edge distribution of column segments.
-    When two anchors are far apart (>= gap_threshold), they represent
-    different columns, and we place the boundary at 2/3 of the way between
-    them to account for word widths and ensure that right-aligned prices
-    in one column don't bleed into the next.
-    """
-    if len(anchors) < 2:
+def _anchor_peaks(anchors: list[float], image_width: int) -> list[float]:
+    """Return X centers of major column-start peaks in the anchor distribution."""
+    if not anchors:
         return []
 
-    sorted_anchors = sorted(set(anchors))  # Remove duplicates and sort
-    if len(sorted_anchors) < 2:
+    gap_threshold = _gap_threshold(image_width)
+    bin_width = max(gap_threshold / 2, 30)
+    min_a, max_a = min(anchors), max(anchors)
+    nbins = max(1, int((max_a - min_a) / bin_width) + 1)
+    bins = [0.0] * nbins
+    for anchor in anchors:
+        idx = min(int((anchor - min_a) / bin_width), nbins - 1)
+        bins[idx] += 1
+
+    min_peak_count = max(_MIN_ROWS_PER_COLUMN, int(len(anchors) * 0.08))
+    peaks: list[tuple[float, float]] = []
+    for idx, count in enumerate(bins):
+        if count < min_peak_count:
+            continue
+        center = min_a + (idx + 0.5) * bin_width
+        peaks.append((center, count))
+
+    if not peaks:
         return []
-    
+
+    merged: list[tuple[float, float]] = [peaks[0]]
+    for center, count in peaks[1:]:
+        prev_center, prev_count = merged[-1]
+        if center - prev_center < gap_threshold:
+            total = prev_count + count
+            merged[-1] = (
+                (prev_center * prev_count + center * count) / total,
+                total,
+            )
+        else:
+            merged.append((center, count))
+
+    return [center for center, _ in merged]
+
+
+def _find_column_boundaries(anchors: list[float], image_width: int) -> list[float]:
+    """Return gutter X positions between columns, left-to-right."""
+    peaks = _anchor_peaks(anchors, image_width)
+    if len(peaks) < 2:
+        return []
+
     gap_threshold = _gap_threshold(image_width)
     boundaries: list[float] = []
-    
-    for i in range(len(sorted_anchors) - 1):
-        left_a = sorted_anchors[i]
-        left_b = sorted_anchors[i + 1]
-        gap = left_b - left_a
-        
-        # Only place a boundary if there's a significant gap (gutter) between columns
-        if gap >= gap_threshold:
-            # Place boundary at 2/3 point to account for words that extend rightward
-            # This ensures right-aligned prices don't cross into the next column
-            boundary = left_a + (left_b - left_a) * 0.67
-            boundaries.append(boundary)
-    
+    for left_center, right_center in zip(peaks, peaks[1:]):
+        if right_center - left_center < gap_threshold:
+            continue
+        boundaries.append(
+            left_center + (right_center - left_center) * _COLUMN_BOUNDARY_FRACTION
+        )
+
     return boundaries
 
 
@@ -202,7 +231,7 @@ def _assign_words_to_columns(
     """Split words into columns using gutter X boundaries (left → right)."""
     columns: list[list[dict]] = [[] for _ in range(len(boundaries) + 1)]
     for word in words:
-        x = _word_center_x(word)
+        x = float(word["left"])
         col_idx = 0
         while col_idx < len(boundaries) and x >= boundaries[col_idx]:
             col_idx += 1
@@ -237,7 +266,7 @@ def _detect_columns(words: list[dict], image_width: int) -> list[list[dict]] | N
         return None
 
     # Assign all words to columns based on the detected boundaries
-    columns = _assign_words_to_columns(words, boundaries)
+    columns = _merge_fragment_columns(_assign_words_to_columns(words, boundaries))
     
     # Verify that each column has enough rows of content
     # (prevents false positives from stray words)
@@ -247,6 +276,70 @@ def _detect_columns(words: list[dict], image_width: int) -> list[list[dict]] | N
         return None
 
     return columns
+
+
+_ORPHAN_PRICE_LINE = re.compile(
+    rf"^[{re.escape('$€£₽')} ]*\d+(?:[.,]\d{{1,2}})?\s*,?\s*$"
+)
+_JUNK_LINE = re.compile(r"^[\W_]+$")
+
+
+def _line_is_orphan_price(line: str) -> bool:
+    stripped = line.strip()
+    if not stripped or stripped in {"$"}:
+        return bool(stripped == "$")
+    return bool(_ORPHAN_PRICE_LINE.match(stripped))
+
+
+def _line_is_junk(line: str) -> bool:
+    stripped = line.strip()
+    return bool(stripped) and bool(_JUNK_LINE.match(stripped))
+
+
+def _merge_orphan_price_rows(rows: list[list[dict]]) -> list[list[dict]]:
+    """Attach price-only OCR rows to the dish row directly above them."""
+    if not rows:
+        return rows
+
+    merged: list[list[dict]] = [list(rows[0])]
+    for row in rows[1:]:
+        line = _row_to_text(row)
+        if _line_is_orphan_price(line) or _line_is_junk(line):
+            merged[-1].extend(row)
+        else:
+            merged.append(list(row))
+    return merged
+
+
+def _column_is_price_fragment(col_words: list[dict]) -> bool:
+    """True when a detected column is mostly prices / leader dots, not dishes."""
+    meaningful = [
+        w
+        for w in col_words
+        if w["text"].strip() and not _JUNK_LINE.match(w["text"].strip())
+    ]
+    if not meaningful:
+        return True
+    priceish = sum(
+        1
+        for w in meaningful
+        if _is_price_word(w["text"]) or set(w["text"].strip()) <= {".", "-", "_"}
+    )
+    return priceish / len(meaningful) >= 0.6
+
+
+def _merge_fragment_columns(columns: list[list[dict]]) -> list[list[dict]]:
+    """Fold trailing price-only pseudo-columns back into the previous column."""
+    if len(columns) < 2:
+        return columns
+
+    merged: list[list[dict]] = [columns[0]]
+    for col in columns[1:]:
+        if _column_is_price_fragment(col) and merged:
+            merged[-1].extend(col)
+        else:
+            merged.append(col)
+    return merged
 
 
 def _row_to_text(row: list[dict]) -> str:
@@ -283,6 +376,8 @@ def _should_start_new_block(
         return True
     if _line_has_price(new_line):
         if len(current_block) == 1 and _looks_like_section_header(current_block[0]):
+            return True
+        if any(_looks_like_section_header(line) for line in current_block):
             return True
         if any(_line_has_price(line) for line in current_block):
             return True
@@ -322,5 +417,6 @@ def _rows_to_blocks(rows: list[list[dict]]) -> list[list[str]]:
 
 
 def _column_rows_to_text(rows: list[list[dict]]) -> str:
+    rows = _merge_orphan_price_rows(rows)
     blocks = _rows_to_blocks(rows)
     return "\n\n".join("\n".join(block) for block in blocks)

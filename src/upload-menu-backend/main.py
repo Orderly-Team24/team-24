@@ -3,7 +3,7 @@ import io
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from parser import parse_menu
 from ocr_layout import reconstruct_text
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageOps
 import pytesseract
 from pytesseract import Output
 import os
@@ -35,6 +35,10 @@ MIN_OCR_WIDTH = 1200
 # Supported image content types for OCR
 SUPPORTED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
+# Uniform block of text — reads multi-column menus and right-aligned prices
+# much more reliably than Tesseract's default page mode on styled menu photos.
+TESSERACT_CONFIG = "--psm 6"
+
 
 def _upscale_if_small(image: Image.Image) -> Image.Image:
     """Scale up low-resolution photos before OCR.
@@ -49,6 +53,19 @@ def _upscale_if_small(image: Image.Image) -> Image.Image:
     scale = MIN_OCR_WIDTH / image.width
     new_size = (MIN_OCR_WIDTH, round(image.height * scale))
     return image.resize(new_size, Image.LANCZOS)
+
+
+def _prepare_for_ocr(image: Image.Image) -> Image.Image:
+    """Upscale small photos and boost contrast before OCR.
+
+    Decorative menu images often use light-on-cream text with dotted price
+    leaders; without preprocessing Tesseract frequently misses right-aligned
+    prices entirely, leaving the recommender with almost no valid dishes.
+    """
+    scaled = _upscale_if_small(image)
+    gray = ImageOps.grayscale(scaled.convert("RGB"))
+    gray = ImageEnhance.Contrast(gray).enhance(2.0)
+    return ImageEnhance.Sharpness(gray).enhance(1.5)
 
 
 @app.post("/upload-menu")
@@ -99,8 +116,13 @@ async def upload_menu(photo: UploadFile = File(...)):
     # handle 2-column menu layouts instead of interleaving both columns'
     # words into garbled single lines.
     try:
-        ocr_image = _upscale_if_small(image)
-        ocr_data = pytesseract.image_to_data(ocr_image, lang='rus+eng', output_type=Output.DICT)
+        ocr_image = _prepare_for_ocr(image)
+        ocr_data = pytesseract.image_to_data(
+            ocr_image,
+            lang="rus+eng",
+            output_type=Output.DICT,
+            config=TESSERACT_CONFIG,
+        )
         extracted_text = reconstruct_text(ocr_data, ocr_image.width)
     except Exception as exc:
         raise HTTPException(

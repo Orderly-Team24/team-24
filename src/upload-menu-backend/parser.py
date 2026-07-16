@@ -9,13 +9,27 @@ _PRICE_PATTERN = rf'{_CURRENCY}?\s*(\d+(?:[.,]\d{{1,2}})?)\s*{_CURRENCY}?'
 
 def _find_price(line: str) -> tuple[float, str] | None:
     """Find a price in `line`. Returns (price, line_with_price_removed) or None."""
-    match = re.search(_PRICE_PATTERN, line)
-    if not match:
-        return None
-    price = float(match.group(1).replace(',', '.'))
-    remainder = re.sub(_PRICE_PATTERN, '', line)
-    remainder = re.sub(r'[.\-–]+', '', remainder).strip()
-    return price, remainder
+    currency_match = re.search(
+        rf"(?:{_CURRENCY}\s*(\d+(?:[.,]\d{{1,2}})?)|(\d+(?:[.,]\d{{1,2}})?)\s*{_CURRENCY})",
+        line,
+    )
+    if currency_match:
+        raw = (currency_match.group(1) or currency_match.group(2)).replace(",", ".")
+        price = float(raw)
+        remainder = line[: currency_match.start()] + line[currency_match.end() :]
+        remainder = re.sub(r"[.\-–]+", "", remainder).strip(" ,")
+        return price, remainder
+
+    # Bare trailing prices (e.g. "with basil aioli 7" or ".....15") — but not
+    # mid-line quantities like "12 oz ribeye".
+    end_match = re.search(r"(?:[.\-–\s…]+|^)(\d+(?:[.,]\d{1,2})?)\s*,?\s*$", line)
+    if end_match:
+        price = float(end_match.group(1).replace(",", "."))
+        remainder = line[: end_match.start(1)]
+        remainder = re.sub(r"[.\-–]+", "", remainder).strip()
+        return price, remainder
+
+    return None
 
 
 def parse_menu_line(line: str) -> dict:

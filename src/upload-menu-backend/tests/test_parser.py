@@ -22,6 +22,19 @@ def test_price_with_dots_separator():
     assert result["flagged"] == False
 
 
+def test_mid_line_quantity_is_not_a_price():
+    """Regression: '12 oz ribeye' must not parse as $12."""
+    result = parse_menu_line("12 oz ribeye, mashed potatoes")
+    assert result["price"] is None
+    assert result["flagged"] is True
+
+
+def test_trailing_price_with_comma_after_currency():
+    result = parse_menu_line("RIBEYE STEAK $32,")
+    assert result["name"] == "RIBEYE STEAK"
+    assert result["price"] == 32.0
+
+
 def test_no_price_flagged():
     result = parse_menu_line("Caesar Salad")
     assert result["name"] == "Caesar Salad"

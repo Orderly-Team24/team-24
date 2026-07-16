@@ -43,6 +43,7 @@ out/
 __pycache__/
 *.pyc
 .pytest_cache/
+.venv/
 venv/
 src/backend/venv/
 __pycache__/
