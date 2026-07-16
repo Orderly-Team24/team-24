@@ -108,6 +108,37 @@ def test_recommendation_request_backward_compat_no_preferences():
     assert r.message == "hi"
 
 
+def test_preferences_has_dietary_preferences_field():
+    p = Preferences(dietary_preferences="vegan, halal")
+    assert p.dietary_preferences == "vegan, halal"
+
+
+def test_preferences_dietary_preferences_defaults_to_none():
+    p = Preferences()
+    assert p.dietary_preferences is None
+
+
+def test_recommendation_request_accepts_dietary_preferences():
+    r = RecommendationRequest(
+        message="hi",
+        preferences=Preferences(dietary_preferences="gluten-free"),
+    )
+    assert r.preferences.dietary_preferences == "gluten-free"
+
+
+def test_endpoint_accepts_dietary_preferences_without_filtering():
+    """dietary_preferences is prompt-only — stub mode still returns a dish."""
+    resp = client.post(
+        "/display/recommendations",
+        json={
+            "message": "anything",
+            "preferences": {"dietary_preferences": "vegan"},
+        },
+    )
+    assert resp.status_code == 200
+    assert len(resp.json()["recommendations"]) == 1
+
+
 # --- HTTP endpoint tests (AC 2, 3, 4) ----------------------------------
 
 

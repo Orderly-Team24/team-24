@@ -21,7 +21,7 @@ function Questionnaire() {
       likes: parseList(likes),
       dislikes: parseList(dislikes),
       allergies: parseList(allergies),
-      dietary: parseList(dietary),
+      dietary_preferences: parseList(dietary),
     };
     localStorage.setItem('orderly_preferences', JSON.stringify(preferences));
 
