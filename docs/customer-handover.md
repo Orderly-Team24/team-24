@@ -1,74 +1,127 @@
-# Customer Handover — Orderly
+# Customer Handover
 
-This page answers the practical questions a customer needs answered: what you're getting, what you can do with it today, what still depends on the team, and what to watch out for. It's updated whenever any of that changes.
+_Last updated: 2026-07-17 (Week 7, Sprint 5)_
 
-## In short
+## 1. Current Product Status & Handover Scope
 
-- **The product is live and usable today** at https://team-24-navy.vercel.app/ — you can create an account and use it right now.
-- **Hosting is still owned by the team**, not you. The website, the two backend services, the database, and the AI (OpenAI) account all run under the team's own accounts. You have not been given login access to any of them yet.
-- **You have not taken over operating the product yourself.** If that's something you want, it's an open item — see "What's not decided yet" below.
+<!-- Artifact Req #4: current product status and handover scope -->
+<!-- Assignment 6 Part 4: which repository, service, deployment, account, access,
+     or ownership arrangements were transferred, delegated, or intentionally
+     retained by the team -->
 
-## What you can do right now
+Short paragraph: what the product does today (MVP v3), what was delivered in
+Assignment 6 (Sprint 4 + Sprint 5), and the overall scope of what is being
+handed over.
 
-| You want to... | Where |
-|---|---|
-| Use the app | https://team-24-navy.vercel.app/ |
-| See what it does and how it's set up | [README.md](../README.md) — includes a plain "how do I use it" walkthrough |
-| See everything that's changed, sprint by sprint | [CHANGELOG.md](../CHANGELOG.md) |
-| See what's planned next | [docs/roadmap.md](roadmap.md) |
-| Check a specific feature works the way it should | [docs/user-acceptance-tests.md](user-acceptance-tests.md) — step-by-step scenarios you (or the team, with you) can run |
+- **Repository:** transferred / access granted to `<customer-github-username>` as
+  [Owner / Maintainer] — *or* retained by the team with customer given read access, explain why.
+- **Deployment/hosting:** transferred to customer's account / retained on team's
+  account with access granted / retained by team, explain why and until when.
+- **Domain / hosting service account:** who owns it now.
+- **CI/CD, monitoring, or other service accounts:** state ownership explicitly.
 
-## Who owns what, right now
+> Be concrete. "Repo ownership retained by team; customer added as Maintainer;
+> deployment stays on team's [hosting provider] account until [date/condition]."
 
-| Piece | Who runs it today |
-|---|---|
-| The website (team-24-navy.vercel.app) | Team's Vercel account. Updates automatically whenever the team pushes code. |
-| The two backend services (recommendations, menu photo scanning) | Team's Render account. Same auto-update behavior. |
-| The database (user accounts, preferences) | Team's Render account. |
-| The AI used for recommendations (OpenAI) | Team's OpenAI account/API key. Not shared with you. |
-| The code itself (GitHub repository) | Public — anyone can read it — but the team still administers it. |
+## 2. How the Customer Accesses and Uses the Product
 
-**Nothing above has been formally handed to you yet.** That's not necessarily a problem — plenty of teams keep operating a product for a customer rather than transferring hosting — but it's something to explicitly decide, not assume.
+<!-- Artifact Req #4: how the customer accesses and uses the product -->
 
-## What's not decided yet
+- Production URL: `https://...`
+- Login / access method (no credentials in this public file — see §4)
+- Link to current product access artifact
+- Brief walkthrough of the main user flow (2–4 sentences, not a full manual —
+  link to more detailed usage docs if they exist)
 
-- Whether you want your **own** hosting (your own Vercel/Render/OpenAI accounts) instead of continuing to depend on the team's, or whether the team continuing to host it is fine with you.
-- What level of access you want (dashboard access to see logs/uptime? Full account ownership? Nothing, just use the product?).
+## 3. Installation or Deployment Instructions
 
-These were raised as open questions at the Week 6 review — see `reports/week6/README.md` for that conversation's outcome once recorded.
+<!-- Artifact Req #4: installation or deployment instructions where relevant -->
 
-## Things you should know before relying on this beyond the course
+If the customer needs to deploy or run it themselves:
 
-- **User accounts/passwords are on a hardcoded secret key**, not one only the team controls securely. In plain terms: the code that verifies login sessions uses a fixed value written directly into the source code instead of a private setting. This is fine for a course project but should be fixed (moved to a private setting, changed) before this is used as a real product with real users' data.
-- **Order history and "disliked" dishes are now permanently saved** — as of Sprint 5, both are stored in the same PostgreSQL database as accounts and preferences, so they survive service restarts/redeploys (previously they lived in short-term server memory and were wiped periodically; see [ADR-002](architecture/adr/ADR-002-postgresql-sqlalchemy.md#update-2026-07-14--order-history-and-dislikes-now-wired-up)).
-- **The AI won't always perfectly understand free-text requests** typed into the "what are you in the mood for" field. Allergies and things you've explicitly excluded are strictly enforced — those are never violated. But open-ended phrasing ("something light and warm") is best-effort, not a strict guarantee.
-- **Scanning menu photos handles single-column and multi-column layouts** (including uneven column widths), with $/€/£/₽ prices and both "12.50" and European "12,50" formats. It does not yet handle handwritten specials boards.
+- Prerequisites (runtime, services, accounts needed)
+- Step-by-step deploy/run instructions, or a link to `README.md` / a deploy doc
+  if the steps are long — but summarize the key steps here, don't just link.
 
-## If something breaks or needs to be recreated
+## 4. Configuration & Secrets-Handling Expectations
 
-- How to run it locally / redeploy: [README.md § Getting started](../README.md#getting-started-local-development).
-- How to make a change: [CONTRIBUTING.md](../CONTRIBUTING.md).
-- The exact settings (environment variables) each service needs are listed in [docs/development-process.md § Configuration Management](development-process.md#configuration-management) — this is the reference the team uses to recreate a service from scratch if needed.
-- There is currently no customer-facing backup/restore process for the database — this is called out as a known gap, not hidden.
+<!-- Artifact Req #4: required configuration and secrets-handling expectations
+     without exposing secrets -->
+<!-- Assignment 6 Part 4: which environment variables, configuration values,
+     external services, or secrets-handling steps the customer must know about
+     without exposing secrets -->
 
-## Is the documentation good enough? What help do you still need?
+- List **names** of required environment variables / config values (not values):
+  `DATABASE_URL`, `API_KEY_X`, etc.
+- External services the product depends on (e.g. hosting provider, email
+  service, third-party API) and what account/plan they need.
+- Where actual secrets live and how the customer obtains them (e.g. "shared
+  privately via [instructor/customer channel], never committed to the repo").
 
-**Team's own view going in:** we think README.md + this page are enough for someone technical to understand and run the product independently. We do **not** think it's enough yet for someone to take over *hosting/operating* it themselves — that's a separate step nobody has done yet (see "What's not decided yet" above).
+## 5. Operational Notes for Normal Use
 
-**Customer's view (Week 6 review, 10.07.2026):** README.md and CONTRIBUTING.md were reviewed live. Feedback: this document and the README were missing a clear, non-technical user guide for using the product independently — noted as the main documentation gap. That gap has since been addressed (see the new "User guide" section in [README.md](../README.md) and the plain-language rewrite of this page) as a direct action item from that meeting.
+<!-- Artifact Req #4: operational notes needed for normal use where relevant -->
 
-## Where things stand on handover
+- Anything the customer needs to do periodically (backups, renewals, updates)
+- Any manual steps not yet automated
+- Monitoring / logs, if applicable and accessible to the customer
 
-We're using three straightforward labels to track this, so it's always clear where things stand — no reading between the lines required.
+## 6. Troubleshooting & Support
 
-- **How far along is the handover?** → **Ready for you to use independently.** The product is live and usable end-to-end; you have not yet taken over hosting/operating it yourself (see "Who owns what" above) — that remains a separate, not-yet-started step if you want it.
-- **Have you confirmed you're happy with where things stand?** → **Yes, with follow-up items.** At the Week 6 review (10.07.2026) you approved the delivered features (order history, dislikes, AI safety fixes) and accepted this handover document as an accurate reflection of the current state, "noting that while dependencies aren't ideal, the handover is acceptable for now."
-- **Follow-up items from that review** (owned by the team, due before Week 7 wraps):
-  - Add a clear, non-technical user guide — **done** this same day (README.md § User guide, and this page's plain-language rewrite).
-  - Order history and dislikes not surviving a restart — **done** in Sprint 5 (issue #338): both now persist in the same PostgreSQL database as accounts and preferences.
-  - Meal-type recommendation filtering (breakfast/lunch/dinner) felt unstable in places beyond the specific scenario tested — scheduled for Sprint 5.
-  - Remove a stray/confusing "Recommendations" nav button — scheduled for Sprint 5.
-  - Add a free-text dietary-preference field (vegan, halal, etc.) — **done** (recommendation API + LLM prompt; Questionnaire text field).
-  - Whether you want your own hosting instead of continuing to depend on the team's — still an open question, not yet raised for a decision (see "What's not decided yet" above).
+<!-- Artifact Req #4: troubleshooting or support guidance -->
 
-Full meeting record: [reports/week6/sprint-review-summary.md](../reports/week6/sprint-review-summary.md), [reports/week6/sprint-review-transcript.md](../reports/week6/sprint-review-transcript.md).
+- Common issues and fixes (short table or list)
+- Who to contact and how, and until when the team provides support
+- Link to any issue tracker the customer can use to report problems
+
+## 7. Known Limitations, Unfinished Areas, and Risks
+
+<!-- Artifact Req #4: known limitations, unfinished areas, or important risks -->
+
+- Explicitly list what is NOT done / NOT robust yet (e.g. mobile layout edge
+  cases, filtering edge cases if not fully resolved by #337/#331/#328 — adjust
+  once those are actually closed)
+- Any risk that could affect future usefulness (e.g. free-tier hosting limits,
+  unmaintained dependency, no CI after course ends)
+
+## 8. Current Handover Status
+
+<!-- Artifact Req #5: must be exactly one of the three levels -->
+
+**Handover level reached:** `Ready for independent use` |
+`Independently used by customer` | `Deployed or operated on customer side`
+
+<!-- Assignment 6 Part 8: also state customer-confirmation status, separate
+     from the level above -->
+
+**Customer-confirmation status:** `Accepted` | `Accepted with follow-up items` |
+`Not yet accepted`
+
+Short paragraph justifying the chosen level and status — what happened in the
+Week 7 meeting that supports this classification.
+
+## 9. Remaining Actions
+
+<!-- Artifact Req #4 + #6: remaining actions and whether they block full
+     transition; if stronger levels not reached, explain blocker -->
+
+| Action | Owner (team / customer / external) | Blocks full transition? |
+|---|---|---|
+| ... | ... | Yes/No |
+
+If the confirmation status is not `Accepted`, explicitly explain:
+- what follow-up items / requested changes remain
+- whose side the blocker is on
+- what evidence of readiness/usefulness was still obtained
+- what would still be needed for full acceptance
+
+## 10. Related Documentation
+
+<!-- Artifact Req #4: links to related customer-relevant documentation -->
+
+- [README.md](../README.md)
+- [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [AGENTS.md](../AGENTS.md)
+- [Hosted documentation site](<link>)
+- [docs/user-acceptance-tests.md](./user-acceptance-tests.md)
+- [docs/roadmap.md](./roadmap.md)
