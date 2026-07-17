@@ -9,7 +9,7 @@ _Last updated: 2026-07-17 (Week 7, Sprint 5)_
 - **Domain / hosting service account:** the team owns it now.
 - **CI/CD, monitoring, or other service accounts:** The team own the project until the final presentation.
 
-> "Repo ownership retained by team; customer added as Editor;
+> "Repo ownership retained by team; customer added as Reader;
 > deployment stays on team's account until the final presentation."
 
 ## 2. How the Customer Accesses and Uses the Product
