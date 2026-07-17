@@ -173,8 +173,7 @@ def _anchor_peaks(anchors: list[float], image_width: int) -> list[float]:
         return []
 
     gap_threshold = _gap_threshold(image_width)
-    # Narrow columns (4+) need finer bins so adjacent peaks do not merge together.
-    bin_width = max(gap_threshold / (2.5 if len(anchors) > 40 else 2), 24)
+    bin_width = max(gap_threshold / 2, 30)
     min_a, max_a = min(anchors), max(anchors)
     nbins = max(1, int((max_a - min_a) / bin_width) + 1)
     bins = [0.0] * nbins
@@ -182,7 +181,7 @@ def _anchor_peaks(anchors: list[float], image_width: int) -> list[float]:
         idx = min(int((anchor - min_a) / bin_width), nbins - 1)
         bins[idx] += 1
 
-    min_peak_count = max(_MIN_ROWS_PER_COLUMN, int(len(anchors) * 0.06))
+    min_peak_count = max(_MIN_ROWS_PER_COLUMN, int(len(anchors) * 0.08))
     peaks: list[tuple[float, float]] = []
     for idx, count in enumerate(bins):
         if count < min_peak_count:
@@ -295,32 +294,6 @@ def _line_is_orphan_price(line: str) -> bool:
 def _line_is_junk(line: str) -> bool:
     stripped = line.strip()
     return bool(stripped) and bool(_JUNK_LINE.match(stripped))
-
-
-def _row_looks_like_noise(row: list[dict]) -> bool:
-    """Drop OCR garbage rows (symbols, photo bleed) before block grouping."""
-    line = _row_to_text(row)
-    if not line.strip():
-        return True
-    if _line_is_junk(line) or _line_is_orphan_price(line):
-        return True
-    letters = sum(1 for char in line if char.isalpha())
-    if letters < 3 and not _line_has_price(line):
-        return True
-    if letters < 6 and _line_has_price(line):
-        # e.g. "$6 -", "$7 |" from a full-width beverage band at the page bottom.
-        nameish = re.sub(r"[$€£₽\d.\-–\s|>]+", "", line)
-        if _letter_count_line(nameish) < 3:
-            return True
-    return False
-
-
-def _letter_count_line(text: str) -> int:
-    return sum(1 for char in text if char.isalpha())
-
-
-def _drop_noise_rows(rows: list[list[dict]]) -> list[list[dict]]:
-    return [row for row in rows if not _row_looks_like_noise(row)]
 
 
 def _merge_orphan_price_rows(rows: list[list[dict]]) -> list[list[dict]]:
@@ -444,6 +417,6 @@ def _rows_to_blocks(rows: list[list[dict]]) -> list[list[str]]:
 
 
 def _column_rows_to_text(rows: list[list[dict]]) -> str:
-    rows = _drop_noise_rows(_merge_orphan_price_rows(rows))
+    rows = _merge_orphan_price_rows(rows)
     blocks = _rows_to_blocks(rows)
     return "\n\n".join("\n".join(block) for block in blocks)
