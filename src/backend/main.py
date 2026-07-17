@@ -1,7 +1,8 @@
 import os
 
 import subprocess
-subprocess.run(["alembic", "upgrade", "head"], cwd="/db")
+if os.path.isdir('/db'):
+    subprocess.run(["alembic", "upgrade", "head"], cwd="/db")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
