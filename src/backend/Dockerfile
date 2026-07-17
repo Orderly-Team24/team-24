@@ -31,4 +31,4 @@ USER appuser
 ENV PORT=8000 \
     AI_BACKEND=stub
 EXPOSE 8000
-CMD ["sh", "-c", "alembic -c /db/alembic.ini upgrade e38340943a94 && uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "alembic -c /db/alembic.ini upgrade head && uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
