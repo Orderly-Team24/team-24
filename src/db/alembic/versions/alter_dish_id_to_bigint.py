@@ -8,7 +8,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision: str = '0001alter_dish'
-down_revision: Union[str, Sequence[str], None] = '31d0cd7df2bc'
+down_revision: Union[str, Sequence[str], None] = ('e38340943a94', '31d0cd7df2bc')
 branch_labels = None
 depends_on = None
 
