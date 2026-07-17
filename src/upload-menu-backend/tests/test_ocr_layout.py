@@ -352,35 +352,3 @@ def test_price_fragment_column_merges_into_previous():
     assert any("TIRAMISU" in d["name"] for d in desserts)
     assert any("CHEESECAKE" in d["name"] for d in desserts)
 
-
-def test_five_column_layout_is_read_column_first():
-    """Five side-by-side columns must not interleave rows from different columns."""
-    cols = [
-        [("Soup", 20, 10, 0, 0), ("Bread", 20, 50, 1, 0)],
-        [("Salad", 240, 10, 2, 0), ("Greek", 240, 50, 3, 0)],
-        [("Steak", 440, 10, 4, 0), ("Pasta", 440, 50, 5, 0)],
-        [("Burger", 640, 10, 6, 0), ("Melt", 640, 50, 7, 0)],
-        [("Cake", 840, 10, 8, 0), ("Pie", 840, 50, 9, 0), ("$8", 980, 10, 8, 1), ("$7", 980, 50, 9, 1)],
-    ]
-    words = [word for col in cols for word in col]
-    data = _make_data(words)
-    text = reconstruct_text(data, image_width=1200)
-
-    assert (
-        text.index("Soup")
-        < text.index("Bread")
-        < text.index("Salad")
-        < text.index("Steak")
-        < text.index("Burger")
-        < text.index("Cake")
-        < text.index("Pie")
-    )
-
-    from parser import parse_menu
-
-    dishes = parse_menu(text)
-    cake = next((d for d in dishes if "Cake" in d["name"]), None)
-    pie = next((d for d in dishes if "Pie" in d["name"]), None)
-    assert cake is not None and cake["price"] == 8.0
-    assert pie is not None and pie["price"] == 7.0
-

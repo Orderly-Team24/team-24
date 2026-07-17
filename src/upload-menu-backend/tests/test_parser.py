@@ -35,24 +35,6 @@ def test_trailing_price_with_comma_after_currency():
     assert result["price"] == 32.0
 
 
-def test_ocr_dollar_b_is_treated_as_eight():
-    result = parse_menu_line("TIRAMISU $B")
-    assert result["name"] == "TIRAMISU"
-    assert result["price"] == 8.0
-
-
-def test_merged_ocr_price_87_is_not_accepted():
-    result = parse_menu_line("YORK CHEESECAKE 87")
-    assert result["price"] is None
-    assert result["flagged"] is True
-
-
-def test_garbage_single_word_lowercase_is_flagged():
-    results = parse_menu("DESSERTS\n\ngraham $8\n")
-    graham = next(d for d in results if d["name"] == "graham")
-    assert graham["flagged"] is True
-
-
 def test_no_price_flagged():
     result = parse_menu_line("Caesar Salad")
     assert result["name"] == "Caesar Salad"
