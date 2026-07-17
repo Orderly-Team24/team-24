@@ -4,75 +4,153 @@ _Last updated: 2026-07-17 (Week 7, Sprint 5)_
 
 ## 1. Current Product Status & Handover Scope
 
-<!-- Artifact Req #4: current product status and handover scope -->
-<!-- Assignment 6 Part 4: which repository, service, deployment, account, access,
-     or ownership arrangements were transferred, delegated, or intentionally
-     retained by the team -->
+- **Repository:** retained by the team with customer given read access, because the team needs to finalize remaining Sprint 5 work and the MVP v3 release.
+- **Deployment/hosting:** Deployment remains on the team's account. Customer has been granted viewer access via invite to monitor and manage the deployment. Full account transfer was not done because the work on the product is still being done.
+- **Domain / hosting service account:** the team owns it now.
+- **CI/CD, monitoring, or other service accounts:** The team own the project until the final presentation.
 
-Short paragraph: what the product does today (MVP v3), what was delivered in
-Assignment 6 (Sprint 4 + Sprint 5), and the overall scope of what is being
-handed over.
-
-- **Repository:** transferred / access granted to `<customer-github-username>` as
-  [Owner / Maintainer] — *or* retained by the team with customer given read access, explain why.
-- **Deployment/hosting:** transferred to customer's account / retained on team's
-  account with access granted / retained by team, explain why and until when.
-- **Domain / hosting service account:** who owns it now.
-- **CI/CD, monitoring, or other service accounts:** state ownership explicitly.
-
-> Be concrete. "Repo ownership retained by team; customer added as Maintainer;
-> deployment stays on team's [hosting provider] account until [date/condition]."
+> "Repo ownership retained by team; customer added as Editor;
+> deployment stays on team's account until the final presentation."
 
 ## 2. How the Customer Accesses and Uses the Product
 
-<!-- Artifact Req #4: how the customer accesses and uses the product -->
+- **Production URL:** https://team-24-navy.vercel.app
+  (backing services: recommender API at https://team-24.onrender.com,
+  upload/OCR API at https://team-24-1.onrender.com — customer doesn't need
+  to interact with these directly)
 
-- Production URL: `https://...`
-- Login / access method (no credentials in this public file — see §4)
-- Link to current product access artifact
-- Brief walkthrough of the main user flow (2–4 sentences, not a full manual —
-  link to more detailed usage docs if they exist)
+- **Login / access method:** Customer creates an account (email + password)
+  to use the product. No credentials are included in this document — see
+  §4 (Configuration & Secrets-Handling) for how account/service credentials
+  are shared and handled.
+
+- **Link to current product access artifact:** [Live demo](https://team-24-navy.vercel.app)
+
+- **Brief walkthrough of the main user flow:** After signing up and logging
+  in, the user The user sets preferences (budget, allergies, dietary
+  restrictions), uploads a photo of a restaurant menu, which the system reads
+  via OCR. The app returns dish recommendations from that menu.
+  Past recommendations are saved to the user's History page for later
+  reference.
 
 ## 3. Installation or Deployment Instructions
 
-<!-- Artifact Req #4: installation or deployment instructions where relevant -->
+The product is currently hosted by the team (see §1 for ownership details).
+If you ever need to deploy your own instance — e.g. after course support
+ends — here is a summary of what's involved; full local-development steps
+are in [README.md](../README.md#getting-started-local-development).
 
-If the customer needs to deploy or run it themselves:
+### Prerequisites
+- Python 3.12+
+- Node.js 18+ and npm
+- A PostgreSQL database (or compatible) for the recommender backend —
+  the service will not start without a working `DATABASE_URL`
+- `tesseract-ocr` installed on the host running the upload/OCR service
+  (`sudo apt-get install tesseract-ocr` on Ubuntu/Debian, `brew install
+  tesseract` on macOS)
+- (Optional) an OpenAI API key, only needed if running the OpenAI-backed
+  recommendation engine rather than the default stub/local-LLM options
+- Accounts on your chosen hosting providers for the three services
+  (currently: Vercel for the frontend, Render for both backend APIs)
 
-- Prerequisites (runtime, services, accounts needed)
-- Step-by-step deploy/run instructions, or a link to `README.md` / a deploy doc
-  if the steps are long — but summarize the key steps here, don't just link.
+### Key steps
+1. Provision a PostgreSQL database and set `DATABASE_URL` for the
+   recommender service, then run the database migrations
+   (`cd src/db && alembic upgrade head`) to create the required tables.
+2. Deploy the two backend services (`src/backend` — recommender,
+   `src/upload-menu-backend` — OCR) as separate services, each with its
+   Python dependencies installed (`pip install -r requirements.txt`) and
+   required environment variables set (see §4).
+3. Deploy the frontend (`src/new-frontend`) as a static/Node build, pointing
+   `REACT_APP_API_URL` at your deployed recommender API URL.
+4. Verify all three services are reachable and the frontend can complete a
+   full flow (sign up, upload a menu, get recommendations) end to end.
 
+> Note: free-tier hosting (as currently used) may sleep after inactivity,
+> adding 5–15s latency to the first request — factor this in when choosing
+> a hosting tier.
+
+Full local-development setup (for testing before deploying, including a
+SQLite-based quick start) is documented in
+[README.md](../README.md#getting-started-local-development).
 ## 4. Configuration & Secrets-Handling Expectations
 
-<!-- Artifact Req #4: required configuration and secrets-handling expectations
-     without exposing secrets -->
-<!-- Assignment 6 Part 4: which environment variables, configuration values,
-     external services, or secrets-handling steps the customer must know about
-     without exposing secrets -->
+Required environment variables (names only — actual values shared via
+private channel, see below):
 
-- List **names** of required environment variables / config values (not values):
-  `DATABASE_URL`, `API_KEY_X`, etc.
-- External services the product depends on (e.g. hosting provider, email
-  service, third-party API) and what account/plan they need.
-- Where actual secrets live and how the customer obtains them (e.g. "shared
-  privately via [instructor/customer channel], never committed to the repo").
+**Recommender backend:**
+- `DATABASE_URL` — required; connection string for the PostgreSQL database
+- `AI_BACKEND` — `stub` (default, no external calls) / `openai` / `lmstudio`
+- `OPENAI_API_KEY` — required only if `AI_BACKEND=openai`
+- `OPENAI_BASE_URL`, `OPENAI_MODEL` — optional, have defaults
+- `ALLOWED_ORIGINS` — optional CORS setting
+- `NEGATION_LLM_EXTRACTION` — optional, `true`/`false`
+
+**Upload/OCR backend:**
+- `TESSERACT_PATH` — optional
+- `ALLOWED_ORIGINS` — optional
+
+Current values are configured directly in the Render dashboard for each
+service and are not committed to the repository. [Customer contact /
+instructor] can request current values through [private channel].
+
+> Note: the JWT signing key is currently hardcoded in the backend rather
+> than read from an environment variable — see §7 (Known Limitations).
 
 ## 5. Operational Notes for Normal Use
 
-<!-- Artifact Req #4: operational notes needed for normal use where relevant -->
+### Periodic tasks
+- **Database migrations:** when the product schema changes (tracked via
+  Alembic in `src/db/`), someone with access to the recommender service's
+  environment needs to run `alembic upgrade head` against the production
+  database after deploying new code. This is currently a manual step, not
+  automated in CI/CD.
+- **Backups:** there is currently no automated backup solution for the
+  production PostgreSQL database. This is a known gap — see §7.
+- **Dependency/service renewals:** no paid subscriptions are currently in
+  use (all three services run on free tiers); no renewal action is needed,
+  but free-tier limits should be monitored if usage grows (see §7).
 
-- Anything the customer needs to do periodically (backups, renewals, updates)
-- Any manual steps not yet automated
-- Monitoring / logs, if applicable and accessible to the customer
+### Manual steps not yet automated
+- Database migrations (above) are applied manually rather than as part of
+  the deploy pipeline.
+- There is no automated redeploy trigger beyond Vercel's auto-deploy from
+  `main` for the frontend; the two backend services on Render must be
+  redeployed manually (or via Render's own auto-deploy setting, if enabled)
+  when backend code changes.
+
+### Monitoring / logs
+- Application logs are available through each service's hosting dashboard
+  (Render dashboard for both backend APIs, Vercel dashboard for the
+  frontend). Access to these dashboards depends on the account-ownership
+  arrangement described in §1.
+- There is no dedicated uptime/error monitoring or alerting service
+  configured; issues are currently caught by manual checking or user
+  reports rather than automated alerts. This is a known limitation — see §7.
+- CI (`.gitlab-ci.yml`) runs a link-checker (`lychee`) against `main` to
+  catch broken documentation links, but this does not cover application
+  health or runtime errors.
 
 ## 6. Troubleshooting & Support
 
-<!-- Artifact Req #4: troubleshooting or support guidance -->
+### Common issues and fixes
 
-- Common issues and fixes (short table or list)
-- Who to contact and how, and until when the team provides support
-- Link to any issue tracker the customer can use to report problems
+| Symptom | Cause / Fix |
+|---|---|
+| First request after inactivity takes 5–15 seconds | Backend services run on Render's free tier, which sleeps after inactivity. This is expected — just wait for the first response. |
+| Menu photo doesn't produce recommendations / OCR fails | Ensure the photo is clear, well-lit, and the menu text is readable. Very low-quality photos may not parse correctly — see known limitations in §7. |
+|
+
+### Contact for support
+For issues beyond the above, contact Daria Gorshkova (dayeon761, d.gorshkova@innopolis.university).
+The team provides active support until end of course grading, 31.07.2026. 
+After this date, the customer will need to rely on self-service troubleshooting and the issue
+tracker below.
+
+### Reporting problems
+Problems can be reported directly via the project's GitHub Issues tracker:
+[link to your GitHub Issues page]. This remains available as a reporting
+channel independent of the active-support period above.
 
 ## 7. Known Limitations, Unfinished Areas, and Risks
 
@@ -86,19 +164,12 @@ If the customer needs to deploy or run it themselves:
 
 ## 8. Current Handover Status
 
-<!-- Artifact Req #5: must be exactly one of the three levels -->
-
-**Handover level reached:** `Ready for independent use` |
-`Independently used by customer` | `Deployed or operated on customer side`
-
-<!-- Assignment 6 Part 8: also state customer-confirmation status, separate
-     from the level above -->
+**Handover level reached:** `Ready for independent use` 
 
 **Customer-confirmation status:** `Accepted` | `Accepted with follow-up items` |
 `Not yet accepted`
 
-Short paragraph justifying the chosen level and status — what happened in the
-Week 7 meeting that supports this classification.
+The product works correctly
 
 ## 9. Remaining Actions
 
@@ -116,8 +187,6 @@ If the confirmation status is not `Accepted`, explicitly explain:
 - what would still be needed for full acceptance
 
 ## 10. Related Documentation
-
-<!-- Artifact Req #4: links to related customer-relevant documentation -->
 
 - [README.md](../README.md)
 - [CONTRIBUTING.md](../CONTRIBUTING.md)
