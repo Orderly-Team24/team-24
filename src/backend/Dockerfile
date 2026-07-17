@@ -23,7 +23,7 @@ COPY src/backend/jwt_handler.py ./
 
 # Sibling of /app, matching os.path.join(os.path.dirname(__file__), '..', 'db')
 # as resolved from /app/<module>.py.
-COPY src/db/database.py src/db/models.py /db/
+COPY src/db/ /db/
 
 RUN useradd --create-home appuser && chown -R appuser /app /db
 USER appuser
@@ -31,5 +31,4 @@ USER appuser
 ENV PORT=8000 \
     AI_BACKEND=stub
 EXPOSE 8000
-
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "alembic -c /db/alembic.ini upgrade head && uvicorn main:app --host 0.0.0.0 --port ${PORT}"]
