@@ -1,19 +1,13 @@
 import os
-
-import subprocess
-if os.path.isdir('/db'):
-    subprocess.run(["alembic", "upgrade", "head"], cwd="/db")
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-# Force Docker rebuild after cache issue
 from ai_service import get_recommendation
 from display_recommendations import router as display_router
 from history_router import router as history_router
 from user_route import router as user_router
 from auth import router as auth_router
 from users import router as users_router
+
 ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 
 app = FastAPI()
