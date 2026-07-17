@@ -13,7 +13,7 @@ Our project continues to use LLM capabilities as a core feature for food recomme
 
 - **Coding:** AI was used to assist with implementation tasks, including bug fixes, frontend/backend feature development, and code refactoring.
 - **Transcription:** AI was used to generate transcripts of customer meetings and sprint review sessions, which were then sanitized and reviewed by the team.
-- **Writing:** AI was used to reformulate sentences in reports to make them clearer and more concise. Some report content was converted to Markdown format for better structure and readability. This very report was drafted with the assistance of an AI coding assistant (Cline), which helped generate and format the content based on team input.
+- **Writing:** AI was used to reformulate sentences in reports to make them clearer and more concise. Some report content was converted to Markdown format for better structure and readability.
 - **Research & Idea Generation:** AI was consulted for advice on interface design, color schemes, and technical approaches. The team used AI to better understand tasks and explore possible solutions before implementing them independently.
 - **Understanding Tasks:** The team used AI to better understand assignment requirements and explore possible approaches before implementing them independently.
 
