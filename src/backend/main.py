@@ -1,7 +1,7 @@
 import os
 
 import subprocess
-subprocess.run(["alembic", "upgrade", "head"], cwd="src/db")
+subprocess.run(["alembic", "upgrade", "head"], cwd="../db")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
