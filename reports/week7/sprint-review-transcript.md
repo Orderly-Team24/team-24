@@ -1,6 +1,6 @@
 # Meet – Meeting with the customer 7
 
-**Date:** 16.07.2026
+**Date:** 17.07.2026
 
 **Participants:**
 
