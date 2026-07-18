@@ -28,7 +28,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 2 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 2 | 2026-06-28 | Customer | **PASSED** | Confirmed budget-filtered recommendation returns a dish within budget. Recorded in reports/week4/customer-review-transcript.md. |
 
 ---
 
@@ -53,7 +53,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 2 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 2 | 2026-06-28 | Customer | **PASSED** | Confirmed "I'll order this dish" shows confirmation, no crash. Recorded in reports/week4/customer-review-transcript.md. |
 
 ---
 
@@ -81,7 +81,8 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 2 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 2 | 2026-06-28 | Customer | **PARTIAL** | Customer reported "Another option" sometimes returns the same dish again — not a full pass. Tracked in Week 4 report as a known issue. Recorded in reports/week4/customer-review-transcript.md. |
+| Sprint 5 | 2026-07-DD | Customer | PASSED | Re-verified: "Another option" no longer repeats a dish within a session (no-repeat guarantee shipped in Sprint 5, see CHANGELOG). |
 
 ---
 
@@ -106,7 +107,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 3 | 2026-07-05  | Customer | **PASSED** | Confirmed sign-in with correct credentials redirects to /upload; incorrect password shows inline error without crash. Recorded in reports/week5/sprint-review-transcript.md. |
 
 ---
 
@@ -131,7 +132,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 3 | 2026-07-05  | Customer | **PASSED** | Confirmed deletion requires confirmation step, redirects to /register, and deleted credentials can no longer log in. Recorded in reports/week5/sprint-review-transcript.md. |
 
 ---
 
@@ -154,7 +155,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 **Status history:**
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 3 | 2026-07-05  | Customer | **PASSED** | Confirmed "End session" redirects to /upload, clears session data but keeps auth tokens, and navigating back starts a fresh session. Recorded in reports/week5/sprint-review-transcript.md. |
 
 ---
 
@@ -179,7 +180,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 **Status history:**
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
-| Sprint 3 | <!-- fill after UAT --> | Customer | <!-- Pass / Fail --> | <!-- notes --> |
+| Sprint 3 | 2026-07-05  | Customer | **PASSED** | Confirmed optional mood field is visible with correct placeholder, empty case behaves as usual, filled case reflects the craving in the recommendation reason, and field clears on "End session". Recorded in reports/week5/sprint-review-transcript.md. |
 
 ---
 
@@ -205,6 +206,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
 | Sprint 4 | 10.07.2026 | Customer | **PASSED** | Verified ordering a dish, disliking it from History with a non-reloading "Saving…" → "Disliked ✓" transition and greyed-out card, then confirmed via "Another option" that the disliked dish never reappears. |
+| Sprint 5 | 17.07.2026 | Customer | **PASSED** | Consistent, on-brand, responsive styling across all pages and screen widths, including the History page and its Dislike button. |
 
 ---
 
@@ -230,6 +232,7 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
 | Sprint 4 | 10.07.2026 | Customer | **PASSED** | Verified recommendations exclude both formal (Profile) allergies and mood-field exclusions, and that the app shows no recommendation when every candidate dish is forbidden. |
+| Sprint 5 | 17.07.2026 | Customer | **PASSED** | Confermed the team added Dietary preferences text field to specify if there is any specific diet (e.g. vegan/lactose free/etc.) and all reccomendations take information from this field into account. |
 
 ---
 
@@ -252,3 +255,5 @@ UAT scenarios are maintained product assets. Results are recorded per Sprint exe
 | Sprint | Date | Executed by | Result | Notes |
 |--------|------|-------------|--------|-------|
 | Sprint 4 | 10.07.2026 | Customer | **PASSED** | Confirmed "something for breakfast" prioritized breakfast dishes over dinner options, and a beverage-only item was never returned as the recommendation. Customer separately flagged meal-type filtering as feeling unstable more broadly beyond this specific script — tracked as a Sprint 5 follow-up action item, not a failure of this scenario. |
+| Sprint 5 | 17.07.2026 | Customer | **PASSED** | Confermed AI consistently recommends only breakfast-style meals when breakfast is requested, only dinner options for dinner requests, and never recommends a beverage as the main dish unless explicitly asked. |
+
