@@ -77,7 +77,7 @@
 
 
 ## Sprint 4
-- **Milestone:** [Milestone - Sprint 4](https://github.com/Orderly-Team24/team-24/milestone/4)
+- **Milestone:** [Milestone - Sprint 4](https://github.com/Orderly-Team24/team-24/milestone/4?closed=1)
 - **Issues:** [Issues - Sprint 4](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20milestone%3A%22Sprint%204%22)
 - **Dates:** 06-07-2026 – 12-07-2026
 - **Goal:** Implement order history management (view history, dislike a dish), polish existing AI recommendation quality, and fix bugs found during customer UAT.
@@ -86,7 +86,6 @@
 	- Filter future recommendations by disliked dishes
 	- Harden AI recommendation safety: never recommend an allergen/excluded ingredient even when the LLM backend is used, correctly parse plain-language exclusions ("I don't want steak") and meal-type intent (breakfast/lunch/dinner), never recommend a beverage on its own as "the dish"
 	- Fix authentication/session bugs discovered during UAT (expired-token lockout, order history using a mismatched user identity, a missing frontend route)
-	- Add Assignment 6 maintained assets: `CONTRIBUTING.md`, `AGENTS.md`, `docs/customer-handover.md`
 - **Planned items:**
 	- [US-015: Managing history of orders - Issue #149](https://github.com/Orderly-Team24/team-24/issues/149)
 	- [US-015-1: Backend — dislike storage + endpoints - Issue #285](https://github.com/Orderly-Team24/team-24/issues/285)
@@ -98,3 +97,25 @@
 	- [BUG: Allergen/excluded ingredients can still be recommended when every candidate dish matches an exclude - Issue #298](https://github.com/Orderly-Team24/team-24/issues/298)
 	- [BUG: Expired/invalid access token locks user out of login and register pages - Issue #295](https://github.com/Orderly-Team24/team-24/issues/295)
 	- [BUG: Order history is always empty after saving recommended dishes - Issue #311](https://github.com/Orderly-Team24/team-24/issues/311)
+
+
+## Sprint 5
+- **Milestone:** [Milestone - Sprint 5](https://github.com/Orderly-Team24/team-24/milestone/5?closed=1)
+- **Issues:** [Issues - Sprint 5](https://github.com/Orderly-Team24/team-24/issues?q=is%3Aissue%20milestone%3A%22Sprint%205%22)
+- **Dates:** 13-07-2026 – 19-07-2026
+- **Goal:** Polish all fucntions, fix existing bugs, transfer to customer.
+- **Focus or expected outcome statement:**
+  - Polish the UI/UX across the board: fix mobile layout issues, style the Order History page including the Dislike button, and remove the redundant "Recommendations" button
+  - Stabilize core features: fix unstable meal-type filtering and improve Menu OCR to handle complex layouts like 3-column menus
+  - Move order history and dislikes out of in-memory storage and into the actual database, so nothing's lost on restart
+  - Prepare for customer handover: add a text field for dietary preferences, include a user guide for independent use, and clean up dead endpoints
+  - Fix menu OCR so it handles 3-column and uneven column layouts properly
+- **Planned items:**
+  - [BUG: Mobile layout is unpolished sitewide, and Order History page (incl. Dislike button) has no styling at all - Issue #337](https://github.com/Orderly-Team24/team-24/issues/337)
+  - [BUG: Meal type filtering (breakfast/dinner/drinks) is unstable - Issue #328](https://github.com/Orderly-Team24/team-24/issues/328)
+  - [BUG: Remove extra "Recommendations" button from UI - Issue #329](https://github.com/Orderly-Team24/team-24/issues/329)
+  - [BUG: Add user guide or clearer instructions for independent use - Issue #330](https://github.com/Orderly-Team24/team-24/issues/330)
+  - [BUG: Implement text field for dietary preferences - Issue #331](https://github.com/Orderly-Team24/team-24/issues/331)
+  - [BUG: Order history and dislikes are stored in-memory, not in the database - lost on every restart - Issue #338](https://github.com/Orderly-Team24/team-24/issues/338)
+  - [BUG: Menu OCR doesn't handle 3 columns or uneven column splits - Issue #339](https://github.com/Orderly-Team24/team-24/issues/339)
+  - [BUG: Dead /display/another-option endpoint has its own bugs and duplicates logic already in /display/recommendations - Issue #340](https://github.com/Orderly-Team24/team-24/issues/340)
