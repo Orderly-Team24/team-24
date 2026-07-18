@@ -43,5 +43,9 @@ Completed. Documentation was improved, but the customer still requested a full v
 
 ## Action points
 
-- **Improve internal testing procedures** — Run a full UAT-style test on all critical flows (registration, login, history, recommendations) before any customer demo to catch issues like broken pages.
-- **Prepare handover artifacts earlier** — Complete all handover documentation and create a demo video before the final Sprint Review, not as a reaction to customer requests.
+- **Improve internal testing procedures**
+
+  Run a full UAT-style test on all critical flows (registration, login, history, recommendations) before any customer demo to catch issues like broken pages.
+- **Prepare handover artifacts earlier**
+
+  Complete all handover documentation and create a demo video before the final Sprint Review, not as a reaction to customer requests.
