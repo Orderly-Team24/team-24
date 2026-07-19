@@ -69,7 +69,7 @@
 - **SemVer Release:** [MVP v3](https://github.com/Orderly-Team24/team-24/releases/tag/v3.0.0)
 
 ## Media
-- Demo video
+- [Demo video](https://www.youtube.com/watch?v=mbJnwMYzU8k)
 
 ## Demo Day preparation
 - Rehearsal completed in Week 7
