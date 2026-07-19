@@ -22,17 +22,17 @@
 ## Delivery Summary
 - **Week 7 follow-up:** Fixed critical bugs (OCR, database persistence, UI polish, filtering), added user guide, and finalized deployment for customer handover.
 - **Access/Run instructions:** [README.md](../../README.md)
-- **Deployed Product (runnable artifact):** [product](https://team-24-navy.vercel.app/)
+- **Deployed Product (runnable artifact):** [product](https://team-24-navy.vercel.app/login)
 
 ## Documentation
 - **Contributing:** [CONTRIBUTING.md](../../CONTRIBUTING.md)
 - **AGENTS.md:** [AGENTS.md](../../AGENTS.md)
-- **Customer handover:** [docs/customer-handover.md](../../docs/customer-handover.md)
+- **Customer handover:** [customer-handover.md](../../docs/customer-handover.md)
 - **Hosted Documentation Site:** [Orderly Docs](https://orderly-team24.github.io/team-24/)
 
 ## Transition & Handover
 - **Final transition outcome:** Full handover completed. Customer confirmed product is ready for independent use.
-- **Transferred/delegated items:** Repository access granted, [deployed app](https://team-24-navy.vercel.app/), documentation ([README.md](../../README.md), [CONTRIBUTING.md](../../CONTRIBUTING.md), [AGENTS.md](../../AGENTS.md), [customer handover](docs/customer-handover.md)), user guide. Full details in [customer handover](docs/customer-handover.md).
+- **Transferred/delegated items:** Repository access granted, [deployed app](https://team-24-navy.vercel.app/login), documentation ([README.md](../../README.md), [CONTRIBUTING.md](../../CONTRIBUTING.md), [AGENTS.md](../../AGENTS.md), [customer handover](../../docs/customer-handover.md)), user guide. Full details in [customer handover](../../docs/customer-handover.md).
 - **Remaining support:** Support provided until 31.07.2026. 
 - **Remaining limitations:**
   - no password reset, no email verification
@@ -67,7 +67,7 @@
 - **SemVer Release:** [MVP v3](https://github.com/Orderly-Team24/team-24/releases/tag/v3.0.0)
 
 ## Media
-- [Demo video]()
+- Demo video
 
 ## Demo Day preparation
 - Rehearsal completed in Week 7
