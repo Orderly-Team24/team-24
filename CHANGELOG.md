@@ -1,6 +1,7 @@
 ## [Unreleased]
 
 ### Added
+- Free-text dietary preferences field on the Profile/questionnaire page (#331).
 - Order history and dislikes (US-015): dislike storage + endpoints, filtering future recommendations by disliked dishes, and a frontend History page with a "Dislike" button per order.
 - AI recommender now recognizes meal type (breakfast/lunch/dinner/brunch/supper) named in the free-text mood/craving field and prefers a matching dish when the menu has one.
 - AI recommender never recommends a beverage (water, soda, coffee, juice, etc.) on its own as "the dish" — a drink is not a meal.
@@ -15,6 +16,11 @@
 - Removed the `cuisine` preference entirely. It was accepted end-to-end (UI → API → LLM prompt) but never actually persisted or collected from any real user input — every caller always sent `null`.
 
 ### Fixed
+- Mobile layout and History page styling issues on small screens (#337).
+- Meal-type filtering reliability — previously flagged by the customer as
+feeling unstable beyond the specific UAT-10 script (#328).
+- Order history: fixed a live regression where history entries were still
+appearing empty / mismatched despite the PostgreSQL persistence fix above
 - Removed the dead `/display/another-option` endpoint: it hardcoded every dish to `id=1`, never called the AI backend (so `reason` was always blank), didn't return a `session_id`, and had zero frontend callers — the real "Another option" button always went through `/display/recommendations`, which has its own correct no-repeat logic. Also removed an abandoned LangChain/Chroma RAG experiment (`retriever.py`, `create_database.py`, `food_database/`) that was never wired into any live endpoint and wasn't even listed in `requirements.txt`.
 - README user guide: added an explicit login step for returning users (previously only registration was documented) and a Troubleshooting subsection (cold-start delay, menu-scan limitations, where to report other issues).
 - Order history and disliked dishes are now persisted in PostgreSQL (the existing `order_history`/`dislikes` tables from ADR-002) instead of an in-memory store — they survive service restarts/redeploys like accounts and preferences already did. Removed the `/history/_reset` dev endpoint along with it: it was a test convenience that became a real live-data-wiping risk once the store held real persisted data.
