@@ -25,11 +25,13 @@ cd src/db && alembic upgrade head && cd ../..
 1. **Pick an issue.** All work should trace back to a GitHub issue (a user story, task, or bug). If none exists for what you want to do, open one first.
 2. **Branch from `main`**, named `<issue-number>-short-description` (e.g. `285-task-us-015-1-backend-dislike-storage-endpoints`). See [docs/development-process.md § Branch Naming](docs/development-process.md#branch-naming).
 3. **Write the change and its tests together.** Both backend services (`src/backend/`, `src/upload-menu-backend/`) have `pytest` suites — run them before opening a PR:
-   ```bash
+```bash
    cd src/backend && pytest tests/ -v --cov=. --cov-report=term-missing
    cd src/upload-menu-backend && pytest tests/ -v --cov=. --cov-report=term-missing
-   ```
+```
    The frontend (`src/new-frontend/`) has no automated test suite yet — verify UI changes manually (`npm start`) against the golden path and at least one edge case.
+
+   > **Known issue:** order history persistence has a live regression despite #338 being closed — see [AGENTS.md](AGENTS.md) before touching `order_history.py`, `localStorage.userId`-related files, or History-related endpoints.
 4. **Open a PR** using the template in `.github/pull_request_template.md`: reference the issue with `Closes #<number>`, describe what was done, and how to test it.
 5. **Update `CHANGELOG.md`** under `[Unreleased]` for any user-visible change — that's how the team assembles each SemVer release.
 6. **Get one review from someone other than the author.** The reviewer checks acceptance criteria, tests, CI status, and that no other open PR touches the same endpoint/route (a real recurring source of merge conflicts in this repo — see recent history of `src/backend/display_recommendations.py`).
