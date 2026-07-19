@@ -16,7 +16,7 @@
 ### Sprint Details
 - **Sprint Goal:** Polish all fucntions, fix existing bugs, transfer to customer.33
 - **Sprint Dates:** July 13 2026 – July 19 2026
-- **Scope Summary:** Bug fixes including OCR/menu parsing, database persistence, mobile UI polish, dietary preferences input, user guide, and meal type filtering stabilization.
+- **Scope Summary:** Bug fixes including OCR/menu parsing, database persistence, mobile UI polish, dietary preferences input, user guide, and meal type filtering stabilization. Order history page remains non-functional but is scheduled for immediate fix before Demo Day.
 - **Total Sprint Size:** 28 Story Points
 
 ## Delivery Summary
@@ -40,25 +40,27 @@
   - the OCR does not support handwritten menus or decorative fonts
   - OCR work depends on menu photo quality
   - free-tier Render instances take 15-30 seconds to wake up
+  - Order history page is currently broken. Fix in progress, will be completed before Demo Day
 - **Summary of customer-independent us:** Customer independently tried the product during Week 7 meeting and  confirmed handover level as "Ready for independent use".
 
 ## Summary of customer-independent use
 - Customer independently tested the product during the Week 7 Sprint Review (17.07.2026)
 - Customer verified core features: dietary preferences text field, three-column menu handling, meal type filtering, mobile layout, and AI recommendations.
 - Customer feedback: positively noted that dietary preferences work as expected, confirmed OCR text extraction works correctly.
+- Critical issue identified: order history page is not functional. Team is actively working on the fix and will deliver it before Demo Day.
 - Follow-up items requested (all of this alredy done): fix history page, provide full system demo video after fixes, transfer repository ownership.
 
 ## Customer Feedback Response (Sprint 5)
 
 | Feedback Point | Status |
 |:--- | :--- |
-| History page not functional | Fixed |
+| History page not functional | In progress. Fix planned before Demo Day |
 | Provide full system video demonstration after fixes | Completed |
 | Transfer repository ownership | Completed |
 | Send finalized documentation | Completed |
   
 ## UAT Results Summary
-- **UAT-08 (View Order History and Dislike a Dish)** – passed. History page loads correctly, Dislike button works, disliked dishes excluded from future recommendations.
+- **UAT-08 (View Order History and Dislike a Dish)** – failed. History page does not load correctly. Fix is in progress and will be completed before Demo Day.
 - **UAT-09 (AI Never Recommends an Excluded or Allergen Food)** – passed. Formal allergies, mood-field exclusions, and Dietary Preferences are all exluded from recommendations.
 - **UAT-10 (AI Recognizes Meal Type and Never Recommends a Drink as the Dish)** – passed. AI correctly recommends breakfast/dinner based on request and doesn't returns a drink as the main dish. Meal type filtering instability from Sprint 4 was resolved.
 
@@ -85,6 +87,7 @@
 ## Final product status
 - MVP v3 is fully delivered and deployed
 - All Sprint 5 issues are closed
+- Order history page is currently broken. Fix is in progress and will be completed before Demo Day
 - The product is stable, customer-approved, and ready for independent use
 - Core features (OCR, AI recommendations, dietary preferences, meal filtering, order history with dislike button, mobile-responsive UI) are functional
 - Support provided until 31.07.2026.
