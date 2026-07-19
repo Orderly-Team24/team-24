@@ -138,6 +138,7 @@ pytest tests/ -v --cov=. --cov-report=term-missing
 - [Week 4 report](reports/week4/README.md)
 - [Week 5 report](reports/week5/README.md)
 - [Week 6 report](reports/week6/README.md)
+- [Week 7 report](reports/week7/README.md)
 
 Hosted (browsable) version of the docs above: https://orderly-team24.github.io/team-24/
 
