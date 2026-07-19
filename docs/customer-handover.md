@@ -149,42 +149,72 @@ tracker below.
 
 ### Reporting problems
 Problems can be reported directly via the project's GitHub Issues tracker:
-[link to your GitHub Issues page]. This remains available as a reporting
+[[link to your GitHub Issues page](https://github.com/Orderly-Team24/team-24/issues)]. This remains available as a reporting
 channel independent of the active-support period above.
 
 ## 7. Known Limitations, Unfinished Areas, and Risks
 
-<!-- Artifact Req #4: known limitations, unfinished areas, or important risks -->
-
-- Explicitly list what is NOT done / NOT robust yet (e.g. mobile layout edge
-  cases, filtering edge cases if not fully resolved by #337/#331/#328 — adjust
-  once those are actually closed)
-- Any risk that could affect future usefulness (e.g. free-tier hosting limits,
-  unmaintained dependency, no CI after course ends)
+### Product limitations
+- **3+ columns** The service doesnt handle more than 3 colums in menus
+- **Open-ended mood requests** (e.g. "something warm and comforting") are
+  best-effort — the AI takes them into account but matching quality is not
+  guaranteed the way allergy/exclusion filtering is.
+- The frontend has **no automated test suite**; UI changes are verified
+  manually rather than by CI-enforced tests
+### Security / operational risks
+- **No password reset / "forgot password" flow** — a user who loses their
+  password currently has no self-service way to regain account access.
+- **No email verification** on signup — accounts are usable immediately
+  with an unverified email address.
+- **No rate limiting** on the API endpoints, including login/signup —
+  a risk for abuse (credential stuffing, spam accounts) if usage grows
+  beyond the current small scale.
 
 ## 8. Current Handover Status
 
 **Handover level reached:** `Ready for independent use` 
 
-**Customer-confirmation status:** `Accepted` | `Accepted with follow-up items` |
-`Not yet accepted`
+**Customer-confirmation status:** 'Accepted with follow-up items'
 
-The product works correctly
+The product works correctly.
 
 ## 9. Remaining Actions
 
-<!-- Artifact Req #4 + #6: remaining actions and whether they block full
-     transition; if stronger levels not reached, explain blocker -->
-
 | Action | Owner (team / customer / external) | Blocks full transition? |
 |---|---|---|
-| ... | ... | Yes/No |
+| Fix order history bug | Team | Yes |
+| Re-record product demo video (showing current/fixed functionality) | Team | Yes |
+| Transfer repository ownership to customer | Team | Yes |
+| Send customer a written summary of what was done + demo video | Team | Yes |
+| Request customer's written confirmation of final acceptance | Team → Customer | Yes |
 
-If the confirmation status is not `Accepted`, explicitly explain:
-- what follow-up items / requested changes remain
-- whose side the blocker is on
-- what evidence of readiness/usefulness was still obtained
-- what would still be needed for full acceptance
+**Customer-confirmation status:** `Accepted with follow-up items`
+
+The customer confirmed the handover level as `Ready for independent use`
+after trying the product directly during the Week 7 meeting. However, full
+acceptance is conditional on the following follow-up items:
+
+- **What follow-up items remain:** the order history feature needs to be
+  fixed, the product demo video needs to be re-recorded to reflect the
+  current (fixed) state of the product, and repository ownership needs to
+  be transferred to the customer.
+- **Whose side the blocker is on:** currently on the **team's side** — all
+  three follow-up items are engineering/administrative tasks the team
+  still needs to complete. Once done, the blocker shifts to the
+  **customer's side**: the team will send a written summary of what was
+  done plus the updated demo video, and ask the customer to confirm
+  acceptance in writing.
+- **What evidence of readiness/usefulness was still obtained:** the
+  customer independently tried the product during the Week 7 meeting and
+  explicitly confirmed the handover level as `Ready for independent use`;
+  the only reason full acceptance was withheld was the specific,
+  named follow-up items above — not a broader concern about the product's
+  overall readiness.
+- **What is still needed for full acceptance:** the team must (1) fix the
+  order history bug, (2) re-record and share the demo video, (3) transfer
+  repository ownership, (4) send the customer a written summary of the
+  completed work together with the video, and (5) obtain the customer's
+  written confirmation of acceptance in response.
 
 ## 10. Related Documentation
 
