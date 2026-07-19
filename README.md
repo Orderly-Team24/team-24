@@ -2,6 +2,8 @@
 
 A web app that recommends dishes based on your preferences, budget, allergies, and the photo of a restaurant menu.
 
+📖 **[Full documentation](https://orderly-team24.github.io/team-24/)** — architecture, testing, quality requirements, and more.
+
 ## Live demo
 
 | Service | URL |
@@ -44,7 +46,8 @@ team-24/
 ├── src/
 │   ├── backend/              # Recommender service (FastAPI + Python)
 │   ├── upload-menu-backend/  # OCR / photo upload service (FastAPI + Tesseract)
-│   └── new-frontend/         # React SPA (deployed via Vercel)
+|   ├── new-frontend/         # React SPA (deployed via Vercel)
+│   └── db/                   # SQLAlchemy models + Alembic migrations (shared DB layer)
 ├── docs/                     # Design docs, quality requirements, testing strategy
 ├── reports/                  # Weekly reports and customer notes
 ├── CHANGELOG.md
