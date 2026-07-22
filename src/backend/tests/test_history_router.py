@@ -263,3 +263,18 @@ def test_get_dislikes_empty_for_new_user():
     resp = client.get("/history/dislikes", headers={"X-User-Id": "104"})
     assert resp.status_code == 200
     assert resp.json() == {"user_id": "104", "dislikes": []}
+
+
+def test_history_reflects_disliked_status():
+    """GET /history/orders must carry `disliked`, not just POST .../dislike —
+    otherwise the mark is lost on the next page load/refetch."""
+    post = client.post("/history/orders", json=_dish("Chicken pho"), headers=HEADERS)
+    dish_id = post.json()["dish"]["id"]
+
+    before = client.get("/history/orders", headers=HEADERS).json()
+    assert before["history"][0]["disliked"] is False
+
+    client.post(f"/history/orders/{dish_id}/dislike", headers=HEADERS)
+
+    after = client.get("/history/orders", headers=HEADERS).json()
+    assert after["history"][0]["disliked"] is True

@@ -72,6 +72,7 @@ class DishOut(BaseModel):
     description: str
     ingredients: list[str]
     reason: str
+    disliked: bool = False
 
 
 class OrderResponse(BaseModel):
@@ -125,10 +126,11 @@ def list_orders(
     """Return the user's full history, most recent first."""
     uid_str, user_id = _user_id(x_user_id)
     history = get_history(db, user_id)
+    disliked_ids = set(get_dislikes(db, user_id))
     return HistoryResponse(
         user_id=uid_str,
         count=len(history),
-        history=[DishOut(**d) for d in history],
+        history=[DishOut(**d, disliked=d["id"] in disliked_ids) for d in history],
     )
 
 
