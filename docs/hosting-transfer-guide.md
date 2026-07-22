@@ -1,17 +1,8 @@
 # Hosting Transfer Guide — Render + Vercel
 
-Practical, step-by-step instructions for moving Orderly's hosting from the team's accounts to the customer's own accounts. Written for the specific situation where the customer's Render account is a **free-tier personal workspace** (which cannot have members invited — see "Why not a Render Team" below), so services are recreated fresh rather than transferred in place.
+Practical, step-by-step instructions for moving Orderly's hosting from the team's accounts to the customer's own accounts, recreating the two backend services fresh under the customer's own free-tier Render account (a personal Render workspace can't have members invited — that's a paid Render Team feature — so services are recreated rather than transferred in place).
 
 This is separate from the GitHub repository transfer, which is already complete (`docs/customer-handover.md` §1).
-
-## Why not a Render Team
-
-Render only supports inviting other people (Members) into a **Team** workspace, not a personal one. Creating a Team is a paid feature. If the customer is fine paying for it, the cleaner alternative is:
-- Move the existing services into a Team you own (Render supports this via each service's Settings → Transfer Service).
-- Invite the customer as Owner/Admin.
-- The current service URLs (`team-24.onrender.com`, `team-24-1.onrender.com`) are preserved, so none of the steps below (frontend config, data migration) are needed — just the Team invite.
-
-Everything below assumes the customer is **not** paying for a Render Team, so services get recreated under their personal free account with new URLs.
 
 ## Prerequisites
 
