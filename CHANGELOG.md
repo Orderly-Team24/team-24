@@ -16,6 +16,9 @@
 - Removed the `cuisine` preference entirely. It was accepted end-to-end (UI → API → LLM prompt) but never actually persisted or collected from any real user input — every caller always sent `null`.
 
 ### Fixed
+- JWT signing secret was hardcoded in `src/backend/jwt_handler.py`; it now comes from a required `JWT_SECRET_KEY` environment variable (same pattern as `DATABASE_URL`), so it can be rotated independently of the code — a prerequisite for transferring service ownership to the customer.
+- Root-caused the "order history not reliably persisting" regression: the Alembic migration chain was broken. `31d0cd7df2bc` and `e38340943a94` are sibling migrations that both add the same `order_history` columns, so `alembic upgrade head` crashed with `duplicate column name: description` before reaching `0001alter_dish` — the migration that converts `dish_id`/`Dislikes.dish_id` from `Integer` to `BigInteger`. Confirmed against a real Postgres instance: stuck before that conversion, saving any dish whose id hash exceeds the signed 32-bit range (~50% of dish names) failed with `integer out of range`. Fixed `e38340943a94` to guard on existing columns like its sibling does, and switched `0001alter_dish` to `op.batch_alter_table` — plain `op.alter_column(type_=...)` isn't valid SQLite syntax, so this was also breaking every local/dev database's ability to reach `head`, not just production's.
+- `localStorage.userId` was never cleared alongside the auth tokens on logout/token-expiry/account-deletion (`App.js`, `ProfilePage.jsx`), leaving a stale user id behind — added the missing `removeItem` calls.
 - Mobile layout and History page styling issues on small screens (#337).
 - Meal-type filtering reliability — previously flagged by the customer as
 feeling unstable beyond the specific UAT-10 script (#328).
@@ -38,7 +41,6 @@ appearing empty / mismatched despite the PostgreSQL persistence fix above
 - The History page rendered a blank screen — `App.js` never registered a route for `/history`, even though the page and its nav link both existed.
 
 ### Notes for next-sprint owner
-- JWT signing secret is hardcoded in `src/backend/jwt_handler.py` rather than sourced from an environment variable — externalize before relying on this for anything beyond a course project.
 - Two Render services (`team-24`, `team-24-1`) and two frontend hosts have drifted in the past (different `API_URL` values hardcoded per page) — worth auditing before the next release.
 - OCR multi-column layout reconstruction clusters non-price word left-edges across horizontal gutters (any number of columns, including uneven widths) instead of assuming a single midline split; handwritten specials boards are still out of scope.
 - OCR menu parsing is tuned for one common layout (name on its own line, description + price after); non-Latin currency symbols aren't handled reliably yet.

@@ -79,6 +79,9 @@ pip install -r src/upload-menu-backend/requirements.txt
 # Point at a local SQLite file (swap for a real postgres:// URL to match production)
 export DATABASE_URL="sqlite:///$(pwd)/local.db"
 
+# Any value works locally — just needs to be set and consistent between runs
+export JWT_SECRET_KEY="local-dev-secret"
+
 # Create the tables
 cd src/db
 alembic upgrade head

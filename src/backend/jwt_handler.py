@@ -1,7 +1,14 @@
 from datetime import datetime, timedelta, timezone
-import jwt
+import os
 
-SECRET_KEY = "orderly-secret-key"
+import jwt
+from dotenv import load_dotenv
+
+load_dotenv()
+
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if SECRET_KEY is None:
+    raise RuntimeError("JWT_SECRET_KEY is not set")
 ALGORITHM = "HS256"
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60

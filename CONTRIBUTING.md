@@ -17,6 +17,7 @@ python -m venv venv && source venv/bin/activate
 pip install -r src/backend/requirements.txt
 pip install -r src/upload-menu-backend/requirements.txt
 export DATABASE_URL="sqlite:///$(pwd)/local.db"
+export JWT_SECRET_KEY="local-dev-secret"
 cd src/db && alembic upgrade head && cd ../..
 ```
 
@@ -31,7 +32,7 @@ cd src/db && alembic upgrade head && cd ../..
 ```
    The frontend (`src/new-frontend/`) has no automated test suite yet — verify UI changes manually (`npm start`) against the golden path and at least one edge case.
 
-   > **Known issue:** order history persistence has a live regression despite #338 being closed — see [AGENTS.md](AGENTS.md) before touching `order_history.py`, `localStorage.userId`-related files, or History-related endpoints.
+   > **Known issue (root cause found, fix pending confirmation on production):** order history persistence had a live regression despite #338 being closed — traced to a broken Alembic migration chain, not the DB-backed rewrite itself. See [AGENTS.md](AGENTS.md) for the full root cause before touching `order_history.py`, migrations, `localStorage.userId`-related files, or History-related endpoints. The fix needs `alembic upgrade head` re-run against the live database to take effect there.
 4. **Open a PR** using the template in `.github/pull_request_template.md`: reference the issue with `Closes #<number>`, describe what was done, and how to test it.
 5. **Update `CHANGELOG.md`** under `[Unreleased]` for any user-visible change — that's how the team assembles each SemVer release.
 6. **Get one review from someone other than the author.** The reviewer checks acceptance criteria, tests, CI status, and that no other open PR touches the same endpoint/route (a real recurring source of merge conflicts in this repo — see recent history of `src/backend/display_recommendations.py`).
