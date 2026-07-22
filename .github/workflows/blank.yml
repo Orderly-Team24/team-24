@@ -21,6 +21,8 @@ jobs:
           args: --config .lychee.toml . --verbose
           fail: true
           jobSummary: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
       - name: Upload lychee output as artifact
         if: always()
