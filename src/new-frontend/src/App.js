@@ -18,9 +18,10 @@ function ProtectedRoute({ children }) {
   if (isJwtExpired(token)) {
     localStorage.removeItem("orderly_access_token");
     localStorage.removeItem("orderly_refresh_token");
+    localStorage.removeItem("userId");
     return <Navigate to="/login" />;
   }
-  
+
   return children;
 }
 
@@ -41,6 +42,7 @@ function PublicRoute({ children }) {
   if (isJwtExpired(token)) {
     localStorage.removeItem("orderly_access_token");
     localStorage.removeItem("orderly_refresh_token");
+    localStorage.removeItem("userId");
     return children;
   }
   return <Navigate to="/upload" />;

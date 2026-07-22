@@ -25,6 +25,7 @@ function ProfilePage() {
   const redirectToLogin = useCallback(() => {
     localStorage.removeItem('orderly_access_token');
     localStorage.removeItem('orderly_refresh_token');
+    localStorage.removeItem('userId');
     navigate('/login');
   }, [navigate]);
 
@@ -110,6 +111,7 @@ function ProfilePage() {
 
       localStorage.removeItem('orderly_access_token');
       localStorage.removeItem('orderly_refresh_token');
+      localStorage.removeItem('userId');
       localStorage.removeItem('orderly_menu');
       localStorage.removeItem('orderly_preferences');
       localStorage.removeItem('orderly_budget');

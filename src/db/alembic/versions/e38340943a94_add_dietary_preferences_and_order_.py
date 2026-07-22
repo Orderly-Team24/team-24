@@ -17,6 +17,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import inspect
 
 
 # revision identifiers, used by Alembic.
@@ -27,10 +28,25 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.add_column("preferences", sa.Column("dietary_preferences", sa.JSON(), nullable=True))
-    op.add_column("order_history", sa.Column("description", sa.String(), nullable=True))
-    op.add_column("order_history", sa.Column("ingredients", sa.JSON(), nullable=True))
-    op.add_column("order_history", sa.Column("reason", sa.String(), nullable=True))
+    # This migration and 31d0cd7df2bc were authored independently (same
+    # down_revision) and both add the same order_history columns. Guarding
+    # on existing columns, same as 31d0cd7df2bc does, makes upgrading to
+    # head from scratch (or from either branch alone) idempotent instead of
+    # failing with "duplicate column name" partway through the merge.
+    bind = op.get_bind()
+    inspector = inspect(bind)
+
+    existing_preferences_columns = [col['name'] for col in inspector.get_columns('preferences')]
+    if 'dietary_preferences' not in existing_preferences_columns:
+        op.add_column("preferences", sa.Column("dietary_preferences", sa.JSON(), nullable=True))
+
+    existing_order_history_columns = [col['name'] for col in inspector.get_columns('order_history')]
+    if 'description' not in existing_order_history_columns:
+        op.add_column("order_history", sa.Column("description", sa.String(), nullable=True))
+    if 'ingredients' not in existing_order_history_columns:
+        op.add_column("order_history", sa.Column("ingredients", sa.JSON(), nullable=True))
+    if 'reason' not in existing_order_history_columns:
+        op.add_column("order_history", sa.Column("reason", sa.String(), nullable=True))
 
 
 def downgrade() -> None:

@@ -80,6 +80,7 @@ private channel, see below):
 
 **Recommender backend:**
 - `DATABASE_URL` — required; connection string for the PostgreSQL database
+- `JWT_SECRET_KEY` — required; signing key for access/refresh tokens
 - `AI_BACKEND` — `stub` (default, no external calls) / `openai` / `lmstudio`
 - `OPENAI_API_KEY` — required only if `AI_BACKEND=openai`
 - `OPENAI_BASE_URL`, `OPENAI_MODEL` — optional, have defaults
@@ -94,8 +95,9 @@ Current values are configured directly in the Render dashboard for each
 service and are not committed to the repository. [Customer contact /
 instructor] can request current values through [private channel].
 
-> Note: the JWT signing key is currently hardcoded in the backend rather
-> than read from an environment variable — see §7 (Known Limitations).
+> Note: when transferring service ownership, generate a new
+> `JWT_SECRET_KEY` value rather than reusing the team's existing one, so
+> that previously issued tokens and any prior access are invalidated.
 
 ## 5. Operational Notes for Normal Use
 

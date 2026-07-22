@@ -103,6 +103,7 @@ No secrets, API keys, database URLs, or passwords are committed to the repositor
 | Service | Variable | Purpose |
 |---|---|---|
 | Recommender (team-24) | `DATABASE_URL` | PostgreSQL connection string |
+| Recommender (team-24) | `JWT_SECRET_KEY` | Signing key for access/refresh tokens |
 | Recommender (team-24) | `OPENAI_API_KEY` | OpenAI API authentication |
 | Recommender (team-24) | `OPENAI_BASE_URL` | OpenAI API base URL |
 | Recommender (team-24) | `AI_BACKEND` | Set to `openai` in production |
