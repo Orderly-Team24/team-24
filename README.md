@@ -104,7 +104,7 @@ uvicorn main:app --reload --port 8002
 ```bash
 cd src/new-frontend
 npm install
-REACT_APP_API_URL=http://localhost:8003 npm start
+REACT_APP_API_URL=http://localhost:8003 REACT_APP_UPLOAD_URL=http://localhost:8002/upload-menu npm start
 # Opens http://localhost:3000
 ```
 

@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../App.css';
-
-const API_URL = 'https://team-24.onrender.com';
+import { API_URL } from '../config';
 
 function Questionnaire() {
   const navigate = useNavigate();

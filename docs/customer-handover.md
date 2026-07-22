@@ -62,7 +62,9 @@ are in [README.md](../README.md#getting-started-local-development).
    Python dependencies installed (`pip install -r requirements.txt`) and
    required environment variables set (see §4).
 3. Deploy the frontend (`src/new-frontend`) as a static/Node build, pointing
-   `REACT_APP_API_URL` at your deployed recommender API URL.
+   `REACT_APP_API_URL` at your deployed recommender API URL and
+   `REACT_APP_UPLOAD_URL` at your deployed OCR service's `/upload-menu`
+   endpoint (both build-time variables — see `src/new-frontend/src/config.js`).
 4. Verify all three services are reachable and the frontend can complete a
    full flow (sign up, upload a menu, get recommendations) end to end.
 

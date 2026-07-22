@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-const API_RECOMMENDER = 'https://team-24.onrender.com';
+import { API_URL as API_RECOMMENDER } from "../config";
 
 function getUserId() {
   return localStorage.getItem("userId") || "";

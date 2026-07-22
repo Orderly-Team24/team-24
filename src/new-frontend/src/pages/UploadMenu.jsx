@@ -1,8 +1,8 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_UPLOAD_URL } from '../config';
 
 const MAX_FILE_SIZE = 8 * 1024 * 1024;
-const API_UPLOAD_URL = 'https://team-24-1.onrender.com/upload-menu';
 
 function UploadMenu() {
   const navigate = useNavigate();
