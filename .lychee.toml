@@ -33,3 +33,10 @@ include_extensions = [
 
 max_retries = 3
 retry_wait = 30
+
+# GitHub's secondary (abuse-detection) rate limit kicks in on high request
+# concurrency even with an authenticated token — this repo has 600+ links
+# to github.com across weekly reports, and lychee's default concurrency
+# (128) was tripping it, causing 404/429 failures unrelated to the actual
+# links being checked.
+max_concurrency = 4
