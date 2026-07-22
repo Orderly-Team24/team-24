@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import '../styles/App.css';
-
-const API_URL = 'https://team-24.onrender.com';
+import { API_URL } from '../config';
 
 function LoginPage() {
   const navigate = useNavigate();
