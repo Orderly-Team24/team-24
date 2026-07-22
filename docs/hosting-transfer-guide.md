@@ -30,6 +30,7 @@ Both services deploy the same way as documented in `src/backend/README.md` § "D
 4. **Runtime:** Docker · **Instance type:** Free
 5. Environment variables — see the table below.
 6. Create Web Service. Render will build and deploy; the Dockerfile's `CMD` already runs `alembic upgrade heads` automatically before starting the server, so a fresh database gets its schema created with no manual migration step.
+7. **Where to find the public URL:** once the deploy finishes, it's shown at the top of the service's page, directly under its name — looks like `https://<service-name>.onrender.com`. You'll need this for Step 4.
 
 ### OCR / upload service (`src/upload-menu-backend`)
 Same steps, but:
@@ -51,24 +52,38 @@ Same steps, but:
 ## Step 2 — Create a fresh PostgreSQL database
 
 1. Render Dashboard → **New → PostgreSQL** (free tier).
-2. Copy its **Internal Database URL** (for the recommender service's `DATABASE_URL` — internal is fine since both live in the same Render account) and its **External Database URL** (needed for the data migration in Step 3, since that runs from a machine outside Render's network).
+2. **Where to find the connection strings:** open the new database → **Info** (or **Connect**) tab. Both **Internal Database URL** and **External Database URL** are listed there, each behind a "reveal"/copy icon (they contain the password, so Render hides them by default — click to copy, don't just eyeball and retype). Copy the **Internal** one for the recommender service's `DATABASE_URL` (internal is fine since both live in the same Render account), and the **External** one for the data migration in Step 3 (that runs from a machine outside Render's network, so it needs the externally-reachable address).
 
 ## Step 3 — Migrate data from the old database
 
-Run from a machine with `pg_dump`/`psql` installed (e.g. locally). You'll need the **External Database URL** for both the old (team-owned) and new (customer-owned) databases — get the old one from the team's Render dashboard.
+The customer has no access to the team's existing Render account, so this step is split: the **team** exports the old data into a file, and hands over that **file** (never a connection string or password) to whoever performs the restore into the new, customer-owned database.
+
+### 3a. Team side — export (run by whoever has access to the team's Render account)
 
 ```bash
-# Dump the old database
+# Get OLD_EXTERNAL_DATABASE_URL from the team's Render dashboard:
+# the existing Postgres service → Info (or Connect) tab → External Database URL
+# (behind a "reveal"/copy icon — copy it, don't retype it by hand)
 pg_dump "OLD_EXTERNAL_DATABASE_URL" -F c -f orderly_backup.dump
+```
 
-# Restore into the new one (schema already exists from alembic upgrade heads
-# on first boot — use --data-only to avoid conflicting with it, or restore
-# to the fresh DB *before* the recommender service's first deploy so there's
-# no schema yet to conflict with)
+Send `orderly_backup.dump` itself (e.g. as a file attachment) to whoever does Step 3b — not the connection string used to produce it.
+
+### 3b. New-account side — restore (run by whoever has access to the customer's new Render account, from Step 2)
+
+```bash
+# Get NEW_EXTERNAL_DATABASE_URL the same way, but from the *new* Postgres
+# service created in Step 2 (customer's own Render dashboard → the new
+# database → Info/Connect tab → External Database URL)
+
+# Schema already exists from `alembic upgrade heads` on first boot of the
+# recommender service (Step 1) — --data-only avoids conflicting with it.
+# If restoring before the recommender service's first deploy, there's no
+# schema yet, so plain pg_restore (without --data-only) also works.
 pg_restore --data-only --no-owner -d "NEW_EXTERNAL_DATABASE_URL" orderly_backup.dump
 ```
 
-Do not paste either connection string into chat/Slack/etc. — treat them like passwords.
+Do not paste either connection string into chat/Slack/etc. — treat them like passwords. `orderly_backup.dump` itself contains real user data (emails, order history) — handle/delete it like any other data export, not a throwaway file.
 
 ## Step 4 — Point the frontend at the new backend URLs
 
@@ -79,7 +94,9 @@ The frontend's backend URLs are a single config point (`src/new-frontend/src/con
 | `REACT_APP_API_URL` | New recommender service URL, e.g. `https://<new-name>.onrender.com` |
 | `REACT_APP_UPLOAD_URL` | New OCR service URL + `/upload-menu`, e.g. `https://<new-name>.onrender.com/upload-menu` |
 
-Set these in the Vercel project (Settings → Environment Variables) — either on the team's Vercel project before transferring it, or on the customer's own Vercel project if they're hosting the frontend themselves too. Redeploy after setting them (env var changes require a new build to take effect, since Create React App bakes them in at build time).
+Set these in the Vercel project (Settings → Environment Variables) — either on the team's Vercel project before transferring it, or on the customer's own Vercel project if they're hosting the frontend themselves too. Redeploy after setting them (env var changes require a new build to take effect, since Create React App bakes them in at build time — a saved env var alone does **not** update an already-built deployment).
+
+**Where to find the frontend's own live URL** (to put in the two backend services' `ALLOWED_ORIGINS` above): Vercel project's **Overview** page, shown right under the project name — looks like `https://<project-name>.vercel.app`. Also repeated at the top of every entry under the **Deployments** tab.
 
 ## Step 5 — Smoke test
 
