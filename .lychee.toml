@@ -8,6 +8,15 @@ exclude = [
     "https://github.com/.*/settings/.*",
     # Render free-tier root paths return 404 (no root route); individual API endpoints are tested separately
     "https://team-24-1.onrender.com",
+    # Issue numbers referenced in docs/reports don't reliably resolve — many
+    # predate a repo history reset (see the `backup-before-cleanup` tag) and
+    # 404 permanently regardless of auth/rate-limiting (73 distinct broken
+    # issue links across 9 files as of 2026-07-22, including currently
+    # maintained docs, not just old weekly archives). Not fixable by
+    # touching lychee's request pattern — excluding the whole category
+    # rather than link-by-link, since new dead links would be just as
+    # unfixable here.
+    "https://github.com/.*/issues/[0-9]+",
     # TEMPORARY: GitHub Pages (docs/index.md) only builds from main, so this
     # 404s on every PR that adds/changes it, before main has ever seen the
     # content. Remove this line in a follow-up PR once the site is confirmed
